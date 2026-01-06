@@ -1,0 +1,16 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "tempeststudios.inventorysort.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "HandledScreenMixin",
+    "ScreenAccessor",
+    "AbstractContainerScreenAccessor",
+    "AbstractContainerMenuInvoker",
+    "AbstractContainerScreenInvoker"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
