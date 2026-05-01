@@ -79,13 +79,193 @@ public class InventorySorter {
 	}
 
 	// ─────────────────────────────────────────────────────────────
+	// Transfer Buttons
+	// ─────────────────────────────────────────────────────────────
+
+	/**
+	 * ▲ Up button
+	 * - No shift: move items from player inventory -> container ONLY if container already contains that item (item+components).
+	 * - Shift: move ALL items from player MAIN inventory (exclude hotbar) -> container.
+	 */
+	public static void transferUp(AbstractContainerScreen<?> screen, Player player, boolean shiftAllExcludeHotbar) {
+		AbstractContainerMenu menu = screen.getMenu();
+		AbstractContainerScreenInvoker invoker = (AbstractContainerScreenInvoker) screen;
+
+		List<Slot> containerSlots = getContainerSlots(menu, screen);
+		if (containerSlots.isEmpty()) {
+			InventorySortClient.LOGGER.debug("transferUp: no container slots detected, skipping.");
+			return;
+		}
+
+		PlayerSlotRegions regions = getPlayerSlotRegions(menu, player);
+
+		// ALWAYS ignore hotbar (both normal and shift)
+		List<Slot> playerSlots = new ArrayList<>(regions.main);
+
+		if (!ensureCursorEmpty(menu, invoker, playerSlots, containerSlots)) return;
+
+		Set<StackKey> containerTypes = buildTypeSet(containerSlots);
+
+		for (Slot from : playerSlots) {
+			ItemStack stack = from.getItem();
+			if (stack.isEmpty()) continue;
+
+			if (!shiftAllExcludeHotbar) {
+				// Only move if container already has this exact item+components
+				if (!containerTypes.contains(StackKey.of(stack))) continue;
+			}
+
+			quickMove(invoker, from);
+		}
+
+		ensureCursorEmpty(menu, invoker, playerSlots, containerSlots);
+	}
+
+	/**
+	 * ▼ Down button
+	 * - No shift: top up existing stacks in player inventory using container contents.
+	 * - Shift: move ALL items from container -> player inventory (as much as fits).
+	 */
+	public static void transferDown(AbstractContainerScreen<?> screen, Player player, boolean shiftMoveAllFromContainer) {
+		AbstractContainerMenu menu = screen.getMenu();
+		AbstractContainerScreenInvoker invoker = (AbstractContainerScreenInvoker) screen;
+
+		List<Slot> containerSlots = getContainerSlots(menu, screen);
+		if (containerSlots.isEmpty()) {
+			InventorySortClient.LOGGER.debug("transferDown: no container slots detected, skipping.");
+			return;
+		}
+
+		PlayerSlotRegions regions = getPlayerSlotRegions(menu, player);
+
+		// Down (both modes): affect main + hotbar
+		List<Slot> playerSlots = new ArrayList<>();
+		playerSlots.addAll(regions.hotbar);
+		playerSlots.addAll(regions.main);
+
+		if (!ensureCursorEmpty(menu, invoker, containerSlots, playerSlots)) return;
+
+		if (shiftMoveAllFromContainer) {
+			// Shift+▼ : quick-move everything from container into player inventory
+			for (Slot from : containerSlots) {
+				if (from.getItem().isEmpty()) continue;
+				quickMove(invoker, from);
+			}
+			ensureCursorEmpty(menu, invoker, containerSlots, playerSlots);
+			return;
+		}
+
+		// ▼ : Fill existing stacks in inventory from container
+		fillPlayerStacksFromContainer(menu, invoker, playerSlots, containerSlots);
+
+		ensureCursorEmpty(menu, invoker, containerSlots, playerSlots);
+	}
+
+	private static void fillPlayerStacksFromContainer(AbstractContainerMenu menu,
+													  AbstractContainerScreenInvoker invoker,
+													  List<Slot> playerSlots,
+													  List<Slot> containerSlots) {
+		for (Slot targetSlot : playerSlots) {
+			ItemStack target = targetSlot.getItem();
+			if (target.isEmpty()) continue;
+
+			int max = target.getMaxStackSize();
+			if (max <= 1) continue; // tools, etc.
+			if (target.getCount() >= max) continue;
+
+			for (Slot fromSlot : containerSlots) {
+				ItemStack from = fromSlot.getItem();
+				if (from.isEmpty()) continue;
+				if (!sameItemAndComponents(target, from)) continue;
+
+				// Pick up FROM -> click TARGET (merge) -> if remainder, return to FROM
+				click(invoker, fromSlot);
+				click(invoker, targetSlot);
+
+				if (!menu.getCarried().isEmpty()) {
+					click(invoker, fromSlot);
+				}
+
+				target = targetSlot.getItem();
+				if (target.isEmpty()) break;
+				if (target.getCount() >= max) break;
+			}
+		}
+	}
+
+	private static void quickMove(AbstractContainerScreenInvoker invoker, Slot slot) {
+		invoker.invokeSlotClicked(slot, slot.index, 0, ClickType.QUICK_MOVE);
+	}
+
+	private static List<Slot> getContainerSlots(AbstractContainerMenu menu, AbstractContainerScreen<?> screen) {
+		String screenName = screen.getClass().getSimpleName();
+		int totalSlots = menu.slots.size();
+
+		boolean isContainer = totalSlots > 46;
+
+		boolean isContainerByName = screenName.contains("Container") ||
+				screenName.contains("Chest") ||
+				screenName.contains("Shulker") ||
+				screenName.contains("Barrel") ||
+				screenName.contains("Hopper") ||
+				screenName.contains("Dispenser") ||
+				screenName.contains("Dropper") ||
+				screenName.contains("Furnace") ||
+				screenName.contains("Brewing") ||
+				screenName.contains("Crafting");
+
+		if (!(isContainer || isContainerByName)) return Collections.emptyList();
+
+		int containerSize = totalSlots - 36;
+		if (containerSize <= 0) return Collections.emptyList();
+
+		return new ArrayList<>(menu.slots.subList(0, containerSize));
+	}
+
+	private static Set<StackKey> buildTypeSet(List<Slot> slots) {
+		Set<StackKey> set = new HashSet<>();
+		for (Slot s : slots) {
+			ItemStack st = s.getItem();
+			if (st.isEmpty()) continue;
+			set.add(StackKey.of(st));
+		}
+		return set;
+	}
+
+	private static final class StackKey {
+		private final Object item;
+		private final Object components;
+
+		private StackKey(Object item, Object components) {
+			this.item = item;
+			this.components = components;
+		}
+
+		static StackKey of(ItemStack stack) {
+			return new StackKey(stack.getItem(), stack.getComponents());
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (!(o instanceof StackKey other)) return false;
+			return this.item == other.item && Objects.equals(this.components, other.components);
+		}
+
+		@Override
+		public int hashCode() {
+			return 31 * System.identityHashCode(item) + (components != null ? components.hashCode() : 0);
+		}
+	}
+
+	// ─────────────────────────────────────────────────────────────
 	// Feature #1: Top up partial stacks in the hotbar
 	// ─────────────────────────────────────────────────────────────
 
 	private static void topUpHotbar(AbstractContainerMenu menu,
-			AbstractContainerScreenInvoker invoker,
-			List<Slot> hotbarSlots,
-			List<Slot> mainSlots) {
+									AbstractContainerScreenInvoker invoker,
+									List<Slot> hotbarSlots,
+									List<Slot> mainSlots) {
 
 		for (Slot hotbarSlot : hotbarSlots) {
 			ItemStack target = hotbarSlot.getItem();
@@ -161,61 +341,215 @@ public class InventorySorter {
 		String id = BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
 		String path = id.contains(":") ? id.substring(id.indexOf(':') + 1) : id;
 
-		// Logs / wood
-		if (path.endsWith("_log") || path.endsWith("_wood") || path.endsWith("_stem") || path.contains("hyphae"))
-			return "01_logs_wood";
-		if (path.endsWith("_planks"))
-			return "02_planks";
-		if (path.endsWith("_leaves"))
-			return "03_leaves";
-		if (path.endsWith("_sapling"))
-			return "04_saplings";
+		// ═══════════════════════════════════════════════════════════════
+		// FOOD ITEMS - Group all food together with subcategories
+		// ═══════════════════════════════════════════════════════════════
 
-		// Stone-ish / terrain blocks
+		// Raw meat
+		if (path.equals("beef") || path.equals("porkchop") || path.equals("chicken") ||
+				path.equals("mutton") || path.equals("rabbit") || path.equals("cod") ||
+				path.equals("salmon") || path.equals("tropical_fish") || path.equals("pufferfish"))
+			return "50_food_raw_meat";
+
+		// Cooked meat
+		if (path.equals("cooked_beef") || path.equals("cooked_porkchop") ||
+				path.equals("cooked_chicken") || path.equals("cooked_mutton") ||
+				path.equals("cooked_rabbit") || path.equals("cooked_cod") ||
+				path.equals("cooked_salmon"))
+			return "51_food_cooked_meat";
+
+		// Vegetables & crops
+		if (path.equals("potato") || path.equals("carrot") || path.equals("beetroot") ||
+				path.equals("wheat") || path.equals("wheat_seeds") || path.equals("beetroot_seeds") ||
+				path.equals("pumpkin_seeds") || path.equals("melon_seeds") || path.equals("torchflower_seeds") ||
+				path.equals("pitcher_pod"))
+			return "52_food_crops";
+
+		// Prepared foods
+		if (path.equals("baked_potato") || path.equals("bread") || path.equals("cookie") ||
+				path.equals("pumpkin_pie") || path.equals("cake") || path.contains("stew") ||
+				path.contains("soup"))
+			return "53_food_prepared";
+
+		// Fruits & sweets
+		if (path.equals("apple") || path.equals("golden_apple") || path.equals("enchanted_golden_apple") ||
+				path.equals("melon_slice") || path.equals("sweet_berries") || path.equals("glow_berries") ||
+				path.equals("chorus_fruit") || path.equals("honey_bottle") || path.equals("honeycomb"))
+			return "54_food_fruits";
+
+		// ═══════════════════════════════════════════════════════════════
+		// WOOD & WOOD PRODUCTS - Keep together
+		// ═══════════════════════════════════════════════════════════════
+
+		// Logs & wood blocks
+		if (path.endsWith("_log") || path.endsWith("_wood") || path.endsWith("_stem") || path.contains("hyphae"))
+			return "01_wood_logs";
+
+		// Planks
+		if (path.endsWith("_planks"))
+			return "02_wood_planks";
+
+		// Sticks and wood-related items
+		if (path.equals("stick") || path.equals("bowl") || path.equals("ladder") || path.equals("scaffolding"))
+			return "03_wood_items";
+
+		// Leaves
+		if (path.endsWith("_leaves"))
+			return "04_wood_leaves";
+
+		// Saplings
+		if (path.endsWith("_sapling"))
+			return "05_wood_saplings";
+
+		// ═══════════════════════════════════════════════════════════════
+		// STONE & TERRAIN BLOCKS
+		// ═══════════════════════════════════════════════════════════════
+
+		// Dirt & grass
+		if (path.contains("dirt") || path.contains("grass_block") || path.contains("podzol") ||
+				path.contains("mycelium") || path.contains("mud"))
+			return "10_terrain_dirt";
+
+		// Stone variants
 		if (path.contains("stone") || path.contains("cobblestone") || path.contains("deepslate") ||
 				path.contains("granite") || path.contains("diorite") || path.contains("andesite") ||
 				path.contains("tuff") || path.contains("calcite") || path.contains("basalt") ||
 				path.contains("blackstone") || path.contains("netherrack") || path.contains("end_stone"))
-			return "10_stone_terrain";
+			return "11_terrain_stone";
 
-		// Ores / minerals
-		if (path.endsWith("_ore") || path.contains("_ore_"))
-			return "20_ores";
+		// Sand & gravel
+		if (path.contains("sand") || path.contains("gravel") || path.contains("clay"))
+			return "12_terrain_sand";
+
+		// ═══════════════════════════════════════════════════════════════
+		// ORES, INGOTS, GEMS & MINERALS
+		// ═══════════════════════════════════════════════════════════════
+
+		// Raw ores
+		if (path.endsWith("_ore") || path.contains("_ore_") || path.startsWith("raw_"))
+			return "20_minerals_ores";
+
+		// Gems & precious items
+		if (path.equals("diamond") || path.equals("emerald") || path.equals("amethyst_shard") ||
+				path.equals("lapis_lazuli") || path.equals("prismarine_shard") || path.equals("prismarine_crystals") ||
+				path.equals("quartz") || path.equals("echo_shard"))
+			return "21_minerals_gems";
+
+		// Ingots
 		if (path.endsWith("_ingot"))
-			return "21_ingots";
-		if (path.endsWith("_nugget"))
-			return "22_nuggets";
+			return "22_minerals_ingots";
 
-		// Redstone-y
+		// Nuggets
+		if (path.endsWith("_nugget"))
+			return "23_minerals_nuggets";
+
+		// Dusts & powders
+		if (path.equals("redstone") || path.equals("glowstone_dust") || path.equals("gunpowder") ||
+				path.equals("blaze_powder") || path.equals("bone_meal"))
+			return "24_minerals_dusts";
+
+		// ═══════════════════════════════════════════════════════════════
+		// REDSTONE & MECHANISMS
+		// ═══════════════════════════════════════════════════════════════
+
 		if (path.contains("redstone") || path.contains("repeater") || path.contains("comparator") ||
 				path.contains("piston") || path.contains("observer") || path.contains("hopper") ||
 				path.contains("dispenser") || path.contains("dropper") || path.contains("lever") ||
-				path.contains("button") || path.contains("pressure_plate"))
+				path.contains("button") || path.contains("pressure_plate") || path.contains("rail") ||
+				path.contains("detector"))
 			return "30_redstone";
 
-		// Building pieces
+		// ═══════════════════════════════════════════════════════════════
+		// BUILDING BLOCKS & DECORATIVE
+		// ═══════════════════════════════════════════════════════════════
+
+		// Slabs
 		if (path.contains("slab"))
 			return "40_build_slabs";
+
+		// Stairs
 		if (path.contains("stairs"))
 			return "41_build_stairs";
+
+		// Walls, fences, gates
 		if (path.contains("fence") || path.contains("wall") || path.contains("gate"))
 			return "42_build_edges";
+
+		// Doors & trapdoors
 		if (path.contains("door") || path.contains("trapdoor"))
 			return "43_build_doors";
 
-		// Utility / tools / combat (rough)
-		if (path.contains("sword") || path.contains("axe") || path.contains("pickaxe") ||
-				path.contains("shovel") || path.contains("hoe") || path.contains("bow") ||
-				path.contains("crossbow") || path.contains("trident"))
-			return "60_tools_weapons";
+		// Glass & panes
+		if (path.contains("glass") || path.contains("pane"))
+			return "44_build_glass";
 
+		// Wool & carpet
+		if (path.contains("wool") || path.contains("carpet"))
+			return "45_build_wool";
+
+		// Concrete & terracotta
+		if (path.contains("concrete") || path.contains("terracotta"))
+			return "46_build_concrete";
+
+		// ═══════════════════════════════════════════════════════════════
+		// TOOLS, WEAPONS & ARMOR
+		// ═══════════════════════════════════════════════════════════════
+
+		// Weapons
+		if (path.contains("sword") || path.contains("bow") || path.contains("crossbow") ||
+				path.contains("trident") || path.equals("arrow") || path.equals("spectral_arrow") ||
+				path.contains("tipped_arrow"))
+			return "60_combat_weapons";
+
+		// Tools
+		if (path.contains("axe") || path.contains("pickaxe") || path.contains("shovel") ||
+				path.contains("hoe") || path.contains("shears") || path.equals("flint_and_steel") ||
+				path.equals("fishing_rod"))
+			return "61_tools";
+
+		// Armor
+		if (path.contains("helmet") || path.contains("chestplate") || path.contains("leggings") ||
+				path.contains("boots") || path.equals("shield") || path.equals("elytra"))
+			return "62_armor";
+
+		// ═══════════════════════════════════════════════════════════════
+		// POTIONS & BREWING
+		// ═══════════════════════════════════════════════════════════════
+
+		if (path.contains("potion") || path.equals("glass_bottle") || path.equals("dragon_breath") ||
+				path.equals("fermented_spider_eye") || path.equals("ghast_tear") || path.equals("magma_cream") ||
+				path.equals("blaze_rod") || path.equals("nether_wart") || path.equals("spider_eye") ||
+				path.equals("phantom_membrane"))
+			return "70_potions_brewing";
+
+		// ═══════════════════════════════════════════════════════════════
+		// MISCELLANEOUS COMMON ITEMS
+		// ═══════════════════════════════════════════════════════════════
+
+		// Storage & containers
+		if (path.contains("chest") || path.contains("barrel") || path.contains("shulker_box") ||
+				path.equals("bucket") || path.contains("bundle"))
+			return "80_misc_storage";
+
+		// Books & paper
+		if (path.contains("book") || path.equals("paper") || path.equals("writable_book") ||
+				path.equals("written_book") || path.equals("enchanted_book"))
+			return "81_misc_books";
+
+		// Mob drops
+		if (path.equals("string") || path.equals("leather") || path.equals("feather") ||
+				path.equals("bone") || path.equals("rotten_flesh") || path.equals("slime_ball") ||
+				path.equals("ender_pearl") || path.equals("blaze_rod"))
+			return "82_misc_mob_drops";
+
+		// Default category for anything not matched
 		return "90_misc";
 	}
 
 	private static void applyLayout(AbstractContainerMenu menu,
-			AbstractContainerScreenInvoker invoker,
-			List<Slot> slots,
-			List<ItemStack> desired) {
+									AbstractContainerScreenInvoker invoker,
+									List<Slot> slots,
+									List<ItemStack> desired) {
 
 		for (int i = 0; i < slots.size(); i++) {
 			ItemStack want = desired.get(i);
@@ -300,7 +634,7 @@ public class InventorySorter {
 	}
 
 	private static void stableCompact(List<Slot> slots, AbstractContainerScreenInvoker invoker,
-			AbstractContainerMenu menu) {
+									  AbstractContainerMenu menu) {
 		for (int i = 0; i < slots.size(); i++) {
 			if (!slots.get(i).getItem().isEmpty())
 				continue;
@@ -334,9 +668,9 @@ public class InventorySorter {
 	// ─────────────────────────────────────────────────────────────
 
 	private static boolean ensureCursorEmpty(AbstractContainerMenu menu,
-			AbstractContainerScreenInvoker invoker,
-			List<Slot> preferred,
-			List<Slot> alsoOk) {
+											 AbstractContainerScreenInvoker invoker,
+											 List<Slot> preferred,
+											 List<Slot> alsoOk) {
 		if (menu.getCarried().isEmpty())
 			return true;
 
@@ -399,8 +733,8 @@ public class InventorySorter {
 	// ─────────────────────────────────────────────────────────────
 
 	private static List<Slot> getSortableSlots(AbstractContainerMenu handler,
-			AbstractContainerScreen<?> screen,
-			List<Slot> playerMainSlots) {
+											   AbstractContainerScreen<?> screen,
+											   List<Slot> playerMainSlots) {
 		String screenName = screen.getClass().getSimpleName();
 		int totalSlots = handler.slots.size();
 

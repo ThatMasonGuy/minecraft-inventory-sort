@@ -8,7 +8,9 @@
     "ScreenAccessor",
     "AbstractContainerScreenAccessor",
     "AbstractContainerMenuInvoker",
-    "AbstractContainerScreenInvoker"
+    "AbstractContainerScreenInvoker",
+    "ContainerTrackingMixin",
+    "LocalPlayerMixin"
   ],
   "injectors": {
     "defaultRequire": 1
