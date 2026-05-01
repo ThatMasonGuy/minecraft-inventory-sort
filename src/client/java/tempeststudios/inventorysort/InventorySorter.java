@@ -7,6 +7,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.BundleItem;
 import net.minecraft.world.item.ItemStack;
 import tempeststudios.inventorysort.mixin.AbstractContainerScreenInvoker;
 
@@ -39,8 +40,7 @@ public class InventorySorter {
 		}
 
 		// Determine what to sort:
-		// - Container screens: sort only the container part (no player inventory, no
-		// hotbar)
+		// - Container screens: sort only the container part (no player inventory, no hotbar)
 		// - Player inventory: sort only MAIN inventory (leave hotbar alone)
 		List<Slot> slotsToSort = getSortableSlots(menu, screen, playerMain);
 		InventorySortClient.LOGGER.debug("Found {} slots to sort", slotsToSort.size());
@@ -65,8 +65,7 @@ public class InventorySorter {
 		// counts; restack handles fullness)
 		applyLayout(menu, invoker, slotsToSort, desired);
 
-		// E) Restack again now that like-items are adjacent (full stacks first
-		// naturally)
+		// E) Restack again now that like-items are adjacent (full stacks first naturally)
 		restack(menu, invoker, slotsToSort);
 
 		// F) Final compact
@@ -169,6 +168,9 @@ public class InventorySorter {
 			ItemStack target = targetSlot.getItem();
 			if (target.isEmpty()) continue;
 
+			// Skip bundles - don't want to accidentally fill them
+			if (isBundle(target)) continue;
+
 			int max = target.getMaxStackSize();
 			if (max <= 1) continue; // tools, etc.
 			if (target.getCount() >= max) continue;
@@ -176,6 +178,10 @@ public class InventorySorter {
 			for (Slot fromSlot : containerSlots) {
 				ItemStack from = fromSlot.getItem();
 				if (from.isEmpty()) continue;
+
+				// Skip bundles as source
+				if (isBundle(from)) continue;
+
 				if (!sameItemAndComponents(target, from)) continue;
 
 				// Pick up FROM -> click TARGET (merge) -> if remainder, return to FROM
@@ -272,6 +278,10 @@ public class InventorySorter {
 			if (target.isEmpty())
 				continue;
 
+			// Skip bundles - don't want to accidentally fill them
+			if (isBundle(target))
+				continue;
+
 			int max = target.getMaxStackSize();
 			if (max <= 1)
 				continue; // swords/tools/etc never touched
@@ -283,6 +293,11 @@ public class InventorySorter {
 				ItemStack from = fromSlot.getItem();
 				if (from.isEmpty())
 					continue;
+
+				// Skip bundles as source
+				if (isBundle(from))
+					continue;
+
 				if (!sameItemAndComponents(target, from))
 					continue;
 
@@ -325,8 +340,7 @@ public class InventorySorter {
 		return desired;
 	}
 
-	// 64-stack items first, then smaller. Within that, group by category. Then
-	// alphabetical.
+	// 64-stack items first, then smaller. Within that, group by category. Then alphabetical.
 	private static final Comparator<ItemStack> STACK_COMPARATOR = Comparator
 			.comparingInt((ItemStack s) -> -s.getMaxStackSize())
 			.thenComparing(InventorySorter::categoryKey)
@@ -340,6 +354,19 @@ public class InventorySorter {
 
 		String id = BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
 		String path = id.contains(":") ? id.substring(id.indexOf(':') + 1) : id;
+
+		// ═══════════════════════════════════════════════════════════════
+		// PORTABLE STORAGE - Items that can contain other items (top priority)
+		// ═══════════════════════════════════════════════════════════════
+
+		if (path.contains("bundle"))
+			return "00_storage_bundle";
+
+		if (path.equals("ender_chest"))
+			return "00_storage_ender_chest";
+
+		if (path.contains("shulker_box"))
+			return "00_storage_shulker";
 
 		// ═══════════════════════════════════════════════════════════════
 		// FOOD ITEMS - Group all food together with subcategories
@@ -381,23 +408,18 @@ public class InventorySorter {
 		// WOOD & WOOD PRODUCTS - Keep together
 		// ═══════════════════════════════════════════════════════════════
 
-		// Logs & wood blocks
 		if (path.endsWith("_log") || path.endsWith("_wood") || path.endsWith("_stem") || path.contains("hyphae"))
 			return "01_wood_logs";
 
-		// Planks
 		if (path.endsWith("_planks"))
 			return "02_wood_planks";
 
-		// Sticks and wood-related items
 		if (path.equals("stick") || path.equals("bowl") || path.equals("ladder") || path.equals("scaffolding"))
 			return "03_wood_items";
 
-		// Leaves
 		if (path.endsWith("_leaves"))
 			return "04_wood_leaves";
 
-		// Saplings
 		if (path.endsWith("_sapling"))
 			return "05_wood_saplings";
 
@@ -405,19 +427,16 @@ public class InventorySorter {
 		// STONE & TERRAIN BLOCKS
 		// ═══════════════════════════════════════════════════════════════
 
-		// Dirt & grass
 		if (path.contains("dirt") || path.contains("grass_block") || path.contains("podzol") ||
 				path.contains("mycelium") || path.contains("mud"))
 			return "10_terrain_dirt";
 
-		// Stone variants
 		if (path.contains("stone") || path.contains("cobblestone") || path.contains("deepslate") ||
 				path.contains("granite") || path.contains("diorite") || path.contains("andesite") ||
 				path.contains("tuff") || path.contains("calcite") || path.contains("basalt") ||
 				path.contains("blackstone") || path.contains("netherrack") || path.contains("end_stone"))
 			return "11_terrain_stone";
 
-		// Sand & gravel
 		if (path.contains("sand") || path.contains("gravel") || path.contains("clay"))
 			return "12_terrain_sand";
 
@@ -425,25 +444,20 @@ public class InventorySorter {
 		// ORES, INGOTS, GEMS & MINERALS
 		// ═══════════════════════════════════════════════════════════════
 
-		// Raw ores
 		if (path.endsWith("_ore") || path.contains("_ore_") || path.startsWith("raw_"))
 			return "20_minerals_ores";
 
-		// Gems & precious items
 		if (path.equals("diamond") || path.equals("emerald") || path.equals("amethyst_shard") ||
 				path.equals("lapis_lazuli") || path.equals("prismarine_shard") || path.equals("prismarine_crystals") ||
 				path.equals("quartz") || path.equals("echo_shard"))
 			return "21_minerals_gems";
 
-		// Ingots
 		if (path.endsWith("_ingot"))
 			return "22_minerals_ingots";
 
-		// Nuggets
 		if (path.endsWith("_nugget"))
 			return "23_minerals_nuggets";
 
-		// Dusts & powders
 		if (path.equals("redstone") || path.equals("glowstone_dust") || path.equals("gunpowder") ||
 				path.equals("blaze_powder") || path.equals("bone_meal"))
 			return "24_minerals_dusts";
@@ -463,31 +477,24 @@ public class InventorySorter {
 		// BUILDING BLOCKS & DECORATIVE
 		// ═══════════════════════════════════════════════════════════════
 
-		// Slabs
 		if (path.contains("slab"))
 			return "40_build_slabs";
 
-		// Stairs
 		if (path.contains("stairs"))
 			return "41_build_stairs";
 
-		// Walls, fences, gates
 		if (path.contains("fence") || path.contains("wall") || path.contains("gate"))
 			return "42_build_edges";
 
-		// Doors & trapdoors
 		if (path.contains("door") || path.contains("trapdoor"))
 			return "43_build_doors";
 
-		// Glass & panes
 		if (path.contains("glass") || path.contains("pane"))
 			return "44_build_glass";
 
-		// Wool & carpet
 		if (path.contains("wool") || path.contains("carpet"))
 			return "45_build_wool";
 
-		// Concrete & terracotta
 		if (path.contains("concrete") || path.contains("terracotta"))
 			return "46_build_concrete";
 
@@ -495,19 +502,16 @@ public class InventorySorter {
 		// TOOLS, WEAPONS & ARMOR
 		// ═══════════════════════════════════════════════════════════════
 
-		// Weapons
 		if (path.contains("sword") || path.contains("bow") || path.contains("crossbow") ||
 				path.contains("trident") || path.equals("arrow") || path.equals("spectral_arrow") ||
 				path.contains("tipped_arrow"))
 			return "60_combat_weapons";
 
-		// Tools
 		if (path.contains("axe") || path.contains("pickaxe") || path.contains("shovel") ||
 				path.contains("hoe") || path.contains("shears") || path.equals("flint_and_steel") ||
 				path.equals("fishing_rod"))
 			return "61_tools";
 
-		// Armor
 		if (path.contains("helmet") || path.contains("chestplate") || path.contains("leggings") ||
 				path.contains("boots") || path.equals("shield") || path.equals("elytra"))
 			return "62_armor";
@@ -526,23 +530,19 @@ public class InventorySorter {
 		// MISCELLANEOUS COMMON ITEMS
 		// ═══════════════════════════════════════════════════════════════
 
-		// Storage & containers
-		if (path.contains("chest") || path.contains("barrel") || path.contains("shulker_box") ||
-				path.equals("bucket") || path.contains("bundle"))
+		// Storage & containers (non-portable - chests, barrels, buckets)
+		if (path.contains("chest") || path.contains("barrel") || path.equals("bucket"))
 			return "80_misc_storage";
 
-		// Books & paper
 		if (path.contains("book") || path.equals("paper") || path.equals("writable_book") ||
 				path.equals("written_book") || path.equals("enchanted_book"))
 			return "81_misc_books";
 
-		// Mob drops
 		if (path.equals("string") || path.equals("leather") || path.equals("feather") ||
 				path.equals("bone") || path.equals("rotten_flesh") || path.equals("slime_ball") ||
 				path.equals("ender_pearl") || path.equals("blaze_rod"))
 			return "82_misc_mob_drops";
 
-		// Default category for anything not matched
 		return "90_misc";
 	}
 
@@ -555,6 +555,10 @@ public class InventorySorter {
 			ItemStack want = desired.get(i);
 			ItemStack have = slots.get(i).getItem();
 
+			// Skip if this slot has a bundle - don't move bundles around via normal clicks
+			if (isBundle(have))
+				continue;
+
 			// "Correct enough" if same item+components, ignore counts.
 			if (sameTypeIgnoringCount(have, want))
 				continue;
@@ -563,10 +567,14 @@ public class InventorySorter {
 			if (j == -1)
 				continue;
 
+			// Skip if the source slot is a bundle
+			if (isBundle(slots.get(j).getItem()))
+				continue;
+
 			swap(invoker, slots.get(i), slots.get(j));
 
 			if (!menu.getCarried().isEmpty()) {
-				int empty = findFirstEmpty(slots);
+				int empty = findFirstEmptyNonBundle(slots);
 				if (empty != -1)
 					click(invoker, slots.get(empty));
 			}
@@ -602,6 +610,10 @@ public class InventorySorter {
 			if (target.isEmpty())
 				continue;
 
+			// Skip bundles entirely - we don't want to accidentally insert items into them
+			if (isBundle(target))
+				continue;
+
 			int max = target.getMaxStackSize();
 			if (max <= 1)
 				continue;
@@ -618,6 +630,10 @@ public class InventorySorter {
 				Slot fromSlot = slots.get(j);
 				ItemStack from = fromSlot.getItem();
 				if (from.isEmpty())
+					continue;
+
+				// Skip bundles as source too
+				if (isBundle(from))
 					continue;
 
 				if (!sameItemAndComponents(currentTarget, from))
@@ -640,10 +656,14 @@ public class InventorySorter {
 				continue;
 
 			int j = i + 1;
-			while (j < slots.size() && slots.get(j).getItem().isEmpty())
+			while (j < slots.size() && (slots.get(j).getItem().isEmpty() || isBundle(slots.get(j).getItem())))
 				j++;
 			if (j >= slots.size())
 				return;
+
+			// Double-check we're not swapping with a bundle
+			if (isBundle(slots.get(j).getItem()))
+				continue;
 
 			swap(invoker, slots.get(i), slots.get(j));
 
@@ -663,6 +683,14 @@ public class InventorySorter {
 		return -1;
 	}
 
+	private static int findFirstEmptyNonBundle(List<Slot> slots) {
+		for (int i = 0; i < slots.size(); i++) {
+			if (slots.get(i).getItem().isEmpty())
+				return i;
+		}
+		return -1;
+	}
+
 	// ─────────────────────────────────────────────────────────────
 	// Cursor safety + click primitives
 	// ─────────────────────────────────────────────────────────────
@@ -674,10 +702,16 @@ public class InventorySorter {
 		if (menu.getCarried().isEmpty())
 			return true;
 
+		// Check if cursor is holding a bundle - if so, be careful where we place it
+		boolean cursorHasBundle = isBundle(menu.getCarried());
+
 		for (Slot s : preferred) {
 			if (s.getItem().isEmpty()) {
 				click(invoker, s);
 				return menu.getCarried().isEmpty();
+			}
+			if (!cursorHasBundle && isBundle(s.getItem())) {
+				continue;
 			}
 		}
 
@@ -685,6 +719,9 @@ public class InventorySorter {
 			if (s.getItem().isEmpty()) {
 				click(invoker, s);
 				return menu.getCarried().isEmpty();
+			}
+			if (!cursorHasBundle && isBundle(s.getItem())) {
+				continue;
 			}
 		}
 
@@ -709,15 +746,13 @@ public class InventorySorter {
 	}
 
 	// ─────────────────────────────────────────────────────────────
-	// Equality (1.21+ components)
+	// Equality (1.21+ components) - Use vanilla stackability check
 	// ─────────────────────────────────────────────────────────────
 
 	private static boolean sameItemAndComponents(ItemStack a, ItemStack b) {
 		if (a.isEmpty() || b.isEmpty())
 			return false;
-		if (a.getItem() != b.getItem())
-			return false;
-		return Objects.equals(a.getComponents(), b.getComponents());
+		return ItemStack.isSameItemSameComponents(a, b);
 	}
 
 	private static boolean sameTypeIgnoringCount(ItemStack a, ItemStack b) {
@@ -726,6 +761,15 @@ public class InventorySorter {
 		if (a.isEmpty() || b.isEmpty())
 			return false;
 		return sameItemAndComponents(a, b);
+	}
+
+	// ─────────────────────────────────────────────────────────────
+	// Bundle detection - Skip bundles during sorting to avoid auto-insertion
+	// ─────────────────────────────────────────────────────────────
+
+	private static boolean isBundle(ItemStack stack) {
+		if (stack.isEmpty()) return false;
+		return stack.getItem() instanceof BundleItem;
 	}
 
 	// ─────────────────────────────────────────────────────────────
@@ -740,13 +784,8 @@ public class InventorySorter {
 
 		InventorySortClient.LOGGER.debug("Screen: {}, Total slots: {}", screenName, totalSlots);
 
-		// Check if this is a container screen (has more slots than just player
-		// inventory)
-		// Player inventory typically has 45 slots (36 main + 9 hotbar = 45 total, or 46
-		// with offhand)
 		boolean isContainer = totalSlots > 46;
 
-		// Also check by screen name patterns
 		boolean isContainerByName = screenName.contains("Container") ||
 				screenName.contains("Chest") ||
 				screenName.contains("Shulker") ||
@@ -758,13 +797,9 @@ public class InventorySorter {
 				screenName.contains("Brewing") ||
 				screenName.contains("Crafting");
 
-		// Container screens: sort only the container portion, not player inv/hotbar
 		if (isContainer || isContainerByName) {
-			// Container slots are typically at the beginning
-			// Player slots (36 total) are at the end
 			int containerSize = totalSlots - 36;
 
-			// Safety check
 			if (containerSize <= 0) {
 				InventorySortClient.LOGGER.warn("Container size is {}, falling back to player main", containerSize);
 				return new ArrayList<>(playerMainSlots);
@@ -774,7 +809,6 @@ public class InventorySorter {
 			return new ArrayList<>(handler.slots.subList(0, containerSize));
 		}
 
-		// Player inventory (and other non-container screens): sort main inventory only
 		InventorySortClient.LOGGER.debug("Detected player inventory, sorting {} main slots", playerMainSlots.size());
 		return new ArrayList<>(playerMainSlots);
 	}
@@ -792,11 +826,10 @@ public class InventorySorter {
 		List<SlotWithInvIndex> main = new ArrayList<>();
 
 		for (Slot slot : menu.slots) {
-			// Slot.container is the backing inventory/container for that slot.
 			if (slot.container != inv)
 				continue;
 
-			int idx = slot.getContainerSlot(); // index inside the backing Inventory
+			int idx = slot.getContainerSlot();
 			if (idx >= 0 && idx <= 8) {
 				hotbar.add(new SlotWithInvIndex(slot, idx));
 			} else if (idx >= 9 && idx <= 35) {
