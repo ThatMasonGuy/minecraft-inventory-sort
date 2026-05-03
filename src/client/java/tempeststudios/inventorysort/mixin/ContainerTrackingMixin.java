@@ -86,36 +86,17 @@ public abstract class ContainerTrackingMixin {
     }
 
     private void trackPlayerInventory(ItemLocationTracker tracker, Minecraft client) {
-        // Get player position for tracking
-        BlockPos playerPos = null;
-        ResourceKey<Level> dimension = null;
-
-        if (client.player != null && client.level != null) {
-            playerPos = client.player.blockPosition();
-            dimension = client.level.dimension();
-        }
-
         // Only track main inventory and hotbar (slots 0-35 in player inventory)
         int itemsTracked = 0;
         for (Slot slot : menu.slots) {
             ItemStack stack = slot.getItem();
             if (!stack.isEmpty() && slot.getContainerSlot() < 36) {
-                if (playerPos != null && dimension != null) {
-                    // Track with player position
-                    tracker.trackItem(stack, playerPos, dimension, "Player Inventory");
-                } else {
-                    // Fallback to position-less tracking
-                    tracker.trackItemInInventory(stack);
-                }
+                tracker.trackItemInInventory(stack);
                 itemsTracked++;
             }
         }
 
-        if (playerPos != null) {
-            InventorySortClient.LOGGER.info("Tracked {} items from Player Inventory at {}", itemsTracked, playerPos);
-        } else {
-            InventorySortClient.LOGGER.info("Tracked {} items from Player Inventory", itemsTracked);
-        }
+        InventorySortClient.LOGGER.info("Tracked {} items from Player Inventory", itemsTracked);
     }
 
     private void trackContainer(ItemLocationTracker tracker, Minecraft client, String screenClassName) {

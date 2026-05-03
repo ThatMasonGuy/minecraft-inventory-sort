@@ -2,6 +2,7 @@ package tempeststudios.inventorysort;
 
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,6 +29,8 @@ public class InventorySortClient implements ClientModInitializer {
 			ModCommands.register(dispatcher, registryAccess);
 			LOGGER.info("Registered mod commands");
 		});
+
+		ClientTickEvents.END_CLIENT_TICK.register(InventoryHistorySampler::sample);
 
 		// Register shutdown hook to save tracking data
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
