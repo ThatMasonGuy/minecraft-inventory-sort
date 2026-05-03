@@ -16,13 +16,10 @@ public final class ServerWorldProfileHud {
 
         String serverKey = TrackingNamespace.currentServerKey(client);
         String active = ServerWorldProfileManager.getInstance().getActiveProfile(serverKey);
-        String text = "Inventory Search needs world confirmation! RIGHT ENTER to use \""
-                + active + "\" or BACKSPACE to change";
+        String text = "InvSearch paused: RIGHT ENTER = " + active + " | BACKSPACE = change";
         int x = 8;
-        int y = client.getWindow().getGuiScaledHeight() - 35;
-        int textWidth = client.font.width(text);
+        int y = client.getWindow().getGuiScaledHeight() - 82;
 
-        graphics.fill(x - 4, y - 4, x + textWidth + 4, y + 14, 0x88000000);
         graphics.drawString(client.font, text, x + 1, y + 1, 0xFF000000, false);
         graphics.drawString(client.font, text, x, y, 0xFFFFFFFF, false);
 
