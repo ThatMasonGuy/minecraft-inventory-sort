@@ -31,6 +31,10 @@ public final class InventoryHistorySampler {
         ItemLocationTracker.getInstance().replaceInventorySnapshot(totals.values());
     }
 
+    public static void reset() {
+        lastSignature = "";
+    }
+
     private static Map<String, ItemStack> collectInventoryTotals(Inventory inventory, ItemStack carried) {
         Map<String, ItemStack> totals = new HashMap<>();
         int slots = Math.min(36, inventory.getContainerSize());

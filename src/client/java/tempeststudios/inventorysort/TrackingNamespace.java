@@ -32,11 +32,31 @@ public final class TrackingNamespace {
 
         ServerData server = client.getCurrentServer();
         if (server != null) {
-            String serverId = server.ip != null && !server.ip.isBlank() ? server.ip : server.name;
-            return "server:" + sanitize(serverId);
+            String serverKey = currentServerKey(client);
+            String profile = ServerWorldProfileManager.getInstance().getActiveProfile(serverKey);
+            if (profile == null || profile.equals("default")) {
+                return "server:" + serverKey;
+            }
+            return "server:" + serverKey + ":world:" + sanitize(profile);
         }
 
         return UNKNOWN;
+    }
+
+    public static String currentServerKey(Minecraft client) {
+        if (client == null) {
+            return null;
+        }
+        ServerData server = client.getCurrentServer();
+        if (server == null) {
+            return null;
+        }
+        String serverId = server.ip != null && !server.ip.isBlank() ? server.ip : server.name;
+        return sanitize(serverId);
+    }
+
+    public static boolean isMultiplayerServer(Minecraft client) {
+        return currentServerKey(client) != null;
     }
 
     public static String fileNameSafe(String namespace) {

@@ -128,6 +128,12 @@ public class SearchModalScreen extends Screen {
                 .bounds(closeX, closeY, 18, 18)
                 .build());
 
+        if (TrackingNamespace.isMultiplayerServer(mc)) {
+            this.addRenderableWidget(Button.builder(Component.literal("World"), btn -> mc.setScreen(new ServerWorldProfileScreen(this)))
+                    .bounds(closeX - 56, closeY, 52, 18)
+                    .build());
+        }
+
         // Scroll buttons in their own column (never overlap rows now) ✅
         scrollUpBtn = Button.builder(Component.literal("▲"), btn -> scrollBy(-1))
                 .bounds(scrollColX, listTopY, 18, 18)

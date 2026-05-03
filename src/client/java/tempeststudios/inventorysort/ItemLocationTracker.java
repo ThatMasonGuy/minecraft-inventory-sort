@@ -320,6 +320,10 @@ public class ItemLocationTracker {
         return ensureNamespaceLoaded(TrackingNamespace.current(Minecraft.getInstance()));
     }
 
+    public void reloadForCurrentNamespace() {
+        ensureNamespaceLoaded(TrackingNamespace.current(Minecraft.getInstance()));
+    }
+
     private String ensureNamespaceLoaded(String namespace) {
         if (namespace == null || namespace.isBlank()) {
             namespace = "unknown";
