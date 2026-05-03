@@ -103,7 +103,7 @@ public final class ServerWorldProfileManager {
         }
 
         long window = client.getWindow().handle();
-        boolean confirmKeyDown = GLFW.glfwGetKey(window, GLFW.GLFW_KEY_KP_ENTER) == GLFW.GLFW_PRESS;
+        boolean confirmKeyDown = GLFW.glfwGetKey(window, GLFW.GLFW_KEY_ENTER) == GLFW.GLFW_PRESS;
         boolean menuKeyDown = GLFW.glfwGetKey(window, GLFW.GLFW_KEY_BACKSPACE) == GLFW.GLFW_PRESS;
 
         if (confirmKeyDown && !confirmKeyWasDown) {
