@@ -45,10 +45,42 @@ public class InventorySorter {
 		List<Slot> slotsToSort = getSortableSlots(menu, screen, playerMain);
 		InventorySortClient.LOGGER.debug("Found {} slots to sort", slotsToSort.size());
 
+		sortSlots(menu, invoker, slotsToSort, playerMain);
+
+		InventorySortClient.LOGGER.info("Sorting complete!");
+	}
+
+	public static void sortPlayerInventory(AbstractContainerScreen<?> screen, Player player) {
+		InventorySortClient.LOGGER.info("Player inventory sort button clicked! Screen: {}", screen.getClass().getSimpleName());
+
+		AbstractContainerMenu menu = screen.getMenu();
+		AbstractContainerScreenInvoker invoker = (AbstractContainerScreenInvoker) screen;
+
+		PlayerSlotRegions regions = getPlayerSlotRegions(menu, player);
+		List<Slot> playerHotbar = regions.hotbar;
+		List<Slot> playerMain = regions.main;
+
+		if (!playerHotbar.isEmpty() && !playerMain.isEmpty()) {
+			if (!ensureCursorEmpty(menu, invoker, playerMain, playerHotbar))
+				return;
+			topUpHotbar(menu, invoker, playerHotbar, playerMain);
+			if (!ensureCursorEmpty(menu, invoker, playerMain, playerHotbar))
+				return;
+		}
+
+		sortSlots(menu, invoker, new ArrayList<>(playerMain), playerHotbar);
+
+		InventorySortClient.LOGGER.info("Player inventory sorting complete!");
+	}
+
+	private static void sortSlots(AbstractContainerMenu menu,
+								  AbstractContainerScreenInvoker invoker,
+								  List<Slot> slotsToSort,
+								  List<Slot> fallbackSlots) {
 		if (slotsToSort.isEmpty())
 			return;
 
-		if (!ensureCursorEmpty(menu, invoker, slotsToSort, playerMain))
+		if (!ensureCursorEmpty(menu, invoker, slotsToSort, fallbackSlots))
 			return;
 
 		// A) Compact empties to the end (stable)
@@ -72,9 +104,7 @@ public class InventorySorter {
 		stableCompact(slotsToSort, invoker, menu);
 
 		// Final safety
-		ensureCursorEmpty(menu, invoker, slotsToSort, playerMain);
-
-		InventorySortClient.LOGGER.info("Sorting complete!");
+		ensureCursorEmpty(menu, invoker, slotsToSort, fallbackSlots);
 	}
 
 	// ─────────────────────────────────────────────────────────────
@@ -121,8 +151,8 @@ public class InventorySorter {
 	}
 
 	/**
-	 * ▼ Down button
-	 * - No shift: top up existing stacks in player inventory using container contents.
+	 * Down button
+	 * - No shift: move container items only if the player already has that item.
 	 * - Shift: move ALL items from container -> player inventory (as much as fits).
 	 */
 	public static void transferDown(AbstractContainerScreen<?> screen, Player player, boolean shiftMoveAllFromContainer) {
@@ -154,8 +184,14 @@ public class InventorySorter {
 			return;
 		}
 
-		// ▼ : Fill existing stacks in inventory from container
-		fillPlayerStacksFromContainer(menu, invoker, playerSlots, containerSlots);
+		Set<StackKey> playerTypes = buildTypeSet(playerSlots);
+		for (Slot from : containerSlots) {
+			ItemStack stack = from.getItem();
+			if (stack.isEmpty()) continue;
+			if (!playerTypes.contains(StackKey.of(stack))) continue;
+
+			quickMove(invoker, from);
+		}
 
 		ensureCursorEmpty(menu, invoker, containerSlots, playerSlots);
 	}

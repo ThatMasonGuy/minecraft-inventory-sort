@@ -24,6 +24,10 @@ bin/
 .classpath
 .project
 
+# local assistant settings
+
+.claude/
+
 # macos
 
 *.DS_Store

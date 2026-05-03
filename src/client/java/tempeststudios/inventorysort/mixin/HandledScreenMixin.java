@@ -1,48 +1,44 @@
 package tempeststudios.inventorysort.mixin;
 
-import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.gui.screens.inventory.InventoryScreen;
-import net.minecraft.client.gui.screens.recipebook.RecipeBookComponent;
 import net.minecraft.network.chat.Component;
-import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import tempeststudios.inventorysort.InventorySortIconButton;
 import tempeststudios.inventorysort.InventorySorter;
+import tempeststudios.inventorysort.RecipeBookAwareButtonScreen;
 import tempeststudios.inventorysort.SearchModalScreen;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
 @Mixin(AbstractContainerScreen.class)
-public abstract class HandledScreenMixin {
+public abstract class HandledScreenMixin implements RecipeBookAwareButtonScreen {
+
+	@Unique private static final int inventorySort$BUTTON_SIZE = 18;
+	@Unique private static final int inventorySort$BUTTON_GAP = 2;
+	@Unique private static final int inventorySort$PLAYER_SORT = 0;
+	@Unique private static final int inventorySort$PLAYER_MATCHING_TO_CONTAINER = 1;
+	@Unique private static final int inventorySort$PLAYER_ALL_TO_CONTAINER = 2;
+	@Unique private static final int inventorySort$CONTAINER_SORT = 3;
+	@Unique private static final int inventorySort$CONTAINER_MATCHING_TO_PLAYER = 4;
+	@Unique private static final int inventorySort$CONTAINER_ALL_TO_PLAYER = 5;
+	@Unique private static final int inventorySort$SEARCH = 6;
 
 	@Unique private final List<Button> inventorySort$trackedButtons = new ArrayList<>();
+	@Unique private final List<Integer> inventorySort$trackedButtonRoles = new ArrayList<>();
 	@Unique private boolean inventorySort$isContainer = false;
 	@Unique private int inventorySort$containerRows = 0;
 
-	// Cached via class-level statics so reflection only runs once per screen type
-	@Unique private static Field inventorySort$recipeBookField = null;
-	@Unique private static boolean inventorySort$recipeBookFieldSearched = false;
-
-	private static boolean isShiftDown(Minecraft client) {
-		return InputConstants.isKeyDown(client.getWindow(), GLFW.GLFW_KEY_LEFT_SHIFT)
-				|| InputConstants.isKeyDown(client.getWindow(), GLFW.GLFW_KEY_RIGHT_SHIFT);
-	}
-
 	/**
-	 * Tries to place the button column just outside the right edge of the
-	 * inventory panel. Falls back to the left edge if there is no room on the
-	 * right, avoiding the old clampX() behaviour that pushed buttons back
-	 * inside the panel and onto slots.
+	 * Places buttons just outside the right edge of the GUI, falling back to the
+	 * left edge when the screen is too narrow.
 	 */
 	@Unique
 	private static int calcButtonX(int leftPos, int imageWidth, int screenWidth, int totalButtonWidth) {
@@ -60,13 +56,13 @@ public abstract class HandledScreenMixin {
 	@Inject(method = "init", at = @At("TAIL"))
 	private void onInit(CallbackInfo ci) {
 		AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>) (Object) this;
-		AbstractContainerScreenAccessor accessor = (AbstractContainerScreenAccessor) this;
 		ScreenAccessor screenAccessor = (ScreenAccessor) this;
 
 		Minecraft client = Minecraft.getInstance();
 		if (client == null || client.player == null) return;
 
 		inventorySort$trackedButtons.clear();
+		inventorySort$trackedButtonRoles.clear();
 
 		int totalSlots = screen.getMenu().slots.size();
 		inventorySort$isContainer = totalSlots > 46;
@@ -78,161 +74,141 @@ public abstract class HandledScreenMixin {
 			inventorySort$containerRows = 0;
 		}
 
-		int[] pos = inventorySort$calculatePositions(screen, accessor);
-
-		Button sortButton = Button.builder(
-						Component.literal("≡"),
-						btn -> {
-							InventorySorter.sortInventory(screen, client.player);
-							client.execute(() -> { btn.setFocused(false); screen.setFocused(null); });
-						})
-				.bounds(pos[0], pos[1], 18, 18)
-				.tooltip(Tooltip.create(Component.literal("Sort items")))
-				.build();
-		screenAccessor.invokeAddRenderableWidget(sortButton);
-		inventorySort$trackedButtons.add(sortButton);
+		inventorySort$addButton(screen, screenAccessor, inventorySort$PLAYER_SORT, InventorySortIconButton.SORT,
+				"Sort inventory",
+				btn -> {
+					InventorySorter.sortPlayerInventory(screen, client.player);
+					inventorySort$clearFocus(client, screen, btn);
+				});
 
 		if (inventorySort$isContainer) {
-			Button upButton = Button.builder(
-							Component.literal("▲"),
-							btn -> {
-								InventorySorter.transferUp(screen, client.player, isShiftDown(client));
-								client.execute(() -> { btn.setFocused(false); screen.setFocused(null); });
-							})
-					.bounds(pos[2], pos[3], 18, 18)
-					.tooltip(Tooltip.create(Component.literal("Deposit matching (Shift: deposit all, no hotbar)")))
-					.build();
-
-			Button downButton = Button.builder(
-							Component.literal("▼"),
-							btn -> {
-								InventorySorter.transferDown(screen, client.player, isShiftDown(client));
-								client.execute(() -> { btn.setFocused(false); screen.setFocused(null); });
-							})
-					.bounds(pos[4], pos[5], 18, 18)
-					.tooltip(Tooltip.create(Component.literal("Refill stacks (Shift: take all)")))
-					.build();
-
-			screenAccessor.invokeAddRenderableWidget(upButton);
-			screenAccessor.invokeAddRenderableWidget(downButton);
-			inventorySort$trackedButtons.add(upButton);
-			inventorySort$trackedButtons.add(downButton);
-
+			inventorySort$addButton(screen, screenAccessor, inventorySort$PLAYER_MATCHING_TO_CONTAINER, InventorySortIconButton.MATCHING,
+					"Move matching items to container",
+					btn -> {
+						InventorySorter.transferUp(screen, client.player, false);
+						inventorySort$clearFocus(client, screen, btn);
+					});
+			inventorySort$addButton(screen, screenAccessor, inventorySort$PLAYER_ALL_TO_CONTAINER, InventorySortIconButton.ALL,
+					"Move all inventory items to container (no hotbar)",
+					btn -> {
+						InventorySorter.transferUp(screen, client.player, true);
+						inventorySort$clearFocus(client, screen, btn);
+					});
+			inventorySort$addButton(screen, screenAccessor, inventorySort$CONTAINER_SORT, InventorySortIconButton.SORT,
+					"Sort container",
+					btn -> {
+						InventorySorter.sortInventory(screen, client.player);
+						inventorySort$clearFocus(client, screen, btn);
+					});
+			inventorySort$addButton(screen, screenAccessor, inventorySort$CONTAINER_MATCHING_TO_PLAYER, InventorySortIconButton.MATCHING,
+					"Move matching items to inventory",
+					btn -> {
+						InventorySorter.transferDown(screen, client.player, false);
+						inventorySort$clearFocus(client, screen, btn);
+					});
+			inventorySort$addButton(screen, screenAccessor, inventorySort$CONTAINER_ALL_TO_PLAYER, InventorySortIconButton.ALL,
+					"Move all container items to inventory",
+					btn -> {
+						InventorySorter.transferDown(screen, client.player, true);
+						inventorySort$clearFocus(client, screen, btn);
+					});
 		} else {
-			Button searchButton = Button.builder(
-							Component.literal("🔍"),
-							btn -> {
-								client.setScreen(new SearchModalScreen(screen));
-								client.execute(() -> { btn.setFocused(false); screen.setFocused(null); });
-							})
-					.bounds(pos[2], pos[3], 18, 18)
-					.tooltip(Tooltip.create(Component.literal("Search inventory")))
-					.build();
-			screenAccessor.invokeAddRenderableWidget(searchButton);
-			inventorySort$trackedButtons.add(searchButton);
+			inventorySort$addButton(screen, screenAccessor, inventorySort$SEARCH, InventorySortIconButton.SEARCH,
+					"Search inventory",
+					btn -> {
+						client.setScreen(new SearchModalScreen(screen));
+						inventorySort$clearFocus(client, screen, btn);
+					});
 		}
+
+	}
+
+	@Unique
+	private void inventorySort$addButton(AbstractContainerScreen<?> screen,
+										 ScreenAccessor screenAccessor,
+										 int role,
+										 int icon,
+										 String tooltip,
+										 Button.OnPress onPress) {
+		int[] pos = inventorySort$positionFor(role, screen, (AbstractContainerScreenAccessor) this);
+		Button button = new InventorySortIconButton(pos[0], pos[1], icon, Component.literal(tooltip), onPress);
+		screenAccessor.invokeAddRenderableWidget(button);
+		inventorySort$trackedButtons.add(button);
+		inventorySort$trackedButtonRoles.add(role);
+	}
+
+	@Unique
+	private static void inventorySort$clearFocus(Minecraft client, AbstractContainerScreen<?> screen, Button btn) {
+		client.execute(() -> {
+			btn.setFocused(false);
+			screen.setFocused(null);
+		});
 	}
 
 	/**
-	 * Reposition buttons every frame so they stay anchored to the inventory
-	 * panel even when leftPos/topPos change without a full init() cycle
-	 * (e.g. recipe-book toggle).
+	 * Reposition buttons every frame so they stay anchored to vanilla leftPos.
+	 * Recipe-book toggles update leftPos directly in AbstractRecipeBookScreen.
 	 */
 	@Inject(method = "render", at = @At("HEAD"))
 	private void onRender(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
+		inventorySort$updateButtonPositions();
+	}
+
+	@Override
+	public void inventorysort$updateButtonPositionsFromRecipeBookRender() {
+		inventorySort$updateButtonPositions();
+	}
+
+	@Unique
+	private void inventorySort$updateButtonPositions() {
 		if (inventorySort$trackedButtons.isEmpty()) return;
 
 		AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>) (Object) this;
 		AbstractContainerScreenAccessor accessor = (AbstractContainerScreenAccessor) this;
 
-		int[] pos = inventorySort$calculatePositions(screen, accessor);
+		for (int i = 0; i < inventorySort$trackedButtons.size(); i++) {
+			Button button = inventorySort$trackedButtons.get(i);
+			int[] pos = inventorySort$positionFor(inventorySort$trackedButtonRoles.get(i), screen, accessor);
+			button.setX(pos[0]);
+			button.setY(pos[1]);
+		}
+	}
 
-		inventorySort$trackedButtons.get(0).setX(pos[0]);
-		inventorySort$trackedButtons.get(0).setY(pos[1]);
-
-		if (inventorySort$isContainer) {
-			if (inventorySort$trackedButtons.size() > 1) {
-				inventorySort$trackedButtons.get(1).setX(pos[2]);
-				inventorySort$trackedButtons.get(1).setY(pos[3]);
-			}
-			if (inventorySort$trackedButtons.size() > 2) {
-				inventorySort$trackedButtons.get(2).setX(pos[4]);
-				inventorySort$trackedButtons.get(2).setY(pos[5]);
-			}
+	@Unique
+	private int[] inventorySort$positionFor(int role, AbstractContainerScreen<?> screen, AbstractContainerScreenAccessor accessor) {
+		int x = calcButtonX(accessor.getLeftPos(), accessor.getImageWidth(), screen.width, inventorySort$BUTTON_SIZE);
+		int y;
+		if (role == inventorySort$CONTAINER_SORT) {
+			y = inventorySort$containerGroupY(accessor);
+		} else if (role == inventorySort$CONTAINER_MATCHING_TO_PLAYER) {
+			y = inventorySort$containerGroupY(accessor) + inventorySort$rowOffset(1);
+		} else if (role == inventorySort$CONTAINER_ALL_TO_PLAYER) {
+			y = inventorySort$containerGroupY(accessor) + inventorySort$rowOffset(2);
+		} else if (role == inventorySort$PLAYER_MATCHING_TO_CONTAINER || role == inventorySort$SEARCH) {
+			y = inventorySort$playerGroupY(accessor) + inventorySort$rowOffset(1);
+		} else if (role == inventorySort$PLAYER_ALL_TO_CONTAINER) {
+			y = inventorySort$playerGroupY(accessor) + inventorySort$rowOffset(2);
 		} else {
-			if (inventorySort$trackedButtons.size() > 1) {
-				inventorySort$trackedButtons.get(1).setX(pos[2]);
-				inventorySort$trackedButtons.get(1).setY(pos[3]);
-			}
+			y = inventorySort$playerGroupY(accessor);
 		}
-	}
-
-	/**
-	 * Returns [sortX, sortY, btn1X, btn1Y, btn2X, btn2Y].
-	 * btn2X/btn2Y are 0 for non-container screens.
-	 */
-	@Unique
-	private int[] inventorySort$calculatePositions(AbstractContainerScreen<?> screen, AbstractContainerScreenAccessor accessor) {
-		int effectiveLeftPos = inventorySort$getEffectiveLeftPos(screen, accessor);
-		int topPos = accessor.getTopPos();
-
-		int baseY = inventorySort$isContainer
-				? topPos + inventorySort$containerRows * 18 - 1
-				: topPos + 84 + 36 - 1;
-
-		int sortY   = baseY - 18;
-		int bottomY = baseY;
-
-		if (inventorySort$isContainer) {
-			// ▲▼ sit side by side (36px wide); ≡ aligns with the left of that pair
-			int buttonsX = calcButtonX(effectiveLeftPos, accessor.getImageWidth(), screen.width, 36);
-			return new int[]{buttonsX, sortY, buttonsX, bottomY, buttonsX + 18, bottomY};
-		} else {
-			// Single column (18px wide)
-			int buttonsX = calcButtonX(effectiveLeftPos, accessor.getImageWidth(), screen.width, 18);
-			return new int[]{buttonsX, sortY, buttonsX, bottomY, 0, 0};
-		}
-	}
-
-	/**
-	 * Returns the effective leftPos of the inventory panel, accounting for the
-	 * recipe book shifting it right in InventoryScreen.
-	 */
-	@Unique
-	private int inventorySort$getEffectiveLeftPos(AbstractContainerScreen<?> screen, AbstractContainerScreenAccessor accessor) {
-		if (screen instanceof InventoryScreen && inventorySort$isRecipeBookVisible(screen)) {
-			// Vanilla shifts the panel 77px right when the recipe book is open
-			return (screen.width - accessor.getImageWidth()) / 2 + 77;
-		}
-		return accessor.getLeftPos();
+		return new int[]{x, y};
 	}
 
 	@Unique
-	private boolean inventorySort$isRecipeBookVisible(AbstractContainerScreen<?> screen) {
-		if (!inventorySort$recipeBookFieldSearched) {
-			inventorySort$recipeBookFieldSearched = true;
-			inventorySort$recipeBookField = inventorySort$findRecipeBookField(screen.getClass());
-		}
-		if (inventorySort$recipeBookField != null) {
-			try {
-				Object rb = inventorySort$recipeBookField.get(screen);
-				if (rb instanceof RecipeBookComponent rbc) return rbc.isVisible();
-			} catch (Exception ignored) {}
-		}
-		return false;
+	private int inventorySort$containerGroupY(AbstractContainerScreenAccessor accessor) {
+		int groupHeight = inventorySort$rowOffset(2) + inventorySort$BUTTON_SIZE;
+		int containerHeight = Math.max(1, inventorySort$containerRows) * 18;
+		return accessor.getTopPos() + 17 + Math.max(0, (containerHeight - groupHeight) / 2);
 	}
 
 	@Unique
-	private static Field inventorySort$findRecipeBookField(Class<?> clazz) {
-		while (clazz != null && clazz != Object.class) {
-			for (Field field : clazz.getDeclaredFields()) {
-				if (RecipeBookComponent.class.isAssignableFrom(field.getType())) {
-					field.setAccessible(true);
-					return field;
-				}
-			}
-			clazz = clazz.getSuperclass();
-		}
-		return null;
+	private static int inventorySort$playerGroupY(AbstractContainerScreenAccessor accessor) {
+		return accessor.getTopPos() + accessor.getImageHeight() - 83;
 	}
+
+	@Unique
+	private static int inventorySort$rowOffset(int row) {
+		return row * (inventorySort$BUTTON_SIZE + inventorySort$BUTTON_GAP);
+	}
+
 }
