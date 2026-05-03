@@ -98,13 +98,17 @@ public class ItemLocationTracker {
     public void replaceContainerSnapshot(ContainerIdentity identity, Collection<ItemStack> stacks) {
         if (identity == null) return;
         String namespace = ensureNamespaceLoaded(identity.getNamespace());
+        Map<String, Integer> aggregated = aggregateByItem(stacks);
 
         removeLocations(location -> location.getType() == LocationEntry.LocationType.CONTAINER
                 && location.isInNamespace(namespace)
                 && isSameFixedContainer(location, identity));
 
+        if (isPlacedShulker(identity) && !aggregated.isEmpty()) {
+            removeMatchingPlacedShulkerSnapshots(namespace, identity, aggregated);
+        }
+
         long timestamp = System.currentTimeMillis();
-        Map<String, Integer> aggregated = aggregateByItem(stacks);
 
         for (Map.Entry<String, Integer> entry : aggregated.entrySet()) {
             if (entry.getValue() <= 0) {
@@ -139,6 +143,54 @@ public class ItemLocationTracker {
         return location.getPos() != null
                 && location.getPos().equals(identity.getPrimaryPos())
                 && Objects.equals(location.getDimensionKey(), identity.getDimensionKey());
+    }
+
+    private boolean isPlacedShulker(ContainerIdentity identity) {
+        return identity.getContainerType().toLowerCase(Locale.ROOT).contains("shulker");
+    }
+
+    private void removeMatchingPlacedShulkerSnapshots(String namespace,
+                                                      ContainerIdentity currentIdentity,
+                                                      Map<String, Integer> currentSnapshot) {
+        Set<String> matchingIdentities = findPlacedShulkerIdentitiesWithSnapshot(namespace, currentIdentity, currentSnapshot);
+        if (matchingIdentities.isEmpty()) {
+            return;
+        }
+
+        removeLocations(location -> location.getType() == LocationEntry.LocationType.CONTAINER
+                && location.isInNamespace(namespace)
+                && matchingIdentities.contains(location.getLocationIdentity()));
+    }
+
+    private Set<String> findPlacedShulkerIdentitiesWithSnapshot(String namespace,
+                                                                ContainerIdentity currentIdentity,
+                                                                Map<String, Integer> currentSnapshot) {
+        Map<String, Map<String, Integer>> snapshotsByIdentity = new HashMap<>();
+
+        for (Map.Entry<String, LinkedList<LocationEntry>> itemEntry : trackedLocations.entrySet()) {
+            String itemId = itemEntry.getKey();
+            for (LocationEntry location : itemEntry.getValue()) {
+                if (location.getType() != LocationEntry.LocationType.CONTAINER
+                        || !location.isInNamespace(namespace)
+                        || location.getLocationIdentity() == null
+                        || location.getLocationIdentity().equals(currentIdentity.getIdentityKey())
+                        || !location.getContainerType().toLowerCase(Locale.ROOT).contains("shulker")) {
+                    continue;
+                }
+
+                snapshotsByIdentity
+                        .computeIfAbsent(location.getLocationIdentity(), ignored -> new HashMap<>())
+                        .put(itemId, location.getCount());
+            }
+        }
+
+        Set<String> matchingIdentities = new HashSet<>();
+        for (Map.Entry<String, Map<String, Integer>> entry : snapshotsByIdentity.entrySet()) {
+            if (entry.getValue().equals(currentSnapshot)) {
+                matchingIdentities.add(entry.getKey());
+            }
+        }
+        return matchingIdentities;
     }
 
     private void removeLocations(java.util.function.Predicate<LocationEntry> predicate) {

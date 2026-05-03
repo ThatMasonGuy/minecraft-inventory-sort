@@ -11,6 +11,7 @@ import net.minecraft.world.level.block.BrewingStandBlock;
 import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.DecoratedPotBlock;
 import net.minecraft.world.level.block.DispenserBlock;
+import net.minecraft.world.level.block.EnderChestBlock;
 import net.minecraft.world.level.block.HopperBlock;
 import net.minecraft.world.level.block.ShulkerBoxBlock;
 import net.minecraft.world.level.block.state.BlockState;
@@ -65,6 +66,12 @@ public final class ContainerIdentity {
         String dimensionKey = dimensionKey(dimension);
         String containerType = extractContainerType(state);
 
+        if (state.getBlock() instanceof EnderChestBlock) {
+            String playerId = client.player != null ? client.player.getUUID().toString() : "unknown_player";
+            return new ContainerIdentity(namespace, dimension, "ender_chest:" + playerId,
+                    "Ender Chest", pos, "Ender Chest");
+        }
+
         List<BlockPos> positions = new ArrayList<>();
         positions.add(pos);
 
@@ -108,6 +115,7 @@ public final class ContainerIdentity {
                 || block instanceof BarrelBlock
                 || block instanceof AbstractFurnaceBlock
                 || block instanceof DispenserBlock
+                || block instanceof EnderChestBlock
                 || block instanceof HopperBlock
                 || block instanceof BrewingStandBlock
                 || block instanceof DecoratedPotBlock
