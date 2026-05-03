@@ -85,6 +85,13 @@ public class CatalogSession {
         return "unknown_" + System.currentTimeMillis();
     }
 
+    public static String generateFingerprint(ContainerIdentity identity) {
+        if (identity == null) {
+            return "unknown_" + System.currentTimeMillis();
+        }
+        return identity.getNamespace() + ":" + identity.getIdentityKey() + ":" + identity.getContainerType();
+    }
+
     /**
      * Check if a container has already been tracked in this session
      */

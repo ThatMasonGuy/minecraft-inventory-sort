@@ -60,7 +60,20 @@ public class ItemLocationTracker {
         if (stack.isEmpty()) return;
 
         String itemId = getItemId(stack.getItem());
-        LocationEntry newEntry = new LocationEntry(pos, dimension, containerType, stack.getCount(), System.currentTimeMillis());
+        LocationEntry newEntry = new LocationEntry(TrackingNamespace.current(Minecraft.getInstance()), null, null,
+                pos, dimension, containerType, stack.getCount(), System.currentTimeMillis());
+
+        addOrUpdateLocation(itemId, newEntry);
+    }
+
+    /**
+     * Track an item at a canonical fixed container location.
+     */
+    public void trackItem(ItemStack stack, ContainerIdentity identity) {
+        if (stack.isEmpty() || identity == null) return;
+
+        String itemId = getItemId(stack.getItem());
+        LocationEntry newEntry = new LocationEntry(identity, stack.getCount(), System.currentTimeMillis());
 
         addOrUpdateLocation(itemId, newEntry);
     }
@@ -72,7 +85,8 @@ public class ItemLocationTracker {
         if (stack.isEmpty()) return;
 
         String itemId = getItemId(stack.getItem());
-        LocationEntry newEntry = new LocationEntry(stack.getCount(), System.currentTimeMillis());
+        LocationEntry newEntry = new LocationEntry(TrackingNamespace.current(Minecraft.getInstance()),
+                LocationEntry.LocationType.INVENTORY, stack.getCount(), System.currentTimeMillis());
 
         addOrUpdateLocation(itemId, newEntry);
     }
@@ -84,7 +98,7 @@ public class ItemLocationTracker {
         if (stack.isEmpty()) return;
 
         String itemId = getItemId(stack.getItem());
-        LocationEntry newEntry = new LocationEntry(shulkerIdentifier, stack.getCount(), System.currentTimeMillis());
+        LocationEntry newEntry = new LocationEntry(TrackingNamespace.current(Minecraft.getInstance()), shulkerIdentifier, stack.getCount(), System.currentTimeMillis());
 
         addOrUpdateLocation(itemId, newEntry);
     }
@@ -132,7 +146,14 @@ public class ItemLocationTracker {
             return Collections.emptyList();
         }
 
-        return new ArrayList<>(locations);
+        String namespace = TrackingNamespace.current(Minecraft.getInstance());
+        List<LocationEntry> filtered = new ArrayList<>();
+        for (LocationEntry location : locations) {
+            if (location.isInNamespace(namespace)) {
+                filtered.add(location);
+            }
+        }
+        return filtered;
     }
 
     /**
@@ -215,6 +236,9 @@ public class ItemLocationTracker {
      */
     private static class SerializableLocationEntry {
         String type;
+        String namespace;
+        String locationIdentity;
+        String positionLabel;
         BlockPosData pos;
         String dimension;
         String shulkerIdentifier;
@@ -239,6 +263,9 @@ public class ItemLocationTracker {
         static SerializableLocationEntry fromLocationEntry(LocationEntry entry) {
             SerializableLocationEntry ser = new SerializableLocationEntry();
             ser.type = entry.getType().name();
+            ser.namespace = entry.getNamespace();
+            ser.locationIdentity = entry.getLocationIdentity();
+            ser.positionLabel = entry.getPositionLabel();
             ser.pos = entry.getPos() != null ? new BlockPosData(entry.getPos()) : null;
             ser.dimension = entry.getDimensionKey();
             ser.shulkerIdentifier = entry.getShulkerIdentifier();
@@ -255,11 +282,12 @@ public class ItemLocationTracker {
                 case CONTAINER:
                     // Parse dimension string back to ResourceKey
                     ResourceKey<Level> dimKey = parseDimensionKey(dimension);
-                    return new LocationEntry(pos.toBlockPos(), dimKey, containerType, count, lastSeen);
+                    return new LocationEntry(namespace, locationIdentity, positionLabel,
+                            pos.toBlockPos(), dimKey, containerType, count, lastSeen);
                 case INVENTORY:
-                    return new LocationEntry(count, lastSeen);
+                    return new LocationEntry(namespace, LocationEntry.LocationType.INVENTORY, count, lastSeen);
                 case SHULKER_BOX:
-                    return new LocationEntry(shulkerIdentifier, count, lastSeen);
+                    return new LocationEntry(namespace, shulkerIdentifier, count, lastSeen);
                 default:
                     throw new IllegalStateException("Unknown location type: " + type);
             }

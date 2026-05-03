@@ -501,9 +501,12 @@ public class SearchModalScreen extends Screen {
             case CONTAINER:
                 String dim = loc.getDimensionKey().replace("minecraft:", "").replace("the_", "");
                 String timeAgo = formatTimeAgo(loc.getLastSeen());
-                return String.format("%s @ %d, %d, %d (%s) - %s",
+                String location = loc.getPositionLabel() != null
+                        ? loc.getPositionLabel()
+                        : String.format("%d, %d, %d", loc.getPos().getX(), loc.getPos().getY(), loc.getPos().getZ());
+                return String.format("%s @ %s (%s) - %s",
                         loc.getContainerType(),
-                        loc.getPos().getX(), loc.getPos().getY(), loc.getPos().getZ(),
+                        location,
                         dim, timeAgo);
             case INVENTORY:
                 // Legacy support: If position exists, show it; otherwise just show "Player Inventory"
