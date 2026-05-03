@@ -28,11 +28,7 @@ public final class InventoryHistorySampler {
         }
 
         lastSignature = signature;
-        ItemLocationTracker tracker = ItemLocationTracker.getInstance();
-        for (ItemStack stack : totals.values()) {
-            tracker.trackItemInInventory(stack);
-        }
-        tracker.save();
+        ItemLocationTracker.getInstance().replaceInventorySnapshot(totals.values());
     }
 
     private static Map<String, ItemStack> collectInventoryTotals(Inventory inventory, ItemStack carried) {

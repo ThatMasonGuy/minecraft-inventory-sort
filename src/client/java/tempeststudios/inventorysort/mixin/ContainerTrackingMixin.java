@@ -19,6 +19,9 @@ import tempeststudios.inventorysort.ContainerIdentity;
 import tempeststudios.inventorysort.ItemLocationTracker;
 import tempeststudios.inventorysort.InventorySortClient;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Mixin(AbstractContainerScreen.class)
 public abstract class ContainerTrackingMixin {
 
@@ -167,6 +170,7 @@ public abstract class ContainerTrackingMixin {
 
         int containerSlots = menu.slots.size() - 36; // Subtract player inventory
         int itemsTracked = 0;
+        List<ItemStack> fixedContainerItems = new ArrayList<>();
 
         InventorySortClient.LOGGER.info("Scanning {} container slots for items", containerSlots);
 
@@ -182,10 +186,14 @@ public abstract class ContainerTrackingMixin {
                     tracker.trackItemInShulker(stack, shulkerIdentifier);
                     itemsTracked++;
                 } else if (identity != null) {
-                    tracker.trackItem(stack, identity);
+                    fixedContainerItems.add(stack.copy());
                     itemsTracked++;
                 }
             }
+        }
+
+        if (identity != null && !isShulker) {
+            tracker.replaceContainerSnapshot(identity, fixedContainerItems);
         }
 
         if (itemsTracked == 0) {

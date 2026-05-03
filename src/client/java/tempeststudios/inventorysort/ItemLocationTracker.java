@@ -19,10 +19,9 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ItemLocationTracker {
-    private static final int MAX_LOCATIONS_PER_ITEM = 5;
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
-    // Map: Item ID -> List of LocationEntry (max 5, sorted by most recent)
+    // Map: Item ID -> current known locations, sorted by most recent.
     private final Map<String, LinkedList<LocationEntry>> trackedLocations;
     private final Path modDir;
     private Path saveFile;
@@ -109,6 +108,82 @@ public class ItemLocationTracker {
         addOrUpdateLocation(itemId, newEntry);
     }
 
+    public void replaceContainerSnapshot(ContainerIdentity identity, Collection<ItemStack> stacks) {
+        if (identity == null) return;
+        String namespace = ensureNamespaceLoaded(identity.getNamespace());
+
+        removeLocations(location -> location.getType() == LocationEntry.LocationType.CONTAINER
+                && location.isInNamespace(namespace)
+                && isSameFixedContainer(location, identity));
+
+        long timestamp = System.currentTimeMillis();
+        for (ItemStack stack : aggregateByItem(stacks).values()) {
+            if (stack.isEmpty()) continue;
+            String itemId = getItemId(stack.getItem());
+            addOrUpdateLocation(itemId, new LocationEntry(identity, stack.getCount(), timestamp));
+        }
+
+        save();
+    }
+
+    public void replaceInventorySnapshot(Collection<ItemStack> stacks) {
+        String namespace = ensureCurrentNamespace();
+
+        removeLocations(location -> location.getType() == LocationEntry.LocationType.INVENTORY
+                && location.isInNamespace(namespace));
+
+        long timestamp = System.currentTimeMillis();
+        for (ItemStack stack : aggregateByItem(stacks).values()) {
+            if (stack.isEmpty()) continue;
+            String itemId = getItemId(stack.getItem());
+            addOrUpdateLocation(itemId, new LocationEntry(namespace,
+                    LocationEntry.LocationType.INVENTORY, stack.getCount(), timestamp));
+        }
+
+        save();
+    }
+
+    private boolean isSameFixedContainer(LocationEntry location, ContainerIdentity identity) {
+        if (location.getLocationIdentity() != null) {
+            return location.getLocationIdentity().equals(identity.getIdentityKey());
+        }
+        return location.getPos() != null
+                && location.getPos().equals(identity.getPrimaryPos())
+                && Objects.equals(location.getDimensionKey(), identity.getDimensionKey());
+    }
+
+    private void removeLocations(java.util.function.Predicate<LocationEntry> predicate) {
+        Iterator<Map.Entry<String, LinkedList<LocationEntry>>> iterator = trackedLocations.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<String, LinkedList<LocationEntry>> entry = iterator.next();
+            entry.getValue().removeIf(predicate);
+            if (entry.getValue().isEmpty()) {
+                iterator.remove();
+            }
+        }
+    }
+
+    private Map<String, ItemStack> aggregateByItem(Collection<ItemStack> stacks) {
+        Map<String, ItemStack> totals = new HashMap<>();
+        if (stacks == null) {
+            return totals;
+        }
+
+        for (ItemStack stack : stacks) {
+            if (stack == null || stack.isEmpty()) continue;
+
+            String itemId = getItemId(stack.getItem());
+            ItemStack existing = totals.get(itemId);
+            if (existing == null) {
+                totals.put(itemId, stack.copy());
+            } else {
+                existing.setCount(existing.getCount() + stack.getCount());
+            }
+        }
+
+        return totals;
+    }
+
     /**
      * Core logic: add new location or update existing one
      */
@@ -134,10 +209,6 @@ public class ItemLocationTracker {
             // Add new location at front
             locations.addFirst(newEntry);
 
-            // Keep only the 5 most recent locations
-            while (locations.size() > MAX_LOCATIONS_PER_ITEM) {
-                locations.removeLast();
-            }
         }
     }
 
