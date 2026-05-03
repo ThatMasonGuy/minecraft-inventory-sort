@@ -12,6 +12,7 @@ import net.minecraft.world.level.block.state.properties.ChestType;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 
 public final class ContainerIdentity {
     private final String namespace;
@@ -66,7 +67,9 @@ public final class ContainerIdentity {
                         && connectedState.hasProperty(ChestBlock.TYPE)
                         && connectedState.getValue(ChestBlock.TYPE) == chestType.getOpposite()) {
                     positions.add(connected);
-                    containerType = "Double Chest";
+                    containerType = containerType.toLowerCase(Locale.ROOT).contains("trapped")
+                            ? "Double Trapped Chest"
+                            : "Double Chest";
                 }
             }
         }

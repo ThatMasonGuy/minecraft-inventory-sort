@@ -457,6 +457,9 @@ public class SearchModalScreen extends Screen {
 
         // Query tracked locations
         List<String> trackedLocations = new ArrayList<>();
+        if (seen) {
+            trackedLocations.add(formatCurrentInventoryLocation(snap));
+        }
         int trackedCount = 0;
         try {
             List<LocationEntry> locations = ItemLocationTracker.getInstance().getLocations(entry.item);
@@ -494,6 +497,10 @@ public class SearchModalScreen extends Screen {
                 trackedLocations,
                 trackedCount
         );
+    }
+
+    private String formatCurrentInventoryLocation(InvSnapshot snap) {
+        return String.format("%s - x%d now", snap.locationLabel, snap.count);
     }
 
     private String formatLocation(LocationEntry loc) {
