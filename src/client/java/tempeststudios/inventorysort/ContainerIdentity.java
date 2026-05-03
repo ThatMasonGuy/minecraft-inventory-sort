@@ -9,7 +9,6 @@ import net.minecraft.world.level.block.AbstractFurnaceBlock;
 import net.minecraft.world.level.block.BarrelBlock;
 import net.minecraft.world.level.block.BrewingStandBlock;
 import net.minecraft.world.level.block.ChestBlock;
-import net.minecraft.world.level.block.DecoratedPotBlock;
 import net.minecraft.world.level.block.DispenserBlock;
 import net.minecraft.world.level.block.EnderChestBlock;
 import net.minecraft.world.level.block.HopperBlock;
@@ -53,13 +52,6 @@ public final class ContainerIdentity {
 
         Level level = client.level;
         BlockState state = level.getBlockState(pos);
-        MenuProvider menuProvider = state.getMenuProvider(level, pos);
-        if (menuProvider == null) {
-            return null;
-        }
-        if (!isPersistentFixedContainer(state)) {
-            return null;
-        }
 
         String namespace = TrackingNamespace.current(client);
         ResourceKey<Level> dimension = level.dimension();
@@ -70,6 +62,14 @@ public final class ContainerIdentity {
             String playerId = client.player != null ? client.player.getUUID().toString() : "unknown_player";
             return new ContainerIdentity(namespace, dimension, "ender_chest:" + playerId,
                     "Ender Chest", pos, "Ender Chest");
+        }
+
+        MenuProvider menuProvider = state.getMenuProvider(level, pos);
+        if (menuProvider == null) {
+            return null;
+        }
+        if (!isPersistentFixedContainer(state)) {
+            return null;
         }
 
         List<BlockPos> positions = new ArrayList<>();
@@ -118,7 +118,6 @@ public final class ContainerIdentity {
                 || block instanceof EnderChestBlock
                 || block instanceof HopperBlock
                 || block instanceof BrewingStandBlock
-                || block instanceof DecoratedPotBlock
                 || block instanceof ShulkerBoxBlock;
     }
 
@@ -222,9 +221,6 @@ public final class ContainerIdentity {
         }
         if (type.contains("brewing stand")) {
             return 5;
-        }
-        if (type.contains("decorated pot")) {
-            return 1;
         }
         return -1; // Unknown or variable size
     }
