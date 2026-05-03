@@ -81,19 +81,6 @@ public class ItemLocationTracker {
         addOrUpdateLocation(itemId, newEntry);
     }
 
-    /**
-     * Track an item in player inventory
-     */
-    public void trackItemInInventory(ItemStack stack) {
-        if (stack.isEmpty()) return;
-        String namespace = ensureCurrentNamespace();
-
-        String itemId = getItemId(stack.getItem());
-        LocationEntry newEntry = new LocationEntry(namespace,
-                LocationEntry.LocationType.INVENTORY, stack.getCount(), System.currentTimeMillis());
-
-        addOrUpdateLocation(itemId, newEntry);
-    }
 
     /**
      * Track an item in a shulker box
@@ -117,10 +104,13 @@ public class ItemLocationTracker {
                 && isSameFixedContainer(location, identity));
 
         long timestamp = System.currentTimeMillis();
-        for (ItemStack stack : aggregateByItem(stacks).values()) {
-            if (stack.isEmpty()) continue;
-            String itemId = getItemId(stack.getItem());
-            addOrUpdateLocation(itemId, new LocationEntry(identity, stack.getCount(), timestamp));
+        Map<String, Integer> aggregated = aggregateByItem(stacks);
+
+        for (Map.Entry<String, Integer> entry : aggregated.entrySet()) {
+            if (entry.getValue() <= 0) {
+                continue;
+            }
+            addOrUpdateLocation(entry.getKey(), new LocationEntry(identity, entry.getValue(), timestamp));
         }
 
         save();
@@ -133,11 +123,10 @@ public class ItemLocationTracker {
                 && location.isInNamespace(namespace));
 
         long timestamp = System.currentTimeMillis();
-        for (ItemStack stack : aggregateByItem(stacks).values()) {
-            if (stack.isEmpty()) continue;
-            String itemId = getItemId(stack.getItem());
-            addOrUpdateLocation(itemId, new LocationEntry(namespace,
-                    LocationEntry.LocationType.INVENTORY, stack.getCount(), timestamp));
+        for (Map.Entry<String, Integer> entry : aggregateByItem(stacks).entrySet()) {
+            if (entry.getValue() <= 0) continue;
+            addOrUpdateLocation(entry.getKey(), new LocationEntry(namespace,
+                    LocationEntry.LocationType.INVENTORY, entry.getValue(), timestamp));
         }
 
         save();
@@ -163,8 +152,8 @@ public class ItemLocationTracker {
         }
     }
 
-    private Map<String, ItemStack> aggregateByItem(Collection<ItemStack> stacks) {
-        Map<String, ItemStack> totals = new HashMap<>();
+    private Map<String, Integer> aggregateByItem(Collection<ItemStack> stacks) {
+        Map<String, Integer> totals = new HashMap<>();
         if (stacks == null) {
             return totals;
         }
@@ -173,12 +162,7 @@ public class ItemLocationTracker {
             if (stack == null || stack.isEmpty()) continue;
 
             String itemId = getItemId(stack.getItem());
-            ItemStack existing = totals.get(itemId);
-            if (existing == null) {
-                totals.put(itemId, stack.copy());
-            } else {
-                existing.setCount(existing.getCount() + stack.getCount());
-            }
+            totals.put(itemId, totals.getOrDefault(itemId, 0) + stack.getCount());
         }
 
         return totals;

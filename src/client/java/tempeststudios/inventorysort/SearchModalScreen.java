@@ -463,6 +463,7 @@ public class SearchModalScreen extends Screen {
         int trackedCount = 0;
         try {
             List<LocationEntry> locations = ItemLocationTracker.getInstance().getLocations(entry.item);
+            locations.removeIf(loc -> loc.getType() == LocationEntry.LocationType.INVENTORY);
 
             // Only log if we actually found tracking data
             if (!locations.isEmpty()) {

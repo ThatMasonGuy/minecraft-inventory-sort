@@ -9,11 +9,13 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.ShulkerBoxBlock;
+import net.minecraft.core.registries.BuiltInRegistries;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.Unique;
 import tempeststudios.inventorysort.CatalogSession;
 import tempeststudios.inventorysort.ContainerIdentity;
 import tempeststudios.inventorysort.ItemLocationTracker;
@@ -27,32 +29,84 @@ public abstract class ContainerTrackingMixin {
 
     @Shadow public AbstractContainerMenu menu;
 
-    private boolean hasTrackedThisContainer = false;
+    @Unique private ContainerIdentity inventorySort$capturedIdentity;
+    @Unique private String inventorySort$capturedContainerType;
+    @Unique private boolean inventorySort$isShulker;
+    @Unique private String inventorySort$shulkerIdentifier;
+    @Unique private boolean inventorySort$isPlayerInventory;
+    @Unique private String inventorySort$screenClassName;
 
     @Inject(method = "init", at = @At("TAIL"))
     private void onContainerInit(CallbackInfo ci) {
-        // Reset flag for new container
-        hasTrackedThisContainer = false;
+        Minecraft client = Minecraft.getInstance();
+        if (client == null || client.player == null || client.level == null) return;
 
         AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>) (Object) this;
-        String screenClassName = screen.getClass().getSimpleName();
+        inventorySort$screenClassName = screen.getClass().getSimpleName();
         String menuClassName = menu.getClass().getSimpleName();
 
         InventorySortClient.LOGGER.info("=== Container Screen Opened ===");
-        InventorySortClient.LOGGER.info("  Screen Class: {}", screenClassName);
+        InventorySortClient.LOGGER.info("  Screen Class: {}", inventorySort$screenClassName);
         InventorySortClient.LOGGER.info("  Menu Class: {}", menuClassName);
         InventorySortClient.LOGGER.info("  Total Slots: {}", menu.slots.size());
         InventorySortClient.LOGGER.info("===============================");
 
-        // Delay tracking by 2 ticks to ensure container contents are fully loaded from server
-        Minecraft.getInstance().execute(() -> {
-            Minecraft.getInstance().execute(() -> {
-                if (!hasTrackedThisContainer) {
-                    trackContainerItems();
-                    hasTrackedThisContainer = true;
+        inventorySort$isPlayerInventory = inventorySort$screenClassName.equals("InventoryScreen") ||
+                inventorySort$screenClassName.equals("CreativeModeInventoryScreen");
+
+        if (!inventorySort$isPlayerInventory) {
+            BlockPos containerPos = tempeststudios.inventorysort.ContainerPositionCapture.getLastLookedAtBlock();
+            
+            if (containerPos != null) {
+                inventorySort$capturedIdentity = ContainerIdentity.fromLookedAt(client, containerPos);
+                
+                // If we captured an identity, consume the interaction so other screens (like crafting tables)
+                // don't accidentally reuse it.
+                if (inventorySort$capturedIdentity != null) {
+                    tempeststudios.inventorysort.ContainerPositionCapture.clear();
                 }
-            });
-        });
+            }
+            
+            inventorySort$capturedContainerType = "Container";
+            if (inventorySort$capturedIdentity != null) {
+                inventorySort$capturedContainerType = inventorySort$capturedIdentity.getContainerType();
+            } else if (containerPos != null) {
+                try {
+                    var blockState = client.level.getBlockState(containerPos);
+                    var block = blockState.getBlock();
+                    String blockName = block.getName().getString();
+                    if (blockName.contains("Block{")) {
+                        blockName = blockName.substring(blockName.indexOf("Block{") + 6, blockName.indexOf("}"));
+                    }
+                    if (blockName.contains(":")) {
+                        blockName = blockName.substring(blockName.lastIndexOf(":") + 1);
+                    }
+                    if (!blockName.isEmpty()) {
+                        inventorySort$capturedContainerType = blockName.substring(0, 1).toUpperCase() + blockName.substring(1);
+                    }
+                } catch (Exception e) {}
+            }
+
+            inventorySort$shulkerIdentifier = null;
+            inventorySort$isShulker = false;
+
+            if (inventorySort$capturedIdentity == null && containerPos == null) {
+                inventorySort$shulkerIdentifier = generateShulkerIdentifier(menu);
+                inventorySort$isShulker = true;
+                inventorySort$capturedContainerType = "Shulker Box";
+            } else if (inventorySort$capturedIdentity != null) {
+                if (client.level.getBlockState(containerPos).getBlock() instanceof ShulkerBoxBlock) {
+                    inventorySort$shulkerIdentifier = generateShulkerIdentifier(menu, containerPos);
+                    inventorySort$isShulker = true;
+                    inventorySort$capturedContainerType = "Shulker Box";
+                }
+            }
+        }
+    }
+
+    @Inject(method = "removed", at = @At("HEAD"))
+    private void onContainerClosed(CallbackInfo ci) {
+        trackContainerItems();
     }
 
     private void trackContainerItems() {
@@ -60,150 +114,69 @@ public abstract class ContainerTrackingMixin {
         if (client.player == null || client.level == null) return;
 
         ItemLocationTracker tracker = ItemLocationTracker.getInstance();
-        AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>) (Object) this;
 
-        // Determine if this is player inventory by checking the screen class name
-        String screenClassName = screen.getClass().getSimpleName();
-        boolean isPlayerInventory = screenClassName.equals("InventoryScreen") ||
-                screenClassName.equals("CreativeModeInventoryScreen");
+        InventorySortClient.LOGGER.info("Tracking screen on close: {} (isPlayerInventory: {})", inventorySort$screenClassName, inventorySort$isPlayerInventory);
 
-        InventorySortClient.LOGGER.info("Tracking screen: {} (isPlayerInventory: {})", screenClassName, isPlayerInventory);
-
-        if (isPlayerInventory) {
-            // Track player inventory items
-            trackPlayerInventory(tracker, client);
-
-            // If catalog session is active and includes inventory, track for catalog
+        if (inventorySort$isPlayerInventory) {
+            // Player inventory is tracked continuously by InventoryHistorySampler, no need to duplicate
             if (CatalogSession.isActive() && CatalogSession.getActive().shouldIncludeInventory()) {
                 trackInventoryForCatalog(client);
             }
         } else {
-            // Track container items
-            trackContainer(tracker, client, screenClassName);
+            trackContainer(tracker, client, inventorySort$screenClassName);
 
-            // If catalog session is active, track for catalog
             if (CatalogSession.isActive()) {
-                trackContainerForCatalog(client, screenClassName);
+                trackContainerForCatalog(client, inventorySort$screenClassName);
             }
         }
-    }
-
-    private void trackPlayerInventory(ItemLocationTracker tracker, Minecraft client) {
-        // Only track main inventory and hotbar (slots 0-35 in player inventory)
-        int itemsTracked = 0;
-        for (Slot slot : menu.slots) {
-            ItemStack stack = slot.getItem();
-            if (!stack.isEmpty() && slot.getContainerSlot() < 36) {
-                tracker.trackItemInInventory(stack);
-                itemsTracked++;
-            }
-        }
-
-        InventorySortClient.LOGGER.info("Tracked {} items from Player Inventory", itemsTracked);
     }
 
     private void trackContainer(ItemLocationTracker tracker, Minecraft client, String screenClassName) {
-        // Get the position of the container the player opened
-        BlockPos containerPos = tempeststudios.inventorysort.ContainerPositionCapture.getLastLookedAtBlock();
-        ContainerIdentity identity = ContainerIdentity.fromLookedAt(client, containerPos);
-
-        // Determine container type with better extraction
-        String containerType = "Container"; // Default fallback
-        if (identity != null) {
-            containerType = identity.getContainerType();
-        } else if (containerPos != null) {
-            try {
-                // Get block at position
-                var blockState = client.level.getBlockState(containerPos);
-                var block = blockState.getBlock();
-
-                // Try to get descriptive name first
-                String blockName = block.getName().getString();
-
-                // Clean up the name - remove "Block{" and "}" if present
-                if (blockName.contains("Block{")) {
-                    blockName = blockName.substring(blockName.indexOf("Block{") + 6, blockName.indexOf("}"));
-                }
-
-                // Get the last part after namespace (minecraft:chest -> chest)
-                if (blockName.contains(":")) {
-                    blockName = blockName.substring(blockName.lastIndexOf(":") + 1);
-                }
-
-                // Capitalize first letter
-                if (!blockName.isEmpty()) {
-                    containerType = blockName.substring(0, 1).toUpperCase() + blockName.substring(1);
-                }
-
-                InventorySortClient.LOGGER.info("Extracted container type: '{}' from block: {}", containerType, block.getClass().getSimpleName());
-            } catch (Exception e) {
-                InventorySortClient.LOGGER.warn("Failed to extract container type, using default", e);
-            }
-        }
-
-        // Determine if we're looking at a shulker box or container at a fixed position
-        String shulkerIdentifier = null;
-        boolean isShulker = false;
-
-        if (identity == null && containerPos == null) {
-            // No position means it's likely a shulker box or other portable container
-            shulkerIdentifier = generateShulkerIdentifier(menu);
-            isShulker = true;
-            containerType = "Shulker Box";
-
-            InventorySortClient.LOGGER.info("Container opened without position - treating as shulker");
-        } else if (identity != null) {
-            // Check if this position has a shulker box block
-            if (client.level.getBlockState(containerPos).getBlock() instanceof ShulkerBoxBlock) {
-                shulkerIdentifier = generateShulkerIdentifier(menu, containerPos);
-                isShulker = true;
-                containerType = "Shulker Box";
-
-                InventorySortClient.LOGGER.info("Shulker box detected at position {}", containerPos);
-            } else {
-                InventorySortClient.LOGGER.info("Container detected at {} (type: {}, key: {})",
-                        identity.getPositionLabel(), containerType, identity.getIdentityKey());
-            }
-        } else {
-            InventorySortClient.LOGGER.warn("Looked-at block {} does not expose a container menu; skipping fixed-container tracking for {}", containerPos, screenClassName);
-        }
-
         int containerSlots = menu.slots.size() - 36; // Subtract player inventory
         int itemsTracked = 0;
         List<ItemStack> fixedContainerItems = new ArrayList<>();
 
-        InventorySortClient.LOGGER.info("Scanning {} container slots for items", containerSlots);
+        InventorySortClient.LOGGER.info("Scanning {} container slots for items on close", containerSlots);
+
+        // Validation: If we have a captured identity, ensure the slot count matches the container type.
+        // This prevents "ghost" tracking where a different screen (like a crafting table) uses the
+        // last-interacted-block identity and wipes its data.
+        if (inventorySort$capturedIdentity != null) {
+            int expected = inventorySort$capturedIdentity.getExpectedSlotCount();
+            if (expected != -1 && expected != containerSlots) {
+                InventorySortClient.LOGGER.warn("Rejecting tracking for {} - slot count mismatch (got {}, expected {})",
+                        inventorySort$capturedIdentity.getPositionLabel(), containerSlots, expected);
+                return;
+            }
+        }
 
         for (int i = 0; i < containerSlots; i++) {
             Slot slot = menu.slots.get(i);
             ItemStack stack = slot.getItem();
 
             if (!stack.isEmpty()) {
-                String itemName = stack.getItem().toString();
-                InventorySortClient.LOGGER.info("Found item in slot {}: {} x{}", i, itemName, stack.getCount());
-
-                if (isShulker && shulkerIdentifier != null) {
-                    tracker.trackItemInShulker(stack, shulkerIdentifier);
+                if (inventorySort$isShulker && inventorySort$shulkerIdentifier != null) {
+                    tracker.trackItemInShulker(stack, inventorySort$shulkerIdentifier);
                     itemsTracked++;
-                } else if (identity != null) {
+                } else if (inventorySort$capturedIdentity != null) {
                     fixedContainerItems.add(stack.copy());
                     itemsTracked++;
                 }
             }
         }
 
-        if (identity != null && !isShulker) {
-            tracker.replaceContainerSnapshot(identity, fixedContainerItems);
+        if (inventorySort$capturedIdentity != null && !inventorySort$isShulker) {
+            tracker.replaceContainerSnapshot(inventorySort$capturedIdentity, fixedContainerItems);
         }
 
         if (itemsTracked == 0) {
-            InventorySortClient.LOGGER.info("No items found in {} (container is empty)", containerType);
+            InventorySortClient.LOGGER.info("No items found in {} (container is empty)", inventorySort$capturedContainerType);
         } else {
-            InventorySortClient.LOGGER.info("Tracked {} items from {} container", itemsTracked, containerType);
+            InventorySortClient.LOGGER.info("Tracked {} items from {} container", itemsTracked, inventorySort$capturedContainerType);
         }
 
-        if (isShulker) {
-            InventorySortClient.LOGGER.info("Completed shulker box tracking (ID: {})", shulkerIdentifier);
+        if (inventorySort$isShulker) {
+            InventorySortClient.LOGGER.info("Completed shulker box tracking (ID: {})", inventorySort$shulkerIdentifier);
         }
     }
 
@@ -247,19 +220,16 @@ public abstract class ContainerTrackingMixin {
      * Track a container for the active catalog session
      */
     private void trackContainerForCatalog(Minecraft client, String screenClassName) {
-        BlockPos containerPos = tempeststudios.inventorysort.ContainerPositionCapture.getLastLookedAtBlock();
-        ContainerIdentity identity = ContainerIdentity.fromLookedAt(client, containerPos);
-
-        if (identity == null) {
-            InventorySortClient.LOGGER.warn("Cannot track container for catalog - no position available");
+        if (inventorySort$capturedIdentity == null) {
+            InventorySortClient.LOGGER.warn("Cannot track container for catalog - no identity captured");
             client.player.displayClientMessage(net.minecraft.network.chat.Component.literal("⚠ Container position unknown - not counted").withStyle(net.minecraft.ChatFormatting.RED), false);
             return;
         }
 
-        String containerType = identity.getContainerType();
+        String containerType = inventorySort$capturedContainerType;
 
         // Generate fingerprint
-        String fingerprint = CatalogSession.generateFingerprint(identity);
+        String fingerprint = CatalogSession.generateFingerprint(inventorySort$capturedIdentity);
 
         // Collect items
         int containerSlots = menu.slots.size() - 36;
@@ -277,10 +247,10 @@ public abstract class ContainerTrackingMixin {
         boolean newContainer = CatalogSession.getActive().trackContainer(fingerprint, items);
 
         if (newContainer) {
-            InventorySortClient.LOGGER.info("Cataloged new container at {} with {} items", identity.getPositionLabel(), items.size());
+            InventorySortClient.LOGGER.info("Cataloged new container at {} with {} items", inventorySort$capturedIdentity.getPositionLabel(), items.size());
             client.player.displayClientMessage(net.minecraft.network.chat.Component.literal(String.format("✓ Cataloged %s (%d items)", containerType, items.size())).withStyle(net.minecraft.ChatFormatting.GREEN), false);
         } else {
-            InventorySortClient.LOGGER.info("Skipped already-cataloged container at {}", identity.getPositionLabel());
+            InventorySortClient.LOGGER.info("Skipped already-cataloged container at {}", inventorySort$capturedIdentity.getPositionLabel());
             client.player.displayClientMessage(net.minecraft.network.chat.Component.literal("⊘ Container already counted").withStyle(net.minecraft.ChatFormatting.YELLOW), false);
         }
     }

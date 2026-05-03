@@ -173,4 +173,15 @@ public final class ContainerIdentity {
         return containerType;
     }
 
+    public int getExpectedSlotCount() {
+        String type = containerType.toLowerCase(Locale.ROOT);
+        if (type.contains("double")) {
+            return 54;
+        }
+        if (type.contains("shulker") || type.contains("barrel") || type.contains("chest")) {
+            return 27;
+        }
+        return -1; // Unknown or variable size
+    }
+
 }
