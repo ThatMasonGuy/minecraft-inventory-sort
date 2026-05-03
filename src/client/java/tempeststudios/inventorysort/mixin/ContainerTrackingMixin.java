@@ -8,8 +8,6 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.ShulkerBoxBlock;
-import net.minecraft.core.registries.BuiltInRegistries;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -35,6 +33,7 @@ public abstract class ContainerTrackingMixin {
     @Unique private String inventorySort$shulkerIdentifier;
     @Unique private boolean inventorySort$isPlayerInventory;
     @Unique private String inventorySort$screenClassName;
+    @Unique private boolean inventorySort$skipTracking;
 
     @Inject(method = "init", at = @At("TAIL"))
     private void onContainerInit(CallbackInfo ci) {
@@ -53,6 +52,7 @@ public abstract class ContainerTrackingMixin {
 
         inventorySort$isPlayerInventory = inventorySort$screenClassName.equals("InventoryScreen") ||
                 inventorySort$screenClassName.equals("CreativeModeInventoryScreen");
+        inventorySort$skipTracking = false;
 
         if (!inventorySort$isPlayerInventory) {
             BlockPos containerPos = tempeststudios.inventorysort.ContainerPositionCapture.getLastLookedAtBlock();
@@ -90,16 +90,14 @@ public abstract class ContainerTrackingMixin {
             inventorySort$shulkerIdentifier = null;
             inventorySort$isShulker = false;
 
-            if (inventorySort$capturedIdentity == null && containerPos == null) {
+            if (inventorySort$capturedIdentity == null && containerPos == null && isPortableShulkerScreen(menuClassName)) {
                 inventorySort$shulkerIdentifier = generateShulkerIdentifier(menu);
                 inventorySort$isShulker = true;
                 inventorySort$capturedContainerType = "Shulker Box";
-            } else if (inventorySort$capturedIdentity != null) {
-                if (client.level.getBlockState(containerPos).getBlock() instanceof ShulkerBoxBlock) {
-                    inventorySort$shulkerIdentifier = generateShulkerIdentifier(menu, containerPos);
-                    inventorySort$isShulker = true;
-                    inventorySort$capturedContainerType = "Shulker Box";
-                }
+            } else if (inventorySort$capturedIdentity == null) {
+                inventorySort$skipTracking = true;
+                InventorySortClient.LOGGER.info("Skipping transient or unsupported screen: {} (menu: {}, clicked block: {})",
+                        inventorySort$screenClassName, menuClassName, containerPos);
             }
         }
     }
@@ -122,6 +120,8 @@ public abstract class ContainerTrackingMixin {
             if (CatalogSession.isActive() && CatalogSession.getActive().shouldIncludeInventory()) {
                 trackInventoryForCatalog(client);
             }
+        } else if (inventorySort$skipTracking) {
+            InventorySortClient.LOGGER.info("Skipped tracking transient or unsupported screen: {}", inventorySort$screenClassName);
         } else {
             trackContainer(tracker, client, inventorySort$screenClassName);
 
@@ -181,19 +181,19 @@ public abstract class ContainerTrackingMixin {
     }
 
     /**
-     * Generate a semi-stable identifier for shulkers based on position and NBT
-     */
-    private String generateShulkerIdentifier(AbstractContainerMenu menu, BlockPos pos) {
-        // Use position as part of identifier since shulker is at a known location
-        return "shulker_" + pos.getX() + "_" + pos.getY() + "_" + pos.getZ() + "_" + generateContainerHash(menu);
-    }
-
-    /**
      * Generate identifier for portable shulkers (in inventory or being carried)
      */
     private String generateShulkerIdentifier(AbstractContainerMenu menu) {
         // Use a hash of the container structure and some items
         return "shulker_portable_" + generateContainerHash(menu);
+    }
+
+    private boolean isPortableShulkerScreen(String menuClassName) {
+        boolean screenLooksLikeShulker = inventorySort$screenClassName != null
+                && inventorySort$screenClassName.toLowerCase(java.util.Locale.ROOT).contains("shulker");
+        boolean menuLooksLikeShulker = menuClassName != null
+                && menuClassName.toLowerCase(java.util.Locale.ROOT).contains("shulker");
+        return screenLooksLikeShulker || menuLooksLikeShulker;
     }
 
     /**

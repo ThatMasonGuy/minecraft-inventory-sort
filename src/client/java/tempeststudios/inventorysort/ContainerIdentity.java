@@ -5,7 +5,14 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.AbstractFurnaceBlock;
+import net.minecraft.world.level.block.BarrelBlock;
+import net.minecraft.world.level.block.BrewingStandBlock;
 import net.minecraft.world.level.block.ChestBlock;
+import net.minecraft.world.level.block.DecoratedPotBlock;
+import net.minecraft.world.level.block.DispenserBlock;
+import net.minecraft.world.level.block.HopperBlock;
+import net.minecraft.world.level.block.ShulkerBoxBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.ChestType;
 
@@ -49,6 +56,9 @@ public final class ContainerIdentity {
         if (menuProvider == null) {
             return null;
         }
+        if (!isPersistentFixedContainer(state)) {
+            return null;
+        }
 
         String namespace = TrackingNamespace.current(client);
         ResourceKey<Level> dimension = level.dimension();
@@ -90,6 +100,18 @@ public final class ContainerIdentity {
         }
 
         return new ContainerIdentity(namespace, dimension, key.toString(), compactPositionLabel(positions), positions.get(0), containerType);
+    }
+
+    private static boolean isPersistentFixedContainer(BlockState state) {
+        Object block = state.getBlock();
+        return block instanceof ChestBlock
+                || block instanceof BarrelBlock
+                || block instanceof AbstractFurnaceBlock
+                || block instanceof DispenserBlock
+                || block instanceof HopperBlock
+                || block instanceof BrewingStandBlock
+                || block instanceof DecoratedPotBlock
+                || block instanceof ShulkerBoxBlock;
     }
 
     private static String compactPositionLabel(List<BlockPos> positions) {
@@ -180,6 +202,21 @@ public final class ContainerIdentity {
         }
         if (type.contains("shulker") || type.contains("barrel") || type.contains("chest")) {
             return 27;
+        }
+        if (type.contains("furnace") || type.contains("smoker")) {
+            return 3;
+        }
+        if (type.contains("dispenser") || type.contains("dropper")) {
+            return 9;
+        }
+        if (type.contains("hopper")) {
+            return 5;
+        }
+        if (type.contains("brewing stand")) {
+            return 5;
+        }
+        if (type.contains("decorated pot")) {
+            return 1;
         }
         return -1; // Unknown or variable size
     }
