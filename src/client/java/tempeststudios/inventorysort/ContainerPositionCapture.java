@@ -7,6 +7,7 @@ import net.minecraft.core.BlockPos;
  */
 public class ContainerPositionCapture {
     private static BlockPos lastInteractedBlock = null;
+    private static ContainerIdentity lastInteractedEntityContainer = null;
     private static long lastInteractionTime = 0;
     private static final long POSITION_TIMEOUT = 3000; // server/container open can arrive a few ticks later
 
@@ -16,6 +17,13 @@ public class ContainerPositionCapture {
 
     public static void setLastInteractedBlock(BlockPos pos) {
         lastInteractedBlock = pos;
+        lastInteractedEntityContainer = null;
+        lastInteractionTime = System.currentTimeMillis();
+    }
+
+    public static void setLastInteractedEntityContainer(ContainerIdentity identity) {
+        lastInteractedBlock = null;
+        lastInteractedEntityContainer = identity;
         lastInteractionTime = System.currentTimeMillis();
     }
 
@@ -27,8 +35,16 @@ public class ContainerPositionCapture {
         return lastInteractedBlock;
     }
 
+    public static ContainerIdentity getLastInteractedEntityContainer() {
+        if (System.currentTimeMillis() - lastInteractionTime > POSITION_TIMEOUT) {
+            return null;
+        }
+        return lastInteractedEntityContainer;
+    }
+
     public static void clear() {
         lastInteractedBlock = null;
+        lastInteractedEntityContainer = null;
         lastInteractionTime = 0;
     }
 }

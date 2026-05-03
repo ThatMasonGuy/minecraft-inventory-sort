@@ -66,6 +66,13 @@ public abstract class ContainerTrackingMixin {
                     tempeststudios.inventorysort.ContainerPositionCapture.clear();
                 }
             }
+
+            if (inventorySort$capturedIdentity == null) {
+                inventorySort$capturedIdentity = tempeststudios.inventorysort.ContainerPositionCapture.getLastInteractedEntityContainer();
+                if (inventorySort$capturedIdentity != null) {
+                    tempeststudios.inventorysort.ContainerPositionCapture.clear();
+                }
+            }
             
             inventorySort$capturedContainerType = "Container";
             if (inventorySort$capturedIdentity != null) {

@@ -3,6 +3,9 @@ package tempeststudios.inventorysort;
 import net.minecraft.core.BlockPos;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.vehicle.minecart.MinecartChest;
+import net.minecraft.world.entity.vehicle.minecart.MinecartHopper;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.AbstractFurnaceBlock;
@@ -107,6 +110,30 @@ public final class ContainerIdentity {
         }
 
         return new ContainerIdentity(namespace, dimension, key.toString(), compactPositionLabel(positions), positions.get(0), containerType);
+    }
+
+    public static ContainerIdentity fromEntity(Minecraft client, Entity entity) {
+        if (client == null || client.level == null || entity == null) {
+            return null;
+        }
+
+        String containerType;
+        if (entity instanceof MinecartChest) {
+            containerType = "Chest Minecart";
+        } else if (entity instanceof MinecartHopper) {
+            containerType = "Hopper Minecart";
+        } else {
+            return null;
+        }
+
+        String namespace = TrackingNamespace.current(client);
+        ResourceKey<Level> dimension = client.level.dimension();
+        String dimensionKey = dimensionKey(dimension);
+        BlockPos pos = entity.blockPosition();
+        String identityKey = "entity:" + dimensionKey + ":" + containerType.toLowerCase(Locale.ROOT).replace(' ', '_')
+                + ":" + entity.getUUID();
+        String positionLabel = pos.getX() + ", " + pos.getY() + ", " + pos.getZ();
+        return new ContainerIdentity(namespace, dimension, identityKey, positionLabel, pos, containerType);
     }
 
     private static boolean isPersistentFixedContainer(BlockState state) {
@@ -217,6 +244,12 @@ public final class ContainerIdentity {
             return 9;
         }
         if (type.contains("hopper")) {
+            return 5;
+        }
+        if (type.contains("chest minecart")) {
+            return 27;
+        }
+        if (type.contains("hopper minecart")) {
             return 5;
         }
         if (type.contains("brewing stand")) {

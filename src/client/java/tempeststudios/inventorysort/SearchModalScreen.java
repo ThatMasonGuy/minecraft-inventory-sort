@@ -578,7 +578,7 @@ public class SearchModalScreen extends Screen {
                     id,
                     display,
                     icon,
-                    display.toLowerCase(Locale.ROOT),
+                    searchTextFor(id, display),
                     id.toLowerCase(Locale.ROOT),
                     item
             );
@@ -588,6 +588,18 @@ public class SearchModalScreen extends Screen {
         }
 
         REGISTRY_CACHE = list;
+    }
+
+    private String searchTextFor(String id, String displayName) {
+        String searchText = displayName.toLowerCase(Locale.ROOT);
+        if (id.equals("minecraft:potion")) {
+            searchText += " water bottle awkward potion mundane thick";
+        } else if (id.equals("minecraft:splash_potion")) {
+            searchText += " splash water bottle awkward potion mundane thick";
+        } else if (id.equals("minecraft:lingering_potion")) {
+            searchText += " lingering water bottle awkward potion mundane thick";
+        }
+        return searchText;
     }
 
     private void buildInventorySnapshot(Inventory inv) {
