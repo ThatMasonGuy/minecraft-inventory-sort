@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import net.minecraft.client.Minecraft;
+import org.lwjgl.glfw.GLFW;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -28,6 +29,8 @@ public final class ServerWorldProfileManager {
     private final Path saveFile;
     private final Map<String, ServerProfiles> profilesByServer = new HashMap<>();
     private final Set<String> confirmedThisSession = new HashSet<>();
+    private boolean confirmKeyWasDown = false;
+    private boolean menuKeyWasDown = false;
 
     private ServerWorldProfileManager() {
         Path modDir = Minecraft.getInstance().gameDirectory.toPath().resolve("inventorysort");
@@ -87,13 +90,35 @@ public final class ServerWorldProfileManager {
         InventoryHistorySampler.reset();
     }
 
-    public void promptIfNeeded(Minecraft client) {
+    public void handleConfirmationInput(Minecraft client) {
         if (client == null || client.player == null || client.level == null || client.screen != null) {
+            confirmKeyWasDown = false;
+            menuKeyWasDown = false;
             return;
         }
-        if (needsConfirmation(client)) {
+        if (!needsConfirmation(client)) {
+            confirmKeyWasDown = false;
+            menuKeyWasDown = false;
+            return;
+        }
+
+        long window = client.getWindow().handle();
+        boolean confirmKeyDown = GLFW.glfwGetKey(window, GLFW.GLFW_KEY_KP_ENTER) == GLFW.GLFW_PRESS;
+        boolean menuKeyDown = GLFW.glfwGetKey(window, GLFW.GLFW_KEY_BACKSPACE) == GLFW.GLFW_PRESS;
+
+        if (confirmKeyDown && !confirmKeyWasDown) {
+            String serverKey = TrackingNamespace.currentServerKey(client);
+            confirmActiveProfile(serverKey);
+            if (client.player != null) {
+                client.player.displayClientMessage(net.minecraft.network.chat.Component.literal("Tracking world confirmed: "
+                        + getActiveProfile(serverKey)).withStyle(net.minecraft.ChatFormatting.GREEN), false);
+            }
+        } else if (menuKeyDown && !menuKeyWasDown) {
             client.setScreen(new ServerWorldProfileScreen(null, true));
         }
+
+        confirmKeyWasDown = confirmKeyDown;
+        menuKeyWasDown = menuKeyDown;
     }
 
     public void setActiveProfile(String serverKey, String profileName) {

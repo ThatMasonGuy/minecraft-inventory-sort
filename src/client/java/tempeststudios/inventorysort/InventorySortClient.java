@@ -3,6 +3,7 @@ package tempeststudios.inventorysort;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,9 +32,10 @@ public class InventorySortClient implements ClientModInitializer {
 		});
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
-			ServerWorldProfileManager.getInstance().promptIfNeeded(client);
+			ServerWorldProfileManager.getInstance().handleConfirmationInput(client);
 			InventoryHistorySampler.sample(client);
 		});
+		HudRenderCallback.EVENT.register((graphics, tickCounter) -> ServerWorldProfileHud.render(graphics));
 
 		// Register shutdown hook to save tracking data
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> {

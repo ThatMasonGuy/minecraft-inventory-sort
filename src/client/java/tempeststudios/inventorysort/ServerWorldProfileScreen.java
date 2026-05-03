@@ -137,6 +137,6 @@ public class ServerWorldProfileScreen extends Screen {
 
     @Override
     public boolean shouldCloseOnEsc() {
-        return !requiresConfirmation;
+        return true;
     }
 }
