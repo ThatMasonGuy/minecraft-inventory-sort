@@ -39,6 +39,10 @@ public final class TrackingNamespace {
         return UNKNOWN;
     }
 
+    public static String fileNameSafe(String namespace) {
+        return sanitize(namespace).replace(':', '_');
+    }
+
     private static String sanitize(String value) {
         if (value == null || value.isBlank()) {
             return UNKNOWN;

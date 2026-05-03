@@ -24,7 +24,9 @@ public class ItemLocationTracker {
 
     // Map: Item ID -> List of LocationEntry (max 5, sorted by most recent)
     private final Map<String, LinkedList<LocationEntry>> trackedLocations;
-    private final Path saveFile;
+    private final Path modDir;
+    private Path saveFile;
+    private String activeNamespace;
 
     private static ItemLocationTracker instance;
 
@@ -34,7 +36,7 @@ public class ItemLocationTracker {
         // Save file in .minecraft/inventorysort/item_locations.json
         Minecraft mc = Minecraft.getInstance();
         Path gameDir = mc.gameDirectory.toPath();
-        Path modDir = gameDir.resolve("inventorysort");
+        this.modDir = gameDir.resolve("inventorysort");
 
         try {
             Files.createDirectories(modDir);
@@ -42,8 +44,8 @@ public class ItemLocationTracker {
             InventorySortClient.LOGGER.error("Failed to create mod directory", e);
         }
 
-        this.saveFile = modDir.resolve("item_locations.json");
-        load();
+        this.activeNamespace = null;
+        ensureNamespaceLoaded(TrackingNamespace.current(mc));
     }
 
     public static ItemLocationTracker getInstance() {
@@ -58,9 +60,10 @@ public class ItemLocationTracker {
      */
     public void trackItem(ItemStack stack, BlockPos pos, ResourceKey<Level> dimension, String containerType) {
         if (stack.isEmpty()) return;
+        String namespace = ensureCurrentNamespace();
 
         String itemId = getItemId(stack.getItem());
-        LocationEntry newEntry = new LocationEntry(TrackingNamespace.current(Minecraft.getInstance()), null, null,
+        LocationEntry newEntry = new LocationEntry(namespace, null, null,
                 pos, dimension, containerType, stack.getCount(), System.currentTimeMillis());
 
         addOrUpdateLocation(itemId, newEntry);
@@ -71,6 +74,7 @@ public class ItemLocationTracker {
      */
     public void trackItem(ItemStack stack, ContainerIdentity identity) {
         if (stack.isEmpty() || identity == null) return;
+        ensureNamespaceLoaded(identity.getNamespace());
 
         String itemId = getItemId(stack.getItem());
         LocationEntry newEntry = new LocationEntry(identity, stack.getCount(), System.currentTimeMillis());
@@ -83,9 +87,10 @@ public class ItemLocationTracker {
      */
     public void trackItemInInventory(ItemStack stack) {
         if (stack.isEmpty()) return;
+        String namespace = ensureCurrentNamespace();
 
         String itemId = getItemId(stack.getItem());
-        LocationEntry newEntry = new LocationEntry(TrackingNamespace.current(Minecraft.getInstance()),
+        LocationEntry newEntry = new LocationEntry(namespace,
                 LocationEntry.LocationType.INVENTORY, stack.getCount(), System.currentTimeMillis());
 
         addOrUpdateLocation(itemId, newEntry);
@@ -96,9 +101,10 @@ public class ItemLocationTracker {
      */
     public void trackItemInShulker(ItemStack stack, String shulkerIdentifier) {
         if (stack.isEmpty()) return;
+        String namespace = ensureCurrentNamespace();
 
         String itemId = getItemId(stack.getItem());
-        LocationEntry newEntry = new LocationEntry(TrackingNamespace.current(Minecraft.getInstance()), shulkerIdentifier, stack.getCount(), System.currentTimeMillis());
+        LocationEntry newEntry = new LocationEntry(namespace, shulkerIdentifier, stack.getCount(), System.currentTimeMillis());
 
         addOrUpdateLocation(itemId, newEntry);
     }
@@ -139,6 +145,7 @@ public class ItemLocationTracker {
      * Get all tracked locations for an item
      */
     public List<LocationEntry> getLocations(Item item) {
+        String namespace = ensureCurrentNamespace();
         String itemId = getItemId(item);
         LinkedList<LocationEntry> locations = trackedLocations.get(itemId);
 
@@ -146,7 +153,6 @@ public class ItemLocationTracker {
             return Collections.emptyList();
         }
 
-        String namespace = TrackingNamespace.current(Minecraft.getInstance());
         List<LocationEntry> filtered = new ArrayList<>();
         for (LocationEntry location : locations) {
             if (location.isInNamespace(namespace)) {
@@ -183,6 +189,7 @@ public class ItemLocationTracker {
      * Save tracking data to disk
      */
     public void save() {
+        if (saveFile == null) return;
         try (Writer writer = new FileWriter(saveFile.toFile())) {
             // Convert to serializable format
             Map<String, List<SerializableLocationEntry>> serializable = new HashMap<>();
@@ -196,18 +203,43 @@ public class ItemLocationTracker {
             }
 
             GSON.toJson(serializable, writer);
-            InventorySortClient.LOGGER.info("Saved item location tracking data");
+            InventorySortClient.LOGGER.info("Saved item location tracking data for {}", activeNamespace);
         } catch (IOException e) {
             InventorySortClient.LOGGER.error("Failed to save item location data", e);
         }
+    }
+
+    private String ensureCurrentNamespace() {
+        return ensureNamespaceLoaded(TrackingNamespace.current(Minecraft.getInstance()));
+    }
+
+    private String ensureNamespaceLoaded(String namespace) {
+        if (namespace == null || namespace.isBlank()) {
+            namespace = "unknown";
+        }
+
+        if (namespace.equals(activeNamespace)) {
+            return activeNamespace;
+        }
+
+        if (activeNamespace != null) {
+            save();
+        }
+
+        activeNamespace = namespace;
+        saveFile = modDir.resolve("item_locations_" + TrackingNamespace.fileNameSafe(namespace) + ".json");
+        trackedLocations.clear();
+        load();
+        return activeNamespace;
     }
 
     /**
      * Load tracking data from disk
      */
     private void load() {
+        if (saveFile == null) return;
         if (!Files.exists(saveFile)) {
-            InventorySortClient.LOGGER.info("No saved item location data found");
+            InventorySortClient.LOGGER.info("No saved item location data found for {}", activeNamespace);
             return;
         }
 
@@ -224,7 +256,7 @@ public class ItemLocationTracker {
                     trackedLocations.put(entry.getKey(), locations);
                 }
 
-                InventorySortClient.LOGGER.info("Loaded tracking data for {} items", trackedLocations.size());
+                InventorySortClient.LOGGER.info("Loaded tracking data for {} items in {}", trackedLocations.size(), activeNamespace);
             }
         } catch (IOException e) {
             InventorySortClient.LOGGER.error("Failed to load item location data", e);

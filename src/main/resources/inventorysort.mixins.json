@@ -11,7 +11,7 @@
     "AbstractContainerMenuInvoker",
     "AbstractContainerScreenInvoker",
     "ContainerTrackingMixin",
-    "LocalPlayerMixin"
+    "MultiPlayerGameModeMixin"
   ],
   "injectors": {
     "defaultRequire": 1

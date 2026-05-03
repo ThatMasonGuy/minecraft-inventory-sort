@@ -3,28 +3,32 @@ package tempeststudios.inventorysort;
 import net.minecraft.core.BlockPos;
 
 /**
- * Utility to capture the block position of containers when they're opened
+ * Utility to capture the block position used to open containers.
  */
 public class ContainerPositionCapture {
-    private static BlockPos lastLookedAtBlock = null;
-    private static long lastLookTime = 0;
-    private static final long POSITION_TIMEOUT = 1000; // 1 second timeout
+    private static BlockPos lastInteractedBlock = null;
+    private static long lastInteractionTime = 0;
+    private static final long POSITION_TIMEOUT = 3000; // server/container open can arrive a few ticks later
 
     public static void setLastLookedAtBlock(BlockPos pos) {
-        lastLookedAtBlock = pos;
-        lastLookTime = System.currentTimeMillis();
+        setLastInteractedBlock(pos);
+    }
+
+    public static void setLastInteractedBlock(BlockPos pos) {
+        lastInteractedBlock = pos;
+        lastInteractionTime = System.currentTimeMillis();
     }
 
     public static BlockPos getLastLookedAtBlock() {
-        // Return null if too much time has passed (player moved away)
-        if (System.currentTimeMillis() - lastLookTime > POSITION_TIMEOUT) {
+        // Return null if too much time has passed since the actual block interaction.
+        if (System.currentTimeMillis() - lastInteractionTime > POSITION_TIMEOUT) {
             return null;
         }
-        return lastLookedAtBlock;
+        return lastInteractedBlock;
     }
 
     public static void clear() {
-        lastLookedAtBlock = null;
-        lastLookTime = 0;
+        lastInteractedBlock = null;
+        lastInteractionTime = 0;
     }
 }
