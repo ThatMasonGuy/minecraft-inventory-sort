@@ -20,6 +20,10 @@ public final class InventoryHistorySampler {
             lastSignature = "";
             return;
         }
+        if (!ServerWorldProfileManager.getInstance().trackingAllowed(client)) {
+            lastSignature = "";
+            return;
+        }
 
         Map<String, ItemStack> totals = collectInventoryTotals(client.player.getInventory(), client.player.containerMenu.getCarried());
         String signature = buildSignature(totals);

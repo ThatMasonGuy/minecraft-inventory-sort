@@ -58,6 +58,7 @@ public class ItemLocationTracker {
      * Track an item at a container location
      */
     public void trackItem(ItemStack stack, BlockPos pos, ResourceKey<Level> dimension, String containerType) {
+        if (!ServerWorldProfileManager.getInstance().trackingAllowed(Minecraft.getInstance())) return;
         if (stack.isEmpty()) return;
         String namespace = ensureCurrentNamespace();
 
@@ -72,6 +73,7 @@ public class ItemLocationTracker {
      * Track an item at a canonical fixed container location.
      */
     public void trackItem(ItemStack stack, ContainerIdentity identity) {
+        if (!ServerWorldProfileManager.getInstance().trackingAllowed(Minecraft.getInstance())) return;
         if (stack.isEmpty() || identity == null) return;
         ensureNamespaceLoaded(identity.getNamespace());
 
@@ -86,6 +88,7 @@ public class ItemLocationTracker {
      * Track an item in a shulker box
      */
     public void trackItemInShulker(ItemStack stack, String shulkerIdentifier) {
+        if (!ServerWorldProfileManager.getInstance().trackingAllowed(Minecraft.getInstance())) return;
         if (stack.isEmpty()) return;
         String namespace = ensureCurrentNamespace();
 
@@ -96,6 +99,7 @@ public class ItemLocationTracker {
     }
 
     public void replaceContainerSnapshot(ContainerIdentity identity, Collection<ItemStack> stacks) {
+        if (!ServerWorldProfileManager.getInstance().trackingAllowed(Minecraft.getInstance())) return;
         if (identity == null) return;
         String namespace = ensureNamespaceLoaded(identity.getNamespace());
         Map<String, Integer> aggregated = aggregateByItem(stacks);
@@ -121,6 +125,7 @@ public class ItemLocationTracker {
     }
 
     public void replaceInventorySnapshot(Collection<ItemStack> stacks) {
+        if (!ServerWorldProfileManager.getInstance().trackingAllowed(Minecraft.getInstance())) return;
         String namespace = ensureCurrentNamespace();
 
         removeLocations(location -> location.getType() == LocationEntry.LocationType.INVENTORY

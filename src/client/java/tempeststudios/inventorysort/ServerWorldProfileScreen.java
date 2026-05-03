@@ -12,12 +12,18 @@ import java.util.List;
 
 public class ServerWorldProfileScreen extends Screen {
     private final Screen parent;
+    private final boolean requiresConfirmation;
     private EditBox profileBox;
     private String serverKey;
 
     public ServerWorldProfileScreen(Screen parent) {
+        this(parent, false);
+    }
+
+    public ServerWorldProfileScreen(Screen parent, boolean requiresConfirmation) {
         super(Component.literal("Tracked World"));
         this.parent = parent;
+        this.requiresConfirmation = requiresConfirmation;
     }
 
     @Override
@@ -43,7 +49,7 @@ public class ServerWorldProfileScreen extends Screen {
                 .bounds(panelX + 14, panelY + panelH - 28, 72, 18)
                 .build());
 
-        this.addRenderableWidget(Button.builder(Component.literal("Back"), button -> closeToParent())
+        this.addRenderableWidget(Button.builder(Component.literal(requiresConfirmation ? "Confirm" : "Back"), button -> confirmOrClose())
                 .bounds(panelX + panelW - 72, panelY + panelH - 28, 58, 18)
                 .build());
 
@@ -88,6 +94,9 @@ public class ServerWorldProfileScreen extends Screen {
         } else {
             String active = ServerWorldProfileManager.getInstance().getActiveProfile(serverKey);
             g.drawString(this.font, serverKey, panelX + 14, panelY + 28, 0xFF888888, false);
+            if (requiresConfirmation) {
+                g.drawString(this.font, "Confirm before tracking starts", panelX + 14, panelY + 39, 0xFFFFDD55, false);
+            }
             g.drawString(this.font, "Active: " + active, panelX + 14, panelY + panelH - 42, 0xFF88FF88, false);
         }
 
@@ -114,7 +123,20 @@ public class ServerWorldProfileScreen extends Screen {
         closeToParent();
     }
 
+    private void confirmOrClose() {
+        if (serverKey != null && requiresConfirmation) {
+            ServerWorldProfileManager.getInstance().confirmActiveProfile(serverKey);
+            InventoryHistorySampler.reset();
+        }
+        closeToParent();
+    }
+
     private void closeToParent() {
         Minecraft.getInstance().setScreen(parent);
+    }
+
+    @Override
+    public boolean shouldCloseOnEsc() {
+        return !requiresConfirmation;
     }
 }

@@ -30,7 +30,10 @@ public class InventorySortClient implements ClientModInitializer {
 			LOGGER.info("Registered mod commands");
 		});
 
-		ClientTickEvents.END_CLIENT_TICK.register(InventoryHistorySampler::sample);
+		ClientTickEvents.END_CLIENT_TICK.register(client -> {
+			ServerWorldProfileManager.getInstance().promptIfNeeded(client);
+			InventoryHistorySampler.sample(client);
+		});
 
 		// Register shutdown hook to save tracking data
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> {

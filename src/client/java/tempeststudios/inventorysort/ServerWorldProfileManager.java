@@ -14,9 +14,11 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 public final class ServerWorldProfileManager {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -25,6 +27,7 @@ public final class ServerWorldProfileManager {
 
     private final Path saveFile;
     private final Map<String, ServerProfiles> profilesByServer = new HashMap<>();
+    private final Set<String> confirmedThisSession = new HashSet<>();
 
     private ServerWorldProfileManager() {
         Path modDir = Minecraft.getInstance().gameDirectory.toPath().resolve("inventorysort");
@@ -60,6 +63,39 @@ public final class ServerWorldProfileManager {
         return profiles;
     }
 
+    public boolean needsConfirmation(Minecraft client) {
+        String serverKey = TrackingNamespace.currentServerKey(client);
+        if (serverKey == null) {
+            return false;
+        }
+        ServerProfiles profiles = profilesFor(serverKey);
+        if (profiles.profiles.size() <= 1) {
+            return false;
+        }
+        return !confirmedThisSession.contains(confirmationKey(serverKey, profiles.activeProfile));
+    }
+
+    public boolean trackingAllowed(Minecraft client) {
+        return !needsConfirmation(client);
+    }
+
+    public void confirmActiveProfile(String serverKey) {
+        if (serverKey == null || serverKey.isBlank()) {
+            return;
+        }
+        confirmedThisSession.add(confirmationKey(serverKey, getActiveProfile(serverKey)));
+        InventoryHistorySampler.reset();
+    }
+
+    public void promptIfNeeded(Minecraft client) {
+        if (client == null || client.player == null || client.level == null || client.screen != null) {
+            return;
+        }
+        if (needsConfirmation(client)) {
+            client.setScreen(new ServerWorldProfileScreen(null, true));
+        }
+    }
+
     public void setActiveProfile(String serverKey, String profileName) {
         if (serverKey == null || serverKey.isBlank()) {
             return;
@@ -71,6 +107,7 @@ public final class ServerWorldProfileManager {
         }
         serverProfiles.activeProfile = profile;
         save();
+        confirmActiveProfile(serverKey);
         ItemLocationTracker.getInstance().reloadForCurrentNamespace();
         InventoryHistorySampler.reset();
     }
@@ -94,6 +131,10 @@ public final class ServerWorldProfileManager {
                 .toLowerCase(Locale.ROOT)
                 .replaceAll("[^a-z0-9._-]+", "_");
         return profile.isBlank() ? DEFAULT_PROFILE : profile;
+    }
+
+    private String confirmationKey(String serverKey, String profile) {
+        return serverKey + ":" + profile;
     }
 
     private void load() {

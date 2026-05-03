@@ -90,6 +90,7 @@ public class ModCommands {
 
         ServerWorldProfileManager manager = ServerWorldProfileManager.getInstance();
         manager.setActiveProfile(serverKey, profileName);
+        manager.confirmActiveProfile(serverKey);
         String active = manager.getActiveProfile(serverKey);
         context.getSource().sendFeedback(Component.literal("Tracking server world: " + active).withStyle(ChatFormatting.GREEN));
         context.getSource().sendFeedback(Component.literal("Namespace: " + TrackingNamespace.current(Minecraft.getInstance())).withStyle(ChatFormatting.GRAY));
