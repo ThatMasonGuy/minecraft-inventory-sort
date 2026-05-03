@@ -81,18 +81,38 @@ public final class ContainerIdentity {
 
         StringBuilder key = new StringBuilder("fixed:");
         key.append(dimensionKey).append(":");
-        StringBuilder label = new StringBuilder();
         for (int i = 0; i < positions.size(); i++) {
             BlockPos p = positions.get(i);
             if (i > 0) {
                 key.append("+");
-                label.append(" + ");
             }
             key.append(posKey(p));
-            label.append(p.getX()).append(", ").append(p.getY()).append(", ").append(p.getZ());
         }
 
-        return new ContainerIdentity(namespace, dimension, key.toString(), label.toString(), positions.get(0), containerType);
+        return new ContainerIdentity(namespace, dimension, key.toString(), compactPositionLabel(positions), positions.get(0), containerType);
+    }
+
+    private static String compactPositionLabel(List<BlockPos> positions) {
+        if (positions.size() == 2) {
+            BlockPos a = positions.get(0);
+            BlockPos b = positions.get(1);
+            if (a.getY() == b.getY() && a.getZ() == b.getZ()) {
+                return String.format("(%d - %d), %d, %d", a.getX(), b.getX(), a.getY(), a.getZ());
+            }
+            if (a.getX() == b.getX() && a.getY() == b.getY()) {
+                return String.format("%d, %d, (%d - %d)", a.getX(), a.getY(), a.getZ(), b.getZ());
+            }
+        }
+
+        StringBuilder label = new StringBuilder();
+        for (int i = 0; i < positions.size(); i++) {
+            BlockPos p = positions.get(i);
+            if (i > 0) {
+                label.append(" + ");
+            }
+            label.append(p.getX()).append(", ").append(p.getY()).append(", ").append(p.getZ());
+        }
+        return label.toString();
     }
 
     private static String extractContainerType(BlockState state) {

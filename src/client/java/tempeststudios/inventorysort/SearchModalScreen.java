@@ -511,23 +511,23 @@ public class SearchModalScreen extends Screen {
                 String location = loc.getPositionLabel() != null
                         ? loc.getPositionLabel()
                         : String.format("%d, %d, %d", loc.getPos().getX(), loc.getPos().getY(), loc.getPos().getZ());
-                return String.format("%s @ %s (%s) - %s",
+                return String.format("%s @ %s (%s) - x%d - %s",
                         loc.getContainerType(),
                         location,
-                        dim, timeAgo);
+                        dim, loc.getCount(), timeAgo);
             case INVENTORY:
                 // Legacy support: If position exists, show it; otherwise just show "Player Inventory"
                 if (loc.getPos() != null && loc.getDimensionKey() != null) {
                     String invDim = loc.getDimensionKey().replace("minecraft:", "").replace("the_", "");
                     String invTimeAgo = formatTimeAgo(loc.getLastSeen());
-                    return String.format("Player Inventory @ %d, %d, %d (%s) - %s",
+                    return String.format("Player Inventory @ %d, %d, %d (%s) - x%d - %s",
                             loc.getPos().getX(), loc.getPos().getY(), loc.getPos().getZ(),
-                            invDim, invTimeAgo);
+                            invDim, loc.getCount(), invTimeAgo);
                 } else {
-                    return "Player Inventory - " + formatTimeAgo(loc.getLastSeen());
+                    return String.format("Player Inventory - x%d - %s", loc.getCount(), formatTimeAgo(loc.getLastSeen()));
                 }
             case SHULKER_BOX:
-                return "Shulker Box - " + formatTimeAgo(loc.getLastSeen());
+                return String.format("Shulker Box - x%d - %s", loc.getCount(), formatTimeAgo(loc.getLastSeen()));
             default:
                 return "Unknown";
         }
