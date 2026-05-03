@@ -11,7 +11,7 @@ public class InventorySortIconButton extends Button {
 	public static final int ALL = 2;
 	public static final int SEARCH = 3;
 
-	private static final int SIZE = 18;
+	private static final int SIZE = 12;
 	private static final int ICON_COLOR = 0xFF1C1C1C;
 	private static final int ICON_HOVER_COLOR = 0xFF000000;
 	private final int icon;
@@ -24,11 +24,14 @@ public class InventorySortIconButton extends Button {
 
 	@Override
 	protected void renderContents(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-		renderDefaultSprite(guiGraphics);
-
-		int color = isHoveredOrFocused() ? ICON_HOVER_COLOR : ICON_COLOR;
 		int x = getX();
 		int y = getY();
+		boolean hovered = isHoveredOrFocused();
+
+		// Custom beveled background
+		drawBeveledBackground(guiGraphics, x, y, SIZE, SIZE, hovered);
+
+		int color = hovered ? ICON_HOVER_COLOR : ICON_COLOR;
 
 		switch (icon) {
 			case SORT -> drawSortIcon(guiGraphics, x, y, color);
@@ -39,39 +42,72 @@ public class InventorySortIconButton extends Button {
 		}
 	}
 
-	// Three left-aligned bars in descending width — classic "sorted list" icon
+	private void drawBeveledBackground(GuiGraphics guiGraphics, int x, int y, int width, int height, boolean hovered) {
+		// Border (Black), 2px cut on corners
+		fill(guiGraphics, x + 2, y, x + width - 2, y + 1, 0xFF000000); // Top
+		fill(guiGraphics, x + 2, y + height - 1, x + width - 2, y + height, 0xFF000000); // Bottom
+		fill(guiGraphics, x, y + 2, x + 1, y + height - 2, 0xFF000000); // Left
+		fill(guiGraphics, x + width - 1, y + 2, x + width, y + height - 2, 0xFF000000); // Right
+		// Corner pixels
+		fill(guiGraphics, x + 1, y + 1, x + 2, y + 2, 0xFF000000); // TL
+		fill(guiGraphics, x + width - 2, y + 1, x + width - 1, y + 2, 0xFF000000); // TR
+		fill(guiGraphics, x + 1, y + height - 2, x + 2, y + height - 1, 0xFF000000); // BL
+		fill(guiGraphics, x + width - 2, y + height - 2, x + width - 1, y + height - 1, 0xFF000000); // BR
+
+		// Center fill (Lighter grey on hover)
+		int centerColor = hovered ? 0xFFE0E0E0 : 0xFFC6C6C6;
+		fill(guiGraphics, x + 2, y + 2, x + width - 2, y + height - 2, centerColor);
+
+		// Top/Left highlight (White)
+		fill(guiGraphics, x + 2, y + 1, x + width - 2, y + 2, 0xFFFFFFFF); // Top
+		fill(guiGraphics, x + 1, y + 2, x + 2, y + height - 2, 0xFFFFFFFF); // Left
+
+		// Bottom/Right shadow (Dark Grey)
+		fill(guiGraphics, x + 2, y + height - 2, x + width - 2, y + height - 1, 0xFF555555); // Bottom
+		fill(guiGraphics, x + width - 2, y + 2, x + width - 1, y + height - 2, 0xFF555555); // Right
+	}
+
+	// 3 left-aligned horizontal bars in descending width
 	private static void drawSortIcon(GuiGraphics g, int x, int y, int color) {
-		fill(g, x+3, y+5, x+15, y+7, color);
-		fill(g, x+3, y+9, x+12, y+11, color);
-		fill(g, x+3, y+13, x+8,  y+15, color);
+		fill(g, x + 3, y + 3, x + 9, y + 4, color);
+		fill(g, x + 3, y + 5, x + 7, y + 6, color);
+		fill(g, x + 3, y + 7, x + 5, y + 8, color);
 	}
 
-	// Funnel/filter shape — wide at top, narrow stem — represents selective matching
+	// Funnel/filter shape — 3 horizontal bars centered in descending width
 	private static void drawMatchingIcon(GuiGraphics g, int x, int y, int color) {
-		fill(g, x+3, y+4,  x+15, y+6,  color);
-		fill(g, x+5, y+7,  x+13, y+9,  color);
-		fill(g, x+7, y+10, x+11, y+12, color);
-		fill(g, x+8, y+12, x+10, y+15, color);
+		fill(g, x + 3, y + 3, x + 9, y + 4, color);
+		fill(g, x + 4, y + 5, x + 8, y + 6, color);
+		fill(g, x + 5, y + 7, x + 7, y + 8, color);
 	}
 
-	// Double-shaft bold arrow pointing right — represents "move all" with no filter
+	// Double arrows, one up (left) and one down (right)
 	private static void drawAllIcon(GuiGraphics g, int x, int y, int color) {
-		fill(g, x+3,  y+6,  x+11, y+8,  color);
-		fill(g, x+3,  y+10, x+11, y+12, color);
-		fill(g, x+11, y+4,  x+13, y+14, color);
-		fill(g, x+13, y+6,  x+15, y+8,  color);
-		fill(g, x+13, y+10, x+15, y+12, color);
+		// Up arrow (left)
+		fill(g, x + 4, y + 3, x + 5, y + 4, color);
+		fill(g, x + 3, y + 4, x + 6, y + 5, color);
+		fill(g, x + 4, y + 5, x + 5, y + 9, color);
+
+		// Down arrow (right)
+		fill(g, x + 7, y + 3, x + 8, y + 7, color);
+		fill(g, x + 6, y + 7, x + 9, y + 8, color);
+		fill(g, x + 7, y + 8, x + 8, y + 9, color);
 	}
 
-	// Magnifying glass — circle ring with a diagonal handle
+	// Magnifying glass — rounded pixel lens with short diagonal handle
 	private static void drawSearchIcon(GuiGraphics g, int x, int y, int color) {
-		fill(g, x+3, y+3, x+11, y+5,  color);
-		fill(g, x+3, y+9, x+11, y+11, color);
-		fill(g, x+3, y+5, x+5,  y+9,  color);
-		fill(g, x+9, y+5, x+11, y+9,  color);
-		fill(g, x+10, y+10, x+12, y+12, color);
-		fill(g, x+12, y+12, x+14, y+14, color);
-		fill(g, x+14, y+14, x+16, y+16, color);
+		x += 1;
+		y += 1;
+
+		// Lens: 5x4 rounded outline
+		fill(g, x + 3, y + 2, x + 6, y + 3, color); // Top
+		fill(g, x + 2, y + 3, x + 3, y + 5, color); // Left
+		fill(g, x + 6, y + 3, x + 7, y + 5, color); // Right
+		fill(g, x + 3, y + 5, x + 6, y + 6, color); // Bottom
+
+		// Handle: starts from bottom-right side, not the corner-corner
+		fill(g, x + 6, y + 6, x + 7, y + 7, color);
+		fill(g, x + 7, y + 7, x + 8, y + 8, color);
 	}
 
 	private static void fill(GuiGraphics guiGraphics, int left, int top, int right, int bottom, int color) {

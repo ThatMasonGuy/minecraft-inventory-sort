@@ -4,6 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -21,8 +22,8 @@ import java.util.List;
 @Mixin(AbstractContainerScreen.class)
 public abstract class HandledScreenMixin implements RecipeBookAwareButtonScreen {
 
-	@Unique private static final int inventorySort$BUTTON_SIZE = 18;
-	@Unique private static final int inventorySort$BUTTON_GAP = 2;
+	@Unique private static final int inventorySort$BUTTON_SIZE = 12;
+	@Unique private static final int inventorySort$BUTTON_GAP = 1;
 	@Unique private static final int inventorySort$PLAYER_SORT = 0;
 	@Unique private static final int inventorySort$PLAYER_MATCHING_TO_CONTAINER = 1;
 	@Unique private static final int inventorySort$PLAYER_ALL_TO_CONTAINER = 2;
@@ -42,11 +43,11 @@ public abstract class HandledScreenMixin implements RecipeBookAwareButtonScreen 
 	 */
 	@Unique
 	private static int calcButtonX(int leftPos, int imageWidth, int screenWidth, int totalButtonWidth) {
-		int rightX = leftPos + imageWidth;
+		int rightX = leftPos + imageWidth - 3;
 		if (rightX + totalButtonWidth <= screenWidth) {
 			return rightX;
 		}
-		int leftX = leftPos - totalButtonWidth;
+		int leftX = leftPos - totalButtonWidth + 3;
 		if (leftX >= 0) {
 			return leftX;
 		}
@@ -65,7 +66,7 @@ public abstract class HandledScreenMixin implements RecipeBookAwareButtonScreen 
 		inventorySort$trackedButtonRoles.clear();
 
 		int totalSlots = screen.getMenu().slots.size();
-		inventorySort$isContainer = totalSlots > 46;
+		inventorySort$isContainer = totalSlots > 46 && !(screen instanceof CreativeModeInventoryScreen);
 
 		if (inventorySort$isContainer) {
 			int containerSlots = totalSlots - 36;
