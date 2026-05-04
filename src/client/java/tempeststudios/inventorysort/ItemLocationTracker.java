@@ -245,7 +245,7 @@ public class ItemLocationTracker {
             // Replace with new entry (updates containerType, timestamp, etc.)
             locations.remove(existing);
             locations.addFirst(newEntry);
-            InventorySortClient.LOGGER.info("Updated existing location for {} with new containerType and timestamp", itemId);
+            InventorySortClient.LOGGER.debug("Updated existing location for {} with new containerType and timestamp", itemId);
         } else {
             // Add new location at front
             locations.addFirst(newEntry);
@@ -315,7 +315,7 @@ public class ItemLocationTracker {
             }
 
             GSON.toJson(serializable, writer);
-            InventorySortClient.LOGGER.info("Saved item location tracking data for {}", activeNamespace);
+            InventorySortClient.LOGGER.debug("Saved item location tracking data for {}", activeNamespace);
         } catch (IOException e) {
             InventorySortClient.LOGGER.error("Failed to save item location data", e);
         }

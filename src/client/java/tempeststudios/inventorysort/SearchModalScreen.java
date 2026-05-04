@@ -283,7 +283,7 @@ public class SearchModalScreen extends Screen {
                     countStr = "x" + row.count;
                     countColor = 0xFFFFFFFF;
                 } else if (row.trackedCount > 0) {
-                    // Item tracked but not in inventory - show tracked count in gray
+                    // Item tracked but not in inventory - show total known tracked count in gray
                     countStr = "x" + row.trackedCount;
                     countColor = 0xFF888888; // Gray
                 } else {
@@ -473,18 +473,17 @@ public class SearchModalScreen extends Screen {
 
             // Only log if we actually found tracking data
             if (!locations.isEmpty()) {
-                InventorySortClient.LOGGER.info("Querying tracking for {}: found {} locations", entry.id, locations.size());
+                InventorySortClient.LOGGER.debug("Querying tracking for {}: found {} locations", entry.id, locations.size());
 
                 for (LocationEntry loc : locations) {
                     String formatted = formatLocation(loc);
                     trackedLocations.add(formatted);
-                    InventorySortClient.LOGGER.info("  - {}", formatted);
+                    InventorySortClient.LOGGER.debug("  - {}", formatted);
                 }
             }
 
-            // Get count from most recent location (first in list)
-            if (!locations.isEmpty()) {
-                trackedCount = locations.get(0).getCount();
+            for (LocationEntry loc : locations) {
+                trackedCount += loc.getCount();
             }
         } catch (Exception e) {
             InventorySortClient.LOGGER.error("Failed to query tracking for " + entry.id, e);
@@ -687,7 +686,7 @@ public class SearchModalScreen extends Screen {
         final String location;
         final String coords;
         final List<String> trackedLocations;
-        final int trackedCount; // Count from most recent tracked location
+        final int trackedCount; // Total count across known tracked storage locations
 
         ResultRow(String id, String name, ItemStack icon,
                   String searchName, String searchId,

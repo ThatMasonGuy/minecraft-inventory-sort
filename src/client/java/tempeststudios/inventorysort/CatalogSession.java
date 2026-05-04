@@ -2,6 +2,7 @@ package tempeststudios.inventorysort;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceKey;
@@ -92,6 +93,10 @@ public class CatalogSession {
         return identity.getNamespace() + ":" + identity.getIdentityKey() + ":" + identity.getContainerType();
     }
 
+    public static String generatePlayerInventoryFingerprint() {
+        return "player_inventory";
+    }
+
     /**
      * Check if a container has already been tracked in this session
      */
@@ -113,7 +118,7 @@ public class CatalogSession {
 
         for (ItemStack stack : items) {
             if (!stack.isEmpty()) {
-                String itemId = stack.getItem().toString();
+                String itemId = BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
                 itemCounts.merge(itemId, stack.getCount(), Integer::sum);
             }
         }

@@ -3,11 +3,9 @@ package tempeststudios.inventorysort.mixin;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -44,11 +42,8 @@ public abstract class ContainerTrackingMixin {
         inventorySort$screenClassName = screen.getClass().getSimpleName();
         String menuClassName = menu.getClass().getSimpleName();
 
-        InventorySortClient.LOGGER.info("=== Container Screen Opened ===");
-        InventorySortClient.LOGGER.info("  Screen Class: {}", inventorySort$screenClassName);
-        InventorySortClient.LOGGER.info("  Menu Class: {}", menuClassName);
-        InventorySortClient.LOGGER.info("  Total Slots: {}", menu.slots.size());
-        InventorySortClient.LOGGER.info("===============================");
+        InventorySortClient.LOGGER.debug("Container screen opened: screen={}, menu={}, totalSlots={}",
+                inventorySort$screenClassName, menuClassName, menu.slots.size());
 
         inventorySort$isPlayerInventory = inventorySort$screenClassName.equals("InventoryScreen") ||
                 inventorySort$screenClassName.equals("CreativeModeInventoryScreen");
@@ -120,7 +115,7 @@ public abstract class ContainerTrackingMixin {
 
         ItemLocationTracker tracker = ItemLocationTracker.getInstance();
 
-        InventorySortClient.LOGGER.info("Tracking screen on close: {} (isPlayerInventory: {})", inventorySort$screenClassName, inventorySort$isPlayerInventory);
+        InventorySortClient.LOGGER.debug("Tracking screen on close: {} (isPlayerInventory: {})", inventorySort$screenClassName, inventorySort$isPlayerInventory);
 
         if (inventorySort$isPlayerInventory) {
             // Player inventory is tracked continuously by InventoryHistorySampler, no need to duplicate
@@ -128,7 +123,7 @@ public abstract class ContainerTrackingMixin {
                 trackInventoryForCatalog(client);
             }
         } else if (inventorySort$skipTracking) {
-            InventorySortClient.LOGGER.info("Skipped tracking transient or unsupported screen: {}", inventorySort$screenClassName);
+            InventorySortClient.LOGGER.debug("Skipped tracking transient or unsupported screen: {}", inventorySort$screenClassName);
         } else {
             trackContainer(tracker, client, inventorySort$screenClassName);
 
@@ -143,7 +138,7 @@ public abstract class ContainerTrackingMixin {
         int itemsTracked = 0;
         List<ItemStack> fixedContainerItems = new ArrayList<>();
 
-        InventorySortClient.LOGGER.info("Scanning {} container slots for items on close", containerSlots);
+        InventorySortClient.LOGGER.debug("Scanning {} container slots for items on close", containerSlots);
 
         // Validation: If we have a captured identity, ensure the slot count matches the container type.
         // This prevents "ghost" tracking where a different screen (like a crafting table) uses the
@@ -177,13 +172,13 @@ public abstract class ContainerTrackingMixin {
         }
 
         if (itemsTracked == 0) {
-            InventorySortClient.LOGGER.info("No items found in {} (container is empty)", inventorySort$capturedContainerType);
+            InventorySortClient.LOGGER.debug("No items found in {} (container is empty)", inventorySort$capturedContainerType);
         } else {
-            InventorySortClient.LOGGER.info("Tracked {} items from {} container", itemsTracked, inventorySort$capturedContainerType);
+            InventorySortClient.LOGGER.debug("Tracked {} items from {} container", itemsTracked, inventorySort$capturedContainerType);
         }
 
         if (inventorySort$isShulker) {
-            InventorySortClient.LOGGER.info("Completed shulker box tracking (ID: {})", inventorySort$shulkerIdentifier);
+            InventorySortClient.LOGGER.debug("Completed shulker box tracking (ID: {})", inventorySort$shulkerIdentifier);
         }
     }
 
@@ -266,11 +261,7 @@ public abstract class ContainerTrackingMixin {
      * Track player inventory for the active catalog session
      */
     private void trackInventoryForCatalog(Minecraft client) {
-        BlockPos playerPos = client.player.blockPosition();
-        ResourceKey<Level> dimension = client.level.dimension();
-
-        // Use a special fingerprint for player inventory
-        String fingerprint = CatalogSession.generateFingerprint(playerPos, dimension, "Player Inventory");
+        String fingerprint = CatalogSession.generatePlayerInventoryFingerprint();
 
         // Collect inventory items (slots 0-35)
         java.util.List<ItemStack> items = new java.util.ArrayList<>();
