@@ -61,9 +61,7 @@ public final class ServerWorldProfileManager {
         if (serverKey == null || serverKey.isBlank()) {
             return Collections.singletonList(DEFAULT_PROFILE);
         }
-        List<String> profiles = new ArrayList<>(profilesFor(serverKey).profiles);
-        Collections.sort(profiles);
-        return profiles;
+        return new ArrayList<>(profilesFor(serverKey).profiles);
     }
 
     public boolean needsConfirmation(Minecraft client) {
@@ -127,9 +125,8 @@ public final class ServerWorldProfileManager {
         }
         String profile = sanitizeProfile(profileName);
         ServerProfiles serverProfiles = profilesFor(serverKey);
-        if (!serverProfiles.profiles.contains(profile)) {
-            serverProfiles.profiles.add(profile);
-        }
+        serverProfiles.profiles.remove(profile);
+        serverProfiles.profiles.add(0, profile);
         serverProfiles.activeProfile = profile;
         save();
         confirmActiveProfile(serverKey);
@@ -210,7 +207,7 @@ public final class ServerWorldProfileManager {
                 activeProfile = DEFAULT_PROFILE;
             }
             if (!profiles.contains(activeProfile)) {
-                profiles.add(activeProfile);
+                profiles.add(0, activeProfile);
             }
         }
     }

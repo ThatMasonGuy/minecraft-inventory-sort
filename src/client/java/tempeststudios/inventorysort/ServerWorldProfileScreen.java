@@ -15,6 +15,7 @@ public class ServerWorldProfileScreen extends Screen {
     private final boolean requiresConfirmation;
     private EditBox profileBox;
     private String serverKey;
+    private int scrollOffset = 0;
 
     public ServerWorldProfileScreen(Screen parent) {
         this(parent, false);
@@ -36,38 +37,53 @@ public class ServerWorldProfileScreen extends Screen {
         int panelX = (this.width - panelW) / 2;
         int panelY = (this.height - panelH) / 2;
 
-        this.profileBox = new EditBox(this.font, panelX + 14, panelY + 48, panelW - 92, 18,
+        this.profileBox = new EditBox(this.font, panelX + 16, panelY + 50, panelW - 96, 14,
                 Component.literal("World name"));
         this.profileBox.setMaxLength(32);
+        this.profileBox.setBordered(false);
+        this.profileBox.setTextColor(0xFF000000);
         this.addRenderableWidget(profileBox);
 
-        this.addRenderableWidget(Button.builder(Component.literal("Use"), button -> useTypedProfile())
-                .bounds(panelX + panelW - 72, panelY + 48, 58, 18)
-                .build());
+        this.addRenderableWidget(new InventorySortTextButton(panelX + panelW - 72, panelY + 48, 58, 18, Component.literal("Use"), button -> useTypedProfile()));
 
-        this.addRenderableWidget(Button.builder(Component.literal("Default"), button -> useProfile("default"))
-                .bounds(panelX + 14, panelY + panelH - 28, 72, 18)
-                .build());
+        this.addRenderableWidget(new InventorySortTextButton(panelX + 14, panelY + panelH - 28, 72, 18, Component.literal("Default"), button -> useProfile("default")));
 
-        this.addRenderableWidget(Button.builder(Component.literal(requiresConfirmation ? "Confirm" : "Back"), button -> confirmOrClose())
-                .bounds(panelX + panelW - 72, panelY + panelH - 28, 58, 18)
-                .build());
+        this.addRenderableWidget(new InventorySortTextButton(panelX + panelW - 72, panelY + panelH - 28, 58, 18, Component.literal(requiresConfirmation ? "Confirm" : "Back"), button -> confirmOrClose()));
 
         if (serverKey != null) {
             List<String> profiles = ServerWorldProfileManager.getInstance().getProfiles(serverKey);
             String active = ServerWorldProfileManager.getInstance().getActiveProfile(serverKey);
+            
+            int visibleCount = 5;
+            int maxScroll = Math.max(0, profiles.size() - visibleCount);
+            scrollOffset = Math.max(0, Math.min(scrollOffset, maxScroll));
+            
             int y = panelY + 74;
             int added = 0;
-            for (String profile : profiles) {
-                if (added >= 5 || y + 18 > panelY + panelH - 34) {
+            
+            for (int i = scrollOffset; i < profiles.size(); i++) {
+                if (added >= visibleCount || y + 18 > panelY + panelH - 34) {
                     break;
                 }
+                String profile = profiles.get(i);
                 String label = profile.equals(active) ? "* " + profile : profile;
-                this.addRenderableWidget(Button.builder(Component.literal(label), button -> useProfile(profile))
-                        .bounds(panelX + 14, y, panelW - 28, 18)
-                        .build());
+                // Leave room for scroll buttons by reducing width
+                int buttonWidth = profiles.size() > visibleCount ? panelW - 46 : panelW - 28;
+                this.addRenderableWidget(new InventorySortTextButton(panelX + 14, y, buttonWidth, 18, Component.literal(label), button -> useProfile(profile)));
                 y += 21;
                 added++;
+            }
+            
+            if (maxScroll > 0) {
+                int scrollColX = panelX + panelW - 32;
+                this.addRenderableWidget(new InventorySortModalIconButton(scrollColX, panelY + 74, 18, InventorySortModalIconButton.UP, Component.literal("Scroll Up"), btn -> {
+                    scrollOffset--;
+                    this.rebuildWidgets();
+                }));
+                this.addRenderableWidget(new InventorySortModalIconButton(scrollColX, panelY + 74 + 21, 18, InventorySortModalIconButton.DOWN, Component.literal("Scroll Down"), btn -> {
+                    scrollOffset++;
+                    this.rebuildWidgets();
+                }));
             }
         }
 
@@ -82,22 +98,24 @@ public class ServerWorldProfileScreen extends Screen {
         int panelY = (this.height - panelH) / 2;
 
         g.fill(0, 0, this.width, this.height, 0x88000000);
-        g.fill(panelX, panelY, panelX + panelW, panelY + panelH, 0xFF1E1E1E);
-        g.fill(panelX, panelY, panelX + panelW, panelY + 1, 0xFF5A5A5A);
-        g.fill(panelX, panelY, panelX + 1, panelY + panelH, 0xFF5A5A5A);
-        g.fill(panelX, panelY + panelH - 1, panelX + panelW, panelY + panelH, 0xFF0F0F0F);
-        g.fill(panelX + panelW - 1, panelY, panelX + panelW, panelY + panelH, 0xFF0F0F0F);
+        
+        // Main panel
+        InventorySortUIUtils.drawBeveledPanel(g, panelX, panelY, panelW, panelH, false);
 
-        g.drawString(this.font, "Tracked World", panelX + 14, panelY + 10, 0xFFFFFFFF, false);
+        g.drawString(this.font, "Tracked World", panelX + 14, panelY + 10, 0xFF1C1C1C, false);
+        
+        // Recessed edit box area
+        InventorySortUIUtils.drawRecessedPanel(g, panelX + 14, panelY + 48, panelW - 92, 18);
+
         if (serverKey == null) {
             g.drawString(this.font, "Multiplayer only", panelX + 14, panelY + 30, 0xFFFF5555, false);
         } else {
             String active = ServerWorldProfileManager.getInstance().getActiveProfile(serverKey);
-            g.drawString(this.font, serverKey, panelX + 14, panelY + 28, 0xFF888888, false);
+            g.drawString(this.font, serverKey, panelX + 14, panelY + 28, 0xFF555555, false);
             if (requiresConfirmation) {
-                g.drawString(this.font, "Confirm before tracking starts", panelX + 14, panelY + 39, 0xFFFFDD55, false);
+                g.drawString(this.font, "Confirm before tracking starts", panelX + 14, panelY + 39, 0xFF775500, false);
             }
-            g.drawString(this.font, "Active: " + active, panelX + 14, panelY + panelH - 42, 0xFF88FF88, false);
+            g.drawString(this.font, "Active: " + active, panelX + 14, panelY + panelH - 42, 0xFF007700, false);
         }
 
         super.render(g, mouseX, mouseY, partialTick);
@@ -138,5 +156,23 @@ public class ServerWorldProfileScreen extends Screen {
     @Override
     public boolean shouldCloseOnEsc() {
         return true;
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+        if (serverKey != null) {
+            List<String> profiles = ServerWorldProfileManager.getInstance().getProfiles(serverKey);
+            int maxScroll = Math.max(0, profiles.size() - 5);
+            if (maxScroll > 0) {
+                int delta = (int) Math.signum(-verticalAmount);
+                int oldOffset = scrollOffset;
+                scrollOffset = Math.max(0, Math.min(scrollOffset + delta, maxScroll));
+                if (scrollOffset != oldOffset) {
+                    this.rebuildWidgets();
+                    return true;
+                }
+            }
+        }
+        return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
     }
 }

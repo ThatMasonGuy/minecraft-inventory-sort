@@ -1,6 +1,5 @@
 package tempeststudios.inventorysort;
 
-import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -48,7 +47,7 @@ public class SearchModalScreen extends Screen {
     private Button scrollDownBtn;
 
     // Scrolling
-    private int scrollOffset = 0;
+    private int scrollOffsetPixels = 0;
 
     // Layout / constants
     private int modalW;
@@ -70,8 +69,6 @@ public class SearchModalScreen extends Screen {
     private static final int PAD = 14;
     private static final int ROW_H = 20;
     private static final int DETAILS_H = 60; // Height for expanded details (header + 3 locations + "+X more")
-
-    private static final int MAX_VISIBLE = 10;
 
     private static final DateTimeFormatter TS_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy h:mma");
 
@@ -116,50 +113,38 @@ public class SearchModalScreen extends Screen {
         // Search box
         int boxX = modalX + PAD;
         int boxW = (scrollColX - 6) - boxX; // stop before right-side columns
-        this.searchBox = new EditBox(this.font, boxX, searchBoxY, boxW, 18, Component.literal("Search"));
+        this.searchBox = new EditBox(this.font, boxX + 2, searchBoxY + 2, boxW - 4, 14, Component.literal("Search"));
         this.searchBox.setMaxLength(64);
         this.searchBox.setValue("");
+        this.searchBox.setBordered(false); // We draw our own beveled border
+        this.searchBox.setTextColor(0xFF000000);
         this.addRenderableWidget(this.searchBox);
 
         // Close button — keep it inside panel ✅
         int closeX = modalX + modalW - 22;
         int closeY = modalY + 6;
-        this.addRenderableWidget(Button.builder(Component.literal("✕"), btn -> closeToParent())
-                .bounds(closeX, closeY, 18, 18)
-                .build());
+        this.addRenderableWidget(new InventorySortModalIconButton(closeX, closeY, 16, InventorySortModalIconButton.CLOSE, Component.literal("Close"), btn -> closeToParent()));
 
         if (TrackingNamespace.isMultiplayerServer(mc)) {
-            this.addRenderableWidget(Button.builder(Component.literal("World"), btn -> mc.setScreen(new ServerWorldProfileScreen(this)))
-                    .bounds(closeX - 56, closeY, 52, 18)
-                    .build());
+            this.addRenderableWidget(new InventorySortTextButton(closeX - 52, closeY, 48, 16, Component.literal("World"), btn -> mc.setScreen(new ServerWorldProfileScreen(this))));
         }
 
         // Scroll buttons in their own column (never overlap rows now) ✅
-        scrollUpBtn = Button.builder(Component.literal("▲"), btn -> scrollBy(-1))
-                .bounds(scrollColX, listTopY, 18, 18)
-                .build();
-
-        scrollDownBtn = Button.builder(Component.literal("▼"), btn -> scrollBy(1))
-                .bounds(scrollColX, listTopY + 20, 18, 18)
-                .build();
+        scrollUpBtn = new InventorySortModalIconButton(scrollColX, listTopY, 18, InventorySortModalIconButton.UP, Component.literal("Scroll Up"), btn -> scrollBy(-1));
+        scrollDownBtn = new InventorySortModalIconButton(scrollColX, listTopY + 20, 18, InventorySortModalIconButton.DOWN, Component.literal("Scroll Down"), btn -> scrollBy(1));
 
         this.addRenderableWidget(scrollUpBtn);
         this.addRenderableWidget(scrollDownBtn);
 
         // Expand buttons pool (only interactive element per row)
         expandButtons.clear();
-        for (int i = 0; i < MAX_VISIBLE; i++) {
-            int idx = i;
-            Button b = Button.builder(Component.literal("▶"), btn -> {
-                        int realIndex = scrollOffset + idx;
-                        if (realIndex >= 0 && realIndex < results.size()) {
-                            String id = results.get(realIndex).id;
-                            toggleExpanded(id);
-                        }
-                    })
-                    .bounds(0, 0, 18, 18)
-                    .build();
-
+        for (int i = 0; i < 50; i++) {
+            InventorySortModalIconButton b = new InventorySortModalIconButton(0, 0, 16, InventorySortModalIconButton.EXPAND, Component.empty(), btn -> {
+                String target = ((InventorySortModalIconButton)btn).getTargetId();
+                if (target != null) {
+                    toggleExpanded(target);
+                }
+            });
             b.visible = false;
             b.active = false;
             this.addRenderableWidget(b);
@@ -181,7 +166,7 @@ public class SearchModalScreen extends Screen {
             String q = this.searchBox.getValue();
             if (!q.equals(this.lastQuery)) {
                 this.lastQuery = q;
-                this.scrollOffset = 0;
+                this.scrollOffsetPixels = 0;
                 updateResults(q);
                 updateLayout();
             }
@@ -201,8 +186,7 @@ public class SearchModalScreen extends Screen {
 
     private void scrollBy(int delta) {
         if (delta == 0) return;
-        int max = Math.max(0, results.size() - MAX_VISIBLE);
-        scrollOffset = clamp(scrollOffset + delta, 0, max);
+        scrollOffsetPixels += delta * (ROW_H + 4);
         updateLayout();
     }
 
@@ -223,18 +207,19 @@ public class SearchModalScreen extends Screen {
         g.fill(0, 0, this.width, this.height, 0x88000000);
 
         // Panel
-        g.fill(modalX, modalY, modalX + modalW, modalY + modalH, 0xFF1E1E1E);
-        g.fill(modalX, modalY, modalX + modalW, modalY + 1, 0xFF5A5A5A);
-        g.fill(modalX, modalY, modalX + 1, modalY + modalH, 0xFF5A5A5A);
-        g.fill(modalX, modalY + modalH - 1, modalX + modalW, modalY + modalH, 0xFF0F0F0F);
-        g.fill(modalX + modalW - 1, modalY, modalX + modalW, modalY + modalH, 0xFF0F0F0F);
+        InventorySortUIUtils.drawBeveledPanel(g, modalX, modalY, modalW, modalH, false);
 
-        g.drawString(this.font, "Inventory Search", modalX + PAD, modalY + 8, 0xFFFFFFFF, false);
+        g.drawString(this.font, "Inventory Search", modalX + PAD, modalY + 8, 0xFF1C1C1C, false);
 
         // Column headers
         int headerY = modalY + 48;
-        g.drawString(this.font, "Item", listX + 0, headerY, 0xFFAAAAAA, false);
-        g.drawString(this.font, "Count", listX + 230, headerY, 0xFFAAAAAA, false);
+        g.drawString(this.font, "Item", listX + 0, headerY, 0xFF555555, false);
+        g.drawString(this.font, "Count", listX + 230, headerY, 0xFF555555, false);
+
+        // Search Box recessed area
+        int boxX = modalX + PAD;
+        int boxW = (scrollColX - 6) - boxX;
+        InventorySortUIUtils.drawRecessedPanel(g, boxX, modalY + 22, boxW, 18);
 
         // List area: clip to the list ✅
         int clipLeft = listX - 2;
@@ -248,21 +233,26 @@ public class SearchModalScreen extends Screen {
             String msg = (lastQuery == null || lastQuery.trim().isEmpty())
                     ? "No recent items yet."
                     : "No matches found.";
-            g.drawString(this.font, msg, listX, listTopY + 6, 0xFF777777, false);
+            g.drawString(this.font, msg, listX, listTopY + 6, 0xFF555555, false);
         } else {
-            int y = listTopY;
+            int y = listTopY - scrollOffsetPixels;
 
-            for (int i = 0; i < MAX_VISIBLE; i++) {
-                int realIndex = scrollOffset + i;
-                if (realIndex >= results.size()) break;
-
-                ResultRow row = results.get(realIndex);
+            for (int i = 0; i < results.size(); i++) {
+                ResultRow row = results.get(i);
                 boolean isOpen = expanded.contains(row.id);
 
                 int rowHeight = ROW_H + (isOpen ? DETAILS_H : 0);
 
-                // Row background (this MUST be before widgets, otherwise it covers them)
-                int bg = (i % 2 == 0) ? 0xFF2A2A2A : 0xFF242424;
+                if (y + rowHeight + 4 <= listTopY) {
+                    y += rowHeight + 4;
+                    continue;
+                }
+                if (y >= listBottomY) {
+                    break;
+                }
+
+                // Row background (subtle light grey)
+                int bg = (i % 2 == 0) ? 0xFFBDBDBD : 0xFFB5B5B5;
                 g.fill(listX - 2, y, rowRightX, y + ROW_H, bg);
 
                 // Icon
@@ -273,19 +263,19 @@ public class SearchModalScreen extends Screen {
                 int nameX = listX + 16 + 8;
                 int nameMaxW = Math.max(80, listContentW - 16 - 8 - 70);
                 String name = this.font.plainSubstrByWidth(row.name, nameMaxW);
-                g.drawString(this.font, name, nameX, y + 6, 0xFFFFFFFF, false);
+                g.drawString(this.font, name, nameX, y + 6, 0xFF000000, false);
 
                 // Count display
                 String countStr;
                 int countColor;
                 if (row.seen) {
-                    // Item in current inventory - show count in white
+                    // Item in current inventory - show count in black
                     countStr = "x" + row.count;
-                    countColor = 0xFFFFFFFF;
+                    countColor = 0xFF000000;
                 } else if (row.trackedCount > 0) {
                     // Item tracked but not in inventory - show total known tracked count in gray
                     countStr = "x" + row.trackedCount;
-                    countColor = 0xFF888888; // Gray
+                    countColor = 0xFF555555; // Gray
                 } else {
                     // Never seen
                     countStr = "—";
@@ -299,31 +289,31 @@ public class SearchModalScreen extends Screen {
 
                     // Show tracked locations if available
                     if (!row.trackedLocations.isEmpty()) {
-                        g.drawString(this.font, "Tracked locations:", nameX, dy, 0xFFB0B0B0, false);
+                        g.drawString(this.font, "Tracked locations:", nameX, dy, 0xFF333333, false);
                         dy += 10;
                         for (int j = 0; j < Math.min(3, row.trackedLocations.size()); j++) {
                             String loc = row.trackedLocations.get(j);
                             if (this.font.width(loc) > listContentW - 24) {
                                 loc = this.font.plainSubstrByWidth(loc, listContentW - 34) + "...";
                             }
-                            g.drawString(this.font, "• " + loc, nameX, dy, 0xFF888888, false);
+                            g.drawString(this.font, "• " + loc, nameX, dy, 0xFF555555, false);
                             dy += 10;
                         }
 
                         // Show "+" indicator if there are more locations
                         if (row.trackedLocations.size() > 3) {
                             int remaining = row.trackedLocations.size() - 3;
-                            g.drawString(this.font, "  +" + remaining + " more", nameX, dy, 0xFF666666, false);
+                            g.drawString(this.font, "  +" + remaining + " more", nameX, dy, 0xFF777777, false);
                         }
                     } else if (!row.seen) {
                         g.drawString(this.font, "Never seen this item yet. No history available.",
-                                nameX, dy, 0xFF777777, false);
+                                nameX, dy, 0xFF555555, false);
                     } else {
                         // Fallback to original display if tracked but seen in snapshot
                         String line1 = "Last seen: " + row.timestamp;
                         String line2 = "Where: " + row.location + " @ " + row.coords;
-                        g.drawString(this.font, line1, nameX, dy, 0xFFB0B0B0, false);
-                        g.drawString(this.font, line2, nameX, dy + 10, 0xFFB0B0B0, false);
+                        g.drawString(this.font, line1, nameX, dy, 0xFF333333, false);
+                        g.drawString(this.font, line2, nameX, dy + 10, 0xFF333333, false);
                     }
                 }
 
@@ -338,7 +328,7 @@ public class SearchModalScreen extends Screen {
 
         // Footer hint
         g.drawString(this.font, "▶ expands details. ▲▼ scrolls (mouse wheel works too).",
-                modalX + PAD, modalY + modalH - 14, 0xFF777777, false);
+                modalX + PAD, modalY + modalH - 14, 0xFF555555, false);
     }
 
     @Override
@@ -351,38 +341,42 @@ public class SearchModalScreen extends Screen {
     }
 
     private void updateLayout() {
-        int max = Math.max(0, results.size() - MAX_VISIBLE);
-        scrollUpBtn.active = scrollOffset > 0;
-        scrollDownBtn.active = scrollOffset < max;
+        int totalHeight = 0;
+        for (ResultRow row : results) {
+            totalHeight += ROW_H + (expanded.contains(row.id) ? DETAILS_H : 0) + 4;
+        }
+        int maxScroll = Math.max(0, totalHeight - (listBottomY - listTopY));
+        scrollOffsetPixels = clamp(scrollOffsetPixels, 0, maxScroll);
+        
+        scrollUpBtn.active = scrollOffsetPixels > 0;
+        scrollDownBtn.active = scrollOffsetPixels < maxScroll;
 
-        int y = listTopY;
+        for (Button b : expandButtons) {
+            b.visible = false;
+            b.active = false;
+        }
 
-        for (int i = 0; i < expandButtons.size(); i++) {
-            Button b = expandButtons.get(i);
+        int btnIdx = 0;
+        int y = listTopY - scrollOffsetPixels;
+        for (int i = 0; i < results.size(); i++) {
+            ResultRow row = results.get(i);
+            boolean isOpen = expanded.contains(row.id);
+            int rowHeight = ROW_H + (isOpen ? DETAILS_H : 0);
 
-            int realIndex = scrollOffset + i;
-            if (realIndex >= 0 && realIndex < results.size()) {
-                ResultRow row = results.get(realIndex);
-                boolean isOpen = expanded.contains(row.id);
-
-                b.setMessage(Component.literal(isOpen ? "▼" : "▶"));
-
-                int bx = expandColX;
-                int by = y + 1;
-
-                boolean withinClip = (by + 18) <= listBottomY;
-
-                b.setX(bx);
-                b.setY(by);
-                b.visible = withinClip;
-                b.active = withinClip;
-
-                int rowHeight = ROW_H + (isOpen ? DETAILS_H : 0);
-                y += rowHeight + 4;
-            } else {
-                b.visible = false;
-                b.active = false;
+            if (y + rowHeight + 4 > listTopY && y < listBottomY) {
+                boolean withinClip = (y + 1) >= listTopY && (y + 1 + 16) <= listBottomY;
+                if (withinClip && btnIdx < expandButtons.size()) {
+                    InventorySortModalIconButton b = (InventorySortModalIconButton) expandButtons.get(btnIdx);
+                    b.setX(expandColX);
+                    b.setY(y + 1);
+                    b.visible = true;
+                    b.active = true;
+                    b.setIcon(isOpen ? InventorySortModalIconButton.COLLAPSE : InventorySortModalIconButton.EXPAND);
+                    b.setTargetId(row.id);
+                    btnIdx++;
+                }
             }
+            y += rowHeight + 4;
         }
     }
 
@@ -471,14 +465,10 @@ public class SearchModalScreen extends Screen {
             List<LocationEntry> locations = ItemLocationTracker.getInstance().getLocations(entry.item);
             locations.removeIf(loc -> loc.getType() == LocationEntry.LocationType.INVENTORY);
 
-            // Only log if we actually found tracking data
             if (!locations.isEmpty()) {
-                InventorySortClient.LOGGER.debug("Querying tracking for {}: found {} locations", entry.id, locations.size());
-
                 for (LocationEntry loc : locations) {
                     String formatted = formatLocation(loc);
                     trackedLocations.add(formatted);
-                    InventorySortClient.LOGGER.debug("  - {}", formatted);
                 }
             }
 
@@ -522,7 +512,6 @@ public class SearchModalScreen extends Screen {
                         location,
                         dim, loc.getCount(), timeAgo);
             case INVENTORY:
-                // Legacy support: If position exists, show it; otherwise just show "Player Inventory"
                 if (loc.getPos() != null && loc.getDimensionKey() != null) {
                     String invDim = loc.getDimensionKey().replace("minecraft:", "").replace("the_", "");
                     String invTimeAgo = formatTimeAgo(loc.getLastSeen());
@@ -686,7 +675,7 @@ public class SearchModalScreen extends Screen {
         final String location;
         final String coords;
         final List<String> trackedLocations;
-        final int trackedCount; // Total count across known tracked storage locations
+        final int trackedCount;
 
         ResultRow(String id, String name, ItemStack icon,
                   String searchName, String searchId,
