@@ -219,53 +219,47 @@ public abstract class ContainerTrackingMixin {
     }
 
     /**
-     * Track a container for the active catalog session
+     * Record a container (or portable shulker) into the active catalog session, keyed by its
+     * canonical identity so reopening it refreshes rather than double-counts.
      */
     private void trackContainerForCatalog(Minecraft client, String screenClassName) {
-        if (inventorySort$capturedIdentity == null) {
-            InventorySortClient.LOGGER.warn("Cannot track container for catalog - no identity captured");
+        List<ItemStack> items = collectContainerItems();
+        CatalogSession session = CatalogSession.getActive();
+
+        CatalogSession.RecordResult result;
+        String label;
+        String containerType = inventorySort$capturedContainerType;
+
+        if (inventorySort$isShulker && inventorySort$shulkerIdentifier != null) {
+            result = session.recordShulker(inventorySort$shulkerIdentifier, items);
+            label = "Shulker Box";
+        } else if (inventorySort$capturedIdentity != null) {
+            // Same ghost guard as the search tracker: if the live slot count does not match the
+            // captured identity's container type, a different screen reused this position - skip it
+            // so we never catalog wrong contents under a chest's identity.
+            int expected = inventorySort$capturedIdentity.getExpectedSlotCount();
+            int containerSlots = menu.slots.size() - 36;
+            if (expected != -1 && expected != containerSlots) {
+                InventorySortClient.LOGGER.warn("Rejecting catalog for {} - slot count mismatch (got {}, expected {})",
+                        inventorySort$capturedIdentity.getPositionLabel(), containerSlots, expected);
+                return;
+            }
+            result = session.recordContainer(inventorySort$capturedIdentity, items);
+            label = containerType;
+        } else {
+            InventorySortClient.LOGGER.warn("Cannot catalog container - no identity captured");
             client.player.displayClientMessage(net.minecraft.network.chat.Component.literal("⚠ Container position unknown - not counted").withStyle(net.minecraft.ChatFormatting.RED), false);
             return;
         }
 
-        String containerType = inventorySort$capturedContainerType;
-
-        // Generate fingerprint
-        String fingerprint = CatalogSession.generateFingerprint(inventorySort$capturedIdentity);
-
-        // Collect items
-        int containerSlots = menu.slots.size() - 36;
-        java.util.List<ItemStack> items = new java.util.ArrayList<>();
-
-        for (int i = 0; i < containerSlots; i++) {
-            Slot slot = menu.slots.get(i);
-            ItemStack stack = slot.getItem();
-            if (!stack.isEmpty()) {
-                items.add(stack.copy());
-            }
-        }
-
-        // Track in catalog session
-        boolean newContainer = CatalogSession.getActive().trackContainer(fingerprint, items);
-
-        if (newContainer) {
-            InventorySortClient.LOGGER.info("Cataloged new container at {} with {} items", inventorySort$capturedIdentity.getPositionLabel(), items.size());
-            client.player.displayClientMessage(net.minecraft.network.chat.Component.literal(String.format("✓ Cataloged %s (%d items)", containerType, items.size())).withStyle(net.minecraft.ChatFormatting.GREEN), false);
-        } else {
-            InventorySortClient.LOGGER.info("Skipped already-cataloged container at {}", inventorySort$capturedIdentity.getPositionLabel());
-            client.player.displayClientMessage(net.minecraft.network.chat.Component.literal("⊘ Container already counted").withStyle(net.minecraft.ChatFormatting.YELLOW), false);
-        }
+        reportCatalogResult(client, result, label, items.size());
     }
 
     /**
-     * Track player inventory for the active catalog session
+     * Record the player inventory into the active catalog session.
      */
     private void trackInventoryForCatalog(Minecraft client) {
-        String fingerprint = CatalogSession.generatePlayerInventoryFingerprint();
-
-        // Collect inventory items (slots 0-35)
-        java.util.List<ItemStack> items = new java.util.ArrayList<>();
-
+        List<ItemStack> items = new ArrayList<>();
         for (Slot slot : menu.slots) {
             if (slot.getContainerSlot() < 36) {
                 ItemStack stack = slot.getItem();
@@ -275,15 +269,36 @@ public abstract class ContainerTrackingMixin {
             }
         }
 
-        // Track in catalog session
-        boolean newInventory = CatalogSession.getActive().trackContainer(fingerprint, items);
+        CatalogSession.RecordResult result = CatalogSession.getActive().recordInventory(items);
+        reportCatalogResult(client, result, "inventory", items.size());
+    }
 
-        if (newInventory) {
-            InventorySortClient.LOGGER.info("Cataloged player inventory with {} items", items.size());
-            client.player.displayClientMessage(net.minecraft.network.chat.Component.literal(String.format("✓ Cataloged inventory (%d items)", items.size())).withStyle(net.minecraft.ChatFormatting.GREEN), false);
-        } else {
-            InventorySortClient.LOGGER.info("Skipped already-cataloged inventory");
-            client.player.displayClientMessage(net.minecraft.network.chat.Component.literal("⊘ Inventory already counted").withStyle(net.minecraft.ChatFormatting.YELLOW), false);
+    private List<ItemStack> collectContainerItems() {
+        int containerSlots = menu.slots.size() - 36;
+        List<ItemStack> items = new ArrayList<>();
+        for (int i = 0; i < containerSlots; i++) {
+            ItemStack stack = menu.slots.get(i).getItem();
+            if (!stack.isEmpty()) {
+                items.add(stack.copy());
+            }
+        }
+        return items;
+    }
+
+    private void reportCatalogResult(Minecraft client, CatalogSession.RecordResult result, String label, int itemCount) {
+        switch (result) {
+            case ADDED:
+                InventorySortClient.LOGGER.info("Cataloged {} ({} stacks)", label, itemCount);
+                client.player.displayClientMessage(net.minecraft.network.chat.Component.literal(String.format("✓ Cataloged %s (%d stacks)", label, itemCount)).withStyle(net.minecraft.ChatFormatting.GREEN), false);
+                break;
+            case UPDATED:
+                InventorySortClient.LOGGER.debug("Refreshed cataloged {} ({} stacks)", label, itemCount);
+                client.player.displayClientMessage(net.minecraft.network.chat.Component.literal(String.format("↻ Updated %s (%d stacks)", label, itemCount)).withStyle(net.minecraft.ChatFormatting.YELLOW), false);
+                break;
+            case SKIPPED:
+            default:
+                InventorySortClient.LOGGER.debug("Skipped cataloging {} (tracking not allowed or world changed)", label);
+                break;
         }
     }
 }

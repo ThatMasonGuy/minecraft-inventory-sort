@@ -44,8 +44,10 @@ Current checkpoint: `2.4.16`
    - Catch parse/runtime exceptions, skip bad entries, and consider writing a `.bak` before overwriting.
 
 4. Catalog mode cleanup:
-   - Review catalog mode against the newer tracking namespace/profile model.
-   - Consider component-aware totals and export/paging for large reports.
+   - DONE: Rebuilt catalogue on the ContainerIdentity/namespace model (`CatalogStore` + `CatalogSession`).
+   - Now per-world, persistent, identity-keyed (single vs double chest, per shulker/ender/minecart), and reopening refreshes instead of double-counting.
+   - Added `catalog report`/`catalog clear` commands and a full plain-text report file under `inventorysort/catalog/`.
+   - Remaining: catalogue totals are still item-id based, so they merge component variants (potions, enchanted books, named items) — needs the shared component-aware key work.
 
 5. Old data cleanup/migration:
    - Earlier dev builds may have stale locations such as crafting tables or old fake inventory coordinates.

@@ -36,9 +36,10 @@ A lightweight **client-side** Minecraft mod that adds robust sorting capabilitie
 - **World Confirmation HUD:** Uses a non-intrusive HUD prompt to confirm the world/profile context, preventing writes to the wrong database until confirmed without blocking your gameplay.
 
 ### 4. Catalogue Mode
-- **Global Item Catalogue:** Browse a consolidated view of all items across all tracked containers.
-- **Relates Tracked Items to Containers:** Acts as a holistic view of your wealth and resources. Instead of searching for a specific item, you can review everything you own across your known storage network.
-- *Note: This feature is currently experimental and may occasionally reflect older container snapshots if they have been altered by other players.*
+- **Cataloguing Sessions:** Start a session with `/inventorysort catalog start` (add `includeInventory` to also count your own inventory), then walk your base opening every chest, shulker, ender chest, minecart, and other storage. Finish with `catalog stop` to get a deduplicated tally of everything you own.
+- **Identity-Based Deduplication:** Built on the same container-identity system as Tracked Storage, so single vs. double chests, individual shulkers, per-player ender chests, and minecarts are each counted once. Reopening a container refreshes its snapshot instead of double-counting it.
+- **Per-World & Persistent:** Catalogue data is scoped per server/world profile and saved to disk, so a tally accumulates across play sessions and survives restarts — perfect for seeing exactly how much of everything you hoarded by the end of a world. Reset a world's catalogue with `catalog clear`.
+- **Reports:** `catalog status` and `catalog report` show running totals in chat; `catalog stop` also writes a full plain-text report to `.minecraft/inventorysort/catalog/`.
 
 ## Compatibility & Scope
 
@@ -83,7 +84,8 @@ Run the client for local testing:
 - `src/client/java/.../InventorySorter.java` – Core logic for sorting, restacking, hotbar top-ups, and layout organization.
 - `src/client/java/.../ItemLocationTracker.java` – The engine powering known-current item location tracking and container snapshots.
 - `src/client/java/.../SearchModalScreen.java` – UI implementation for the live inventory and container search feature.
-- `src/client/java/.../CatalogSession.java` – Logic for the global tracked items catalogue.
+- `src/client/java/.../CatalogSession.java` – Cataloguing session lifecycle (start/stop/status/report) and report generation.
+- `src/client/java/.../CatalogStore.java` – Persistent, per-world catalogue store keyed by container identity.
 - `src/client/java/.../ServerWorldProfileManager.java` – Manages different tracking databases across multiplayer servers and single-player worlds.
 - `src/client/java/.../mixin/HandledScreenMixin.java` – Injects and renders the **Sort** button and search integration into existing container screens.
 

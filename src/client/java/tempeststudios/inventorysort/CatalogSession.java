@@ -1,51 +1,71 @@
 package tempeststudios.inventorysort;
 
 import net.minecraft.ChatFormatting;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
 
-import java.util.*;
+import java.io.IOException;
+import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
+import net.minecraft.world.item.ItemStack;
+
 /**
- * Manages a cataloging session where the player opens chests to count total items
+ * Drives a cataloguing session.
+ *
+ * <p>A session is a recording window over the persistent per-namespace {@link CatalogStore}. While
+ * active, opening containers, shulkers and the player inventory records (or replaces) their
+ * snapshots in the store, keyed by the canonical {@link ContainerIdentity} identity. Because the
+ * store is persistent and namespace-scoped, the catalogue accumulates across sessions and survives
+ * restarts, letting you tally everything you own in a world over an entire playthrough.
  */
-public class CatalogSession {
-    private static CatalogSession activeSession = null;
+public final class CatalogSession {
+    /** Max item rows printed to chat before linking to the full report file. */
+    private static final int CHAT_ITEM_LIMIT = 60;
+
+    private static CatalogSession activeSession;
 
     private final boolean includeInventory;
-    private final Map<String, Integer> itemCounts; // Item ID -> total count
-    private final Set<String> trackedContainers; // Fingerprints of already-tracked containers
+    private final String namespace;
     private final long startTime;
-    private int containersTracked;
 
-    private CatalogSession(boolean includeInventory) {
+    public enum RecordResult {
+        ADDED,      // newly catalogued location
+        UPDATED,    // existing location's snapshot refreshed
+        SKIPPED     // tracking not allowed, or namespace changed mid-session
+    }
+
+    private CatalogSession(boolean includeInventory, String namespace) {
         this.includeInventory = includeInventory;
-        this.itemCounts = new HashMap<>();
-        this.trackedContainers = new HashSet<>();
+        this.namespace = namespace;
         this.startTime = System.currentTimeMillis();
-        this.containersTracked = 0;
     }
 
     public static boolean isActive() {
         return activeSession != null;
     }
 
+    public static CatalogSession getActive() {
+        return activeSession;
+    }
+
     public static CatalogSession start(boolean includeInventory) {
         if (activeSession != null) {
             throw new IllegalStateException("A catalog session is already active");
         }
-        activeSession = new CatalogSession(includeInventory);
-        return activeSession;
-    }
-
-    public static CatalogSession getActive() {
+        CatalogStore store = CatalogStore.getInstance();
+        store.reloadForCurrentNamespace();
+        activeSession = new CatalogSession(includeInventory, store.currentNamespace());
         return activeSession;
     }
 
@@ -53,166 +73,187 @@ public class CatalogSession {
         if (activeSession == null) {
             throw new IllegalStateException("No active catalog session");
         }
-
-        List<Component> report = activeSession.generateReport();
+        List<Component> report = activeSession.buildReport(true);
         activeSession = null;
         return report;
-    }
-
-    /**
-     * Generate a unique fingerprint for a container
-     */
-    public static String generateFingerprint(BlockPos pos, ResourceKey<Level> dimension, String containerType) {
-        if (pos != null && dimension != null) {
-            // For containers with a fixed position
-            // Get dimension key as string
-            String dimensionKey;
-            if (dimension == Level.OVERWORLD) {
-                dimensionKey = "overworld";
-            } else if (dimension == Level.NETHER) {
-                dimensionKey = "nether";
-            } else if (dimension == Level.END) {
-                dimensionKey = "end";
-            } else {
-                dimensionKey = dimension.toString();
-            }
-
-            return String.format("%s_%d_%d_%d_%s",
-                    dimensionKey,
-                    pos.getX(), pos.getY(), pos.getZ(),
-                    containerType);
-        }
-        // Fallback for portable containers (shouldn't really happen in catalog mode)
-        return "unknown_" + System.currentTimeMillis();
-    }
-
-    public static String generateFingerprint(ContainerIdentity identity) {
-        if (identity == null) {
-            return "unknown_" + System.currentTimeMillis();
-        }
-        return identity.getNamespace() + ":" + identity.getIdentityKey() + ":" + identity.getContainerType();
-    }
-
-    public static String generatePlayerInventoryFingerprint() {
-        return "player_inventory";
-    }
-
-    /**
-     * Check if a container has already been tracked in this session
-     */
-    public boolean hasTracked(String fingerprint) {
-        return trackedContainers.contains(fingerprint);
-    }
-
-    /**
-     * Track items from a container
-     * Returns true if container was newly tracked, false if already counted
-     */
-    public boolean trackContainer(String fingerprint, List<ItemStack> items) {
-        if (hasTracked(fingerprint)) {
-            return false; // Already counted this container
-        }
-
-        trackedContainers.add(fingerprint);
-        containersTracked++;
-
-        for (ItemStack stack : items) {
-            if (!stack.isEmpty()) {
-                String itemId = BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
-                itemCounts.merge(itemId, stack.getCount(), Integer::sum);
-            }
-        }
-
-        return true;
     }
 
     public boolean shouldIncludeInventory() {
         return includeInventory;
     }
 
+    public String getNamespace() {
+        return namespace;
+    }
+
+    // --- Recording ----------------------------------------------------------
+
+    public RecordResult recordContainer(ContainerIdentity identity, Collection<ItemStack> items) {
+        if (identity == null || !canRecord()) {
+            return RecordResult.SKIPPED;
+        }
+        boolean added = CatalogStore.getInstance().record(
+                identity.getIdentityKey(),
+                identity.getContainerType(),
+                identity.getPositionLabel(),
+                identity.getDimensionKey(),
+                items);
+        return added ? RecordResult.ADDED : RecordResult.UPDATED;
+    }
+
+    public RecordResult recordShulker(String shulkerIdentifier, Collection<ItemStack> items) {
+        if (shulkerIdentifier == null || !canRecord()) {
+            return RecordResult.SKIPPED;
+        }
+        boolean added = CatalogStore.getInstance().record(
+                "shulker:" + shulkerIdentifier,
+                "Shulker Box",
+                "Portable shulker",
+                null,
+                items);
+        return added ? RecordResult.ADDED : RecordResult.UPDATED;
+    }
+
+    public RecordResult recordInventory(Collection<ItemStack> items) {
+        if (!canRecord()) {
+            return RecordResult.SKIPPED;
+        }
+        boolean added = CatalogStore.getInstance().record(
+                CatalogStore.INVENTORY_KEY,
+                "Player Inventory",
+                "Player Inventory",
+                null,
+                items);
+        return added ? RecordResult.ADDED : RecordResult.UPDATED;
+    }
+
     /**
-     * Generate a formatted report of all tracked items
+     * Only record when the world is confirmed for tracking and we are still in the namespace the
+     * session was started in (guards against the active world profile changing mid-session).
      */
-    private List<Component> generateReport() {
+    private boolean canRecord() {
+        Minecraft client = Minecraft.getInstance();
+        if (!ServerWorldProfileManager.getInstance().trackingAllowed(client)) {
+            return false;
+        }
+        return namespace.equals(TrackingNamespace.current(client));
+    }
+
+    // --- Status / reporting -------------------------------------------------
+
+    public int getLocationCount() {
+        return CatalogStore.getInstance().locationCount();
+    }
+
+    public int getUniqueItems() {
+        return CatalogStore.getInstance().aggregateTotals().size();
+    }
+
+    public int getTotalItems() {
+        return CatalogStore.getInstance().aggregateTotals().values().stream()
+                .mapToInt(Integer::intValue).sum();
+    }
+
+    /**
+     * Build the chat report. When {@code writeFile} is true a full plain-text report is also saved
+     * to disk and its path is appended to the chat output.
+     */
+    public List<Component> buildReport(boolean writeFile) {
         List<Component> report = new ArrayList<>();
-        long duration = (System.currentTimeMillis() - startTime) / 1000; // seconds
+        long durationSeconds = (System.currentTimeMillis() - startTime) / 1000;
 
-        // Header
+        CatalogStore store = CatalogStore.getInstance();
+        Map<String, Integer> totals = store.aggregateTotals();
+        int locationCount = store.locationCount();
+
+        List<Map.Entry<String, Integer>> sortedItems = totals.entrySet().stream()
+                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed()
+                        .thenComparing(Map.Entry.comparingByKey()))
+                .collect(Collectors.toList());
+        int totalItems = totals.values().stream().mapToInt(Integer::intValue).sum();
+
         report.add(Component.literal("=".repeat(50)).withStyle(ChatFormatting.GOLD));
-        report.add(Component.literal("📊 Catalog Session Report").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
+        report.add(Component.literal("📊 Catalog Report").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
         report.add(Component.literal("=".repeat(50)).withStyle(ChatFormatting.GOLD));
         report.add(Component.empty());
-
-        // Summary
-        report.add(Component.literal(String.format("Duration: %d seconds", duration)).withStyle(ChatFormatting.GRAY));
-        report.add(Component.literal(String.format("Containers scanned: %d", containersTracked)).withStyle(ChatFormatting.GRAY));
-        report.add(Component.literal(String.format("Unique items: %d", itemCounts.size())).withStyle(ChatFormatting.GRAY));
-        report.add(Component.literal(String.format("Include inventory: %s", includeInventory ? "Yes" : "No")).withStyle(ChatFormatting.GRAY));
+        report.add(Component.literal("World: " + namespace).withStyle(ChatFormatting.GRAY));
+        report.add(Component.literal(String.format("Session duration: %d seconds", durationSeconds)).withStyle(ChatFormatting.GRAY));
+        report.add(Component.literal(String.format("Locations catalogued: %d", locationCount)).withStyle(ChatFormatting.GRAY));
+        report.add(Component.literal(String.format("Unique items: %d", totals.size())).withStyle(ChatFormatting.GRAY));
         report.add(Component.empty());
 
-        if (itemCounts.isEmpty()) {
-            report.add(Component.literal("No items found!").withStyle(ChatFormatting.RED));
+        if (sortedItems.isEmpty()) {
+            report.add(Component.literal("Nothing catalogued yet - open some containers!").withStyle(ChatFormatting.RED));
         } else {
-            // Sort items by count (descending)
-            List<Map.Entry<String, Integer>> sortedItems = itemCounts.entrySet().stream()
-                    .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
-                    .collect(Collectors.toList());
-
-            report.add(Component.literal("Items cataloged:").withStyle(ChatFormatting.YELLOW, ChatFormatting.BOLD));
+            report.add(Component.literal("Items:").withStyle(ChatFormatting.YELLOW, ChatFormatting.BOLD));
             report.add(Component.empty());
 
-            // Display items in a formatted list
-            for (Map.Entry<String, Integer> entry : sortedItems) {
-                String itemName = formatItemName(entry.getKey());
-                int count = entry.getValue();
-
-                MutableComponent line = Component.literal(String.format("  • %s: ", itemName))
+            int shown = Math.min(sortedItems.size(), CHAT_ITEM_LIMIT);
+            for (int i = 0; i < shown; i++) {
+                Map.Entry<String, Integer> entry = sortedItems.get(i);
+                MutableComponent line = Component.literal("  • " + formatItemName(entry.getKey()) + ": ")
                         .withStyle(ChatFormatting.WHITE)
-                        .append(Component.literal(String.format("%,d", count))
+                        .append(Component.literal(String.format("%,d", entry.getValue()))
                                 .withStyle(ChatFormatting.GREEN, ChatFormatting.BOLD));
-
                 report.add(line);
             }
+            if (sortedItems.size() > shown) {
+                report.add(Component.literal(String.format("  … and %d more (see full report file)",
+                        sortedItems.size() - shown)).withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC));
+            }
 
-            // Calculate total items
-            int totalItems = itemCounts.values().stream().mapToInt(Integer::intValue).sum();
             report.add(Component.empty());
             report.add(Component.literal(String.format("Total items: %,d", totalItems))
                     .withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD));
         }
 
+        if (writeFile && !sortedItems.isEmpty()) {
+            Path file = writeReportFile(sortedItems, totalItems, locationCount, durationSeconds);
+            if (file != null) {
+                report.add(Component.empty());
+                report.add(Component.literal("Full report saved to: " + file)
+                        .withStyle(ChatFormatting.DARK_AQUA));
+            }
+        }
+
         report.add(Component.empty());
         report.add(Component.literal("=".repeat(50)).withStyle(ChatFormatting.GOLD));
-
         return report;
     }
 
-    /**
-     * Format item ID into a readable name
-     * minecraft:diamond -> Diamond
-     * minecraft:iron_ingot -> Iron Ingot
-     */
-    private String formatItemName(String itemId) {
-        // Remove namespace (minecraft:diamond -> diamond)
-        String name = itemId.contains(":") ? itemId.substring(itemId.lastIndexOf(':') + 1) : itemId;
+    private Path writeReportFile(List<Map.Entry<String, Integer>> sortedItems,
+                                 int totalItems,
+                                 int locationCount,
+                                 long durationSeconds) {
+        String stamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+        Path file = CatalogStore.getInstance().catalogDirectory()
+                .resolve("report_" + TrackingNamespace.fileNameSafe(namespace) + "_" + stamp + ".txt");
+        try (Writer writer = Files.newBufferedWriter(file)) {
+            writer.write("Inventory Catalogue Report\n");
+            writer.write("World: " + namespace + "\n");
+            writer.write("Generated: " + LocalDateTime.now() + "\n");
+            writer.write("Session duration (s): " + durationSeconds + "\n");
+            writer.write("Locations catalogued: " + locationCount + "\n");
+            writer.write("Unique items: " + sortedItems.size() + "\n");
+            writer.write("Total items: " + totalItems + "\n");
+            writer.write("\n");
+            for (Map.Entry<String, Integer> entry : sortedItems) {
+                writer.write(String.format("%,d\t%s\t(%s)%n",
+                        entry.getValue(), formatItemName(entry.getKey()), entry.getKey()));
+            }
+        } catch (IOException e) {
+            InventorySortClient.LOGGER.error("Failed to write catalog report file", e);
+            return null;
+        }
+        return file;
+    }
 
-        // Replace underscores with spaces and capitalize
-        name = Arrays.stream(name.split("_"))
+    /** minecraft:iron_ingot -> Iron Ingot */
+    private static String formatItemName(String itemId) {
+        String name = itemId.contains(":") ? itemId.substring(itemId.lastIndexOf(':') + 1) : itemId;
+        return Arrays.stream(name.split("_"))
+                .filter(word -> !word.isEmpty())
                 .map(word -> word.substring(0, 1).toUpperCase() + word.substring(1))
                 .collect(Collectors.joining(" "));
-
-        return name;
-    }
-
-    public int getContainersTracked() {
-        return containersTracked;
-    }
-
-    public int getUniqueItems() {
-        return itemCounts.size();
-    }
-
-    public int getTotalItems() {
-        return itemCounts.values().stream().mapToInt(Integer::intValue).sum();
     }
 }
