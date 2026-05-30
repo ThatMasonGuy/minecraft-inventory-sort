@@ -428,10 +428,10 @@ public class ItemLocationTracker {
 
             switch (locType) {
                 case CONTAINER:
-                    // Parse dimension string back to ResourceKey
-                    ResourceKey<Level> dimKey = parseDimensionKey(dimension);
+                    // Keep the stored dimension id string as-is so modded/custom dimensions
+                    // survive the round-trip instead of collapsing to overworld.
                     return new LocationEntry(namespace, locationIdentity, positionLabel,
-                            pos.toBlockPos(), dimKey, containerType, count, lastSeen);
+                            pos.toBlockPos(), dimension, containerType, count, lastSeen);
                 case INVENTORY:
                     return new LocationEntry(namespace, LocationEntry.LocationType.INVENTORY, count, lastSeen);
                 case SHULKER_BOX:
@@ -439,20 +439,6 @@ public class ItemLocationTracker {
                 default:
                     throw new IllegalStateException("Unknown location type: " + type);
             }
-        }
-
-        private ResourceKey<Level> parseDimensionKey(String dimensionStr) {
-            // Recreate the ResourceKey from the string
-            // The string is in format "minecraft:overworld", "minecraft:the_nether", etc.
-            if (dimensionStr.equals("minecraft:overworld")) {
-                return Level.OVERWORLD;
-            } else if (dimensionStr.equals("minecraft:the_nether")) {
-                return Level.NETHER;
-            } else if (dimensionStr.equals("minecraft:the_end")) {
-                return Level.END;
-            }
-            // Default to overworld if unknown
-            return Level.OVERWORLD;
         }
     }
 }

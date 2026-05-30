@@ -32,35 +32,40 @@ public class LocationEntry {
                 identity.getIdentityKey(),
                 identity.getPositionLabel(),
                 identity.getPrimaryPos(),
-                identity.getDimension(),
+                identity.getDimensionKey(),
                 identity.getContainerType(),
                 count,
                 timestamp);
     }
 
+    // Live-tracking convenience: derive a generic dimension id from the ResourceKey.
     public LocationEntry(String namespace, String locationIdentity, String positionLabel,
                          BlockPos pos, ResourceKey<Level> dimension, String containerType,
+                         int count, long timestamp) {
+        this(namespace, locationIdentity, positionLabel, pos, dimensionKeyOf(dimension),
+                containerType, count, timestamp);
+    }
+
+    // Canonical container constructor. The dimension is kept as a generic id string
+    // (e.g. "minecraft:overworld", "modid:my_dimension") so modded dimensions round-trip
+    // through save/load instead of collapsing to overworld.
+    public LocationEntry(String namespace, String locationIdentity, String positionLabel,
+                         BlockPos pos, String dimensionKey, String containerType,
                          int count, long timestamp) {
         this.type = LocationType.CONTAINER;
         this.namespace = namespace;
         this.locationIdentity = locationIdentity;
         this.positionLabel = positionLabel;
         this.pos = pos;
-        // Get the dimension identifier string
-        if (dimension == Level.OVERWORLD) {
-            this.dimensionKey = "minecraft:overworld";
-        } else if (dimension == Level.NETHER) {
-            this.dimensionKey = "minecraft:the_nether";
-        } else if (dimension == Level.END) {
-            this.dimensionKey = "minecraft:the_end";
-        } else {
-            // Fallback - try to get string representation
-            this.dimensionKey = dimension.toString();
-        }
+        this.dimensionKey = dimensionKey;
         this.shulkerIdentifier = null;
         this.containerType = containerType != null ? containerType : "Container";
         this.count = count;
         this.lastSeen = timestamp;
+    }
+
+    private static String dimensionKeyOf(ResourceKey<Level> dimension) {
+        return dimension != null ? dimension.identifier().toString() : null;
     }
 
     // Constructor for player inventory

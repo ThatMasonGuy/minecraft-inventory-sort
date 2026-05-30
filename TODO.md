@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: `2.6.2`
+Current checkpoint: `2.6.3`
 
 ## Confirmed Working
 
@@ -13,6 +13,16 @@ Current checkpoint: `2.6.2`
 - Catalog `includeInventory` uses a stable per-session player-inventory fingerprint.
 
 ## Recently Fixed
+
+-2. Tracker/search hardening (2.6.3):
+   - Modded/custom dimensions now round-trip: `LocationEntry` stores the dimension as
+     a generic id string and deserialization keeps it verbatim (no more overworld
+     collapse). Legacy entries self-heal on next container visit.
+   - Search results compute tracker data lazily: `buildRowForEntry` does cheap work
+     only; tracked counts/locations are queried + formatted on demand and cached, so
+     a 400-result query no longer hits the tracker for off-screen/collapsed rows.
+   - Wheel/▲▼ scroll snaps to row boundaries (one notch = one row) regardless of
+     whether the top row is expanded.
 
 -1. Small grid containers (2.6.2):
    - Sort + transfer buttons now appear on droppers and dispensers via a
@@ -51,8 +61,9 @@ Current checkpoint: `2.6.2`
    - True variant tracking needs component-aware keys and display names.
 
 2. Custom/modded dimensions:
-   - Unknown dimensions still deserialize poorly and can fall back to overworld.
-   - Store and restore dimension ids generically instead of hard-coding overworld/nether/end.
+   - DONE (2.6.3): dimension ids are now stored/restored generically in the tracker
+     (`LocationEntry`) and were already generic in `CatalogStore`; no more overworld
+     fallback for custom dimensions.
 
 3. Corrupt JSON hardening:
    - Bad tracking/profile JSON should not crash or poison load.
@@ -125,8 +136,8 @@ implemented yet — this is the backlog backup.
    `listContentW` with reserved room on the right.
 3. 🟠 (DONE 2.6.1) Esc abandons the parent screen — `SearchModalScreen` and
    `ServerWorldProfileScreen` now override `onClose()` to route back to parent.
-4. 🟡 Wheel scroll always moves `ROW_H+4` (24px) even past expanded rows (~80px)
-   (`SearchModalScreen.java:189`) — feels sticky over expanded entries.
+4. 🟡 (DONE 2.6.3) Wheel scroll always moves `ROW_H+4` even past expanded rows —
+   scroll now snaps to row boundaries so one notch advances exactly one row.
 5. 🟡 Bottom-most visible row often can't be expanded: `updateLayout` `withinClip`
    check (`SearchModalScreen.java:367`) hides a ▶ button if partially clipped even
    though the row text is on screen.
@@ -172,16 +183,12 @@ implemented yet — this is the backlog backup.
 
 1. 🟠 (DONE 2.6.1) Shulker tracking never explicitly saved — `ContainerTrackingMixin`
    now flushes `tracker.save()` after tracking a portable shulker's contents.
-2. 🔴 Modded dimensions corrupt on reload: `parseDimensionKey`
-   (`ItemLocationTracker.java:444-456`) defaults any non-vanilla dimension to
-   `Level.OVERWORLD`, and the `LocationEntry` constructor then re-derives the
-   dimension string from it → chests in custom dims reload labeled overworld.
-   (Overlaps P2 #2; note `CatalogStore` stores dimension ids generically and is
-   already correct here.)
-3. 🟠 Per-keystroke eager work: `buildRowForEntry` (`SearchModalScreen.java:445`)
-   queries the tracker and formats every location string for up to 400 results
-   (`:404`) even though strings are only shown when a row is expanded. Lazy-format
-   on expand to cut hundreds of lookups + a full re-sort per keystroke.
+2. 🔴 (DONE 2.6.3) Modded dimensions corrupt on reload — `LocationEntry` now keeps a
+   generic dimension id string and deserialization preserves it verbatim instead of
+   round-tripping through `Level.OVERWORLD`.
+3. 🟠 (DONE 2.6.3) Per-keystroke eager work — tracker queries and location-string
+   formatting moved to lazy, cached accessors on `ResultRow`; `buildRowForEntry` now
+   does only cheap snapshot work.
 4. 🟡 Dead branch: `formatLocation` INVENTORY case checks `loc.getPos() != null`
    (`SearchModalScreen.java:515`) but inventory entries always have `pos == null`
    and are filtered out before formatting anyway.

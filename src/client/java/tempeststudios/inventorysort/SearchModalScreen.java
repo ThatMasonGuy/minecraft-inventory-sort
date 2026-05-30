@@ -197,9 +197,35 @@ public class SearchModalScreen extends Screen {
     }
 
     private void scrollBy(int delta) {
-        if (delta == 0) return;
-        scrollOffsetPixels += delta * (ROW_H + 4);
+        if (delta == 0 || results.isEmpty()) return;
+
+        // Snap to row boundaries so one notch moves exactly one row, whether the row at the top
+        // edge is expanded (tall) or collapsed (short) - fixes uneven scrolling past open rows.
+        int current = scrollOffsetPixels;
+        int target;
+        if (delta > 0) {
+            int top = 0;
+            target = current;
+            for (ResultRow row : results) {
+                if (top > current + 1) { target = top; break; }
+                top += rowSpan(row);
+            }
+            if (target == current) target = top; // past the last boundary; clamp handles the rest
+        } else {
+            int top = 0;
+            target = 0;
+            for (ResultRow row : results) {
+                if (top >= current - 1) break;
+                target = top;
+                top += rowSpan(row);
+            }
+        }
+        scrollOffsetPixels = target;
         updateLayout();
+    }
+
+    private int rowSpan(ResultRow row) {
+        return ROW_H + (expanded.contains(row.id) ? DETAILS_H : 0) + 4;
     }
 
     private boolean isMouseOverList(double mouseX, double mouseY) {
@@ -285,27 +311,31 @@ public class SearchModalScreen extends Screen {
                     // Item in current inventory - show count in black
                     countStr = "x" + row.count;
                     countColor = 0xFF000000;
-                } else if (row.trackedCount > 0) {
-                    // Item tracked but not in inventory - show total known tracked count in gray
-                    countStr = "x" + row.trackedCount;
-                    countColor = 0xFF555555; // Gray
                 } else {
-                    // Never seen
-                    countStr = "—";
-                    countColor = 0xFF777777; // Darker gray
+                    // Item tracked but not in inventory - show total known tracked count in gray.
+                    // trackedCount() lazily queries the tracker only for the rows actually drawn.
+                    int tc = row.trackedCount();
+                    if (tc > 0) {
+                        countStr = "x" + tc;
+                        countColor = 0xFF555555; // Gray
+                    } else {
+                        countStr = "—";
+                        countColor = 0xFF777777; // Darker gray
+                    }
                 }
                 g.drawString(this.font, countStr, countColX, y + 6, countColor, false);
 
-                // Expanded details
+                // Expanded details - tracked locations are formatted lazily here, only for the
+                // handful of rows that are actually open and on screen.
                 if (isOpen) {
                     int dy = y + ROW_H + 4;
+                    List<String> tracked = row.trackedLocations();
 
-                    // Show tracked locations if available
-                    if (!row.trackedLocations.isEmpty()) {
+                    if (!tracked.isEmpty()) {
                         g.drawString(this.font, "Tracked locations:", nameX, dy, 0xFF333333, false);
                         dy += 10;
-                        for (int j = 0; j < Math.min(3, row.trackedLocations.size()); j++) {
-                            String loc = row.trackedLocations.get(j);
+                        for (int j = 0; j < Math.min(3, tracked.size()); j++) {
+                            String loc = tracked.get(j);
                             if (this.font.width(loc) > listContentW - 24) {
                                 loc = this.font.plainSubstrByWidth(loc, listContentW - 34) + "...";
                             }
@@ -314,19 +344,13 @@ public class SearchModalScreen extends Screen {
                         }
 
                         // Show "+" indicator if there are more locations
-                        if (row.trackedLocations.size() > 3) {
-                            int remaining = row.trackedLocations.size() - 3;
+                        if (tracked.size() > 3) {
+                            int remaining = tracked.size() - 3;
                             g.drawString(this.font, "  +" + remaining + " more", nameX, dy, 0xFF777777, false);
                         }
-                    } else if (!row.seen) {
+                    } else {
                         g.drawString(this.font, "Never seen this item yet. No history available.",
                                 nameX, dy, 0xFF555555, false);
-                    } else {
-                        // Fallback to original display if tracked but seen in snapshot
-                        String line1 = "Last seen: " + row.timestamp;
-                        String line2 = "Where: " + row.location + " @ " + row.coords;
-                        g.drawString(this.font, line1, nameX, dy, 0xFF333333, false);
-                        g.drawString(this.font, line2, nameX, dy + 10, 0xFF333333, false);
                     }
                 }
 
@@ -406,14 +430,14 @@ public class SearchModalScreen extends Screen {
                 RegistryEntry entry = REGISTRY_BY_ID.get(id);
                 if (entry == null) continue;
 
-                results.add(buildRowForEntry(entry, mc));
+                results.add(buildRowForEntry(entry));
                 added++;
                 if (added >= 10) break;
             }
         } else {
             for (RegistryEntry e : REGISTRY_CACHE) {
                 if (e.searchName.contains(q) || e.searchId.contains(q)) {
-                    results.add(buildRowForEntry(e, mc));
+                    results.add(buildRowForEntry(e));
                     if (results.size() >= 400) break;
                 }
             }
@@ -455,42 +479,13 @@ public class SearchModalScreen extends Screen {
         return score;
     }
 
-    private ResultRow buildRowForEntry(RegistryEntry entry, Minecraft mc) {
+    private ResultRow buildRowForEntry(RegistryEntry entry) {
+        // Cheap per-result work only: inventory snapshot lookup. Tracker queries and location
+        // string formatting are deferred to the row's lazy accessors, so a 400-result query no
+        // longer touches the tracker or builds strings for rows that are never drawn/expanded.
         InvSnapshot snap = invSnapshot.get(entry.id);
         boolean seen = snap != null && snap.count > 0;
-
-        String ts = LocalDateTime.now().format(TS_FMT).toLowerCase(Locale.ROOT);
-
-        int px = mc.player.blockPosition().getX();
-        int py = mc.player.blockPosition().getY();
-        int pz = mc.player.blockPosition().getZ();
-        String coords = px + " / " + py + " / " + pz;
-
-        String location = seen ? snap.locationLabel : "—";
-
-        // Query tracked locations
-        List<String> trackedLocations = new ArrayList<>();
-        if (seen) {
-            trackedLocations.add(formatCurrentInventoryLocation(snap));
-        }
-        int trackedCount = 0;
-        try {
-            List<LocationEntry> locations = ItemLocationTracker.getInstance().getLocations(entry.item);
-            locations.removeIf(loc -> loc.getType() == LocationEntry.LocationType.INVENTORY);
-
-            if (!locations.isEmpty()) {
-                for (LocationEntry loc : locations) {
-                    String formatted = formatLocation(loc);
-                    trackedLocations.add(formatted);
-                }
-            }
-
-            for (LocationEntry loc : locations) {
-                trackedCount += loc.getCount();
-            }
-        } catch (Exception e) {
-            InventorySortClient.LOGGER.error("Failed to query tracking for " + entry.id, e);
-        }
+        String currentInvLine = seen ? formatCurrentInventoryLocation(snap) : null;
 
         return new ResultRow(
                 entry.id,
@@ -500,22 +495,20 @@ public class SearchModalScreen extends Screen {
                 entry.searchId,
                 seen,
                 seen ? snap.count : 0,
-                ts,
-                location,
-                coords,
-                trackedLocations,
-                trackedCount
+                currentInvLine,
+                entry.item
         );
     }
 
-    private String formatCurrentInventoryLocation(InvSnapshot snap) {
+    private static String formatCurrentInventoryLocation(InvSnapshot snap) {
         return String.format("%s - x%d now", snap.locationLabel, snap.count);
     }
 
-    private String formatLocation(LocationEntry loc) {
+    private static String formatLocation(LocationEntry loc) {
         switch (loc.getType()) {
             case CONTAINER:
-                String dim = loc.getDimensionKey().replace("minecraft:", "").replace("the_", "");
+                String rawDim = loc.getDimensionKey();
+                String dim = rawDim == null ? "" : rawDim.replace("minecraft:", "").replace("the_", "");
                 String timeAgo = formatTimeAgo(loc.getLastSeen());
                 String location = loc.getPositionLabel() != null
                         ? loc.getPositionLabel()
@@ -541,7 +534,7 @@ public class SearchModalScreen extends Screen {
         }
     }
 
-    private String formatTimeAgo(long timestamp) {
+    private static String formatTimeAgo(long timestamp) {
         long diff = System.currentTimeMillis() - timestamp;
         long minutes = diff / 60000;
         long hours = minutes / 60;
@@ -682,19 +675,21 @@ public class SearchModalScreen extends Screen {
         final String searchId;
 
         final boolean seen;
-        final int count;
+        final int count;                 // current inventory count (when seen)
+        final String currentInvLine;     // formatted "in inventory" line, or null
+        final Item item;                 // for lazy tracker lookup
 
-        final String timestamp;
-        final String location;
-        final String coords;
-        final List<String> trackedLocations;
-        final int trackedCount;
+        // Tracker-derived data, computed on first access and cached so off-screen and collapsed
+        // rows never pay for it, and visible rows pay only once.
+        private boolean trackedLoaded = false;
+        private List<LocationEntry> trackedEntries = Collections.emptyList();
+        private int trackedCount = 0;
+        private List<String> trackedLocationsCache = null;
 
         ResultRow(String id, String name, ItemStack icon,
                   String searchName, String searchId,
                   boolean seen, int count,
-                  String timestamp, String location, String coords,
-                  List<String> trackedLocations, int trackedCount) {
+                  String currentInvLine, Item item) {
             this.id = id;
             this.name = name;
             this.icon = icon;
@@ -702,11 +697,45 @@ public class SearchModalScreen extends Screen {
             this.searchId = searchId;
             this.seen = seen;
             this.count = count;
-            this.timestamp = timestamp;
-            this.location = location;
-            this.coords = coords;
-            this.trackedLocations = trackedLocations;
-            this.trackedCount = trackedCount;
+            this.currentInvLine = currentInvLine;
+            this.item = item;
+        }
+
+        int trackedCount() {
+            ensureTracked();
+            return trackedCount;
+        }
+
+        List<String> trackedLocations() {
+            ensureTracked();
+            if (trackedLocationsCache == null) {
+                List<String> out = new ArrayList<>();
+                if (currentInvLine != null) {
+                    out.add(currentInvLine);
+                }
+                for (LocationEntry loc : trackedEntries) {
+                    out.add(formatLocation(loc));
+                }
+                trackedLocationsCache = out;
+            }
+            return trackedLocationsCache;
+        }
+
+        private void ensureTracked() {
+            if (trackedLoaded) return;
+            trackedLoaded = true;
+            try {
+                List<LocationEntry> locations = ItemLocationTracker.getInstance().getLocations(item);
+                locations.removeIf(loc -> loc.getType() == LocationEntry.LocationType.INVENTORY);
+                trackedEntries = locations;
+                int sum = 0;
+                for (LocationEntry loc : locations) {
+                    sum += loc.getCount();
+                }
+                trackedCount = sum;
+            } catch (Exception e) {
+                InventorySortClient.LOGGER.error("Failed to query tracking for " + id, e);
+            }
         }
     }
 }
