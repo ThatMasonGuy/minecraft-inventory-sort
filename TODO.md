@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: `2.4.16`
+Current checkpoint: `2.6.0`
 
 ## Confirmed Working
 
@@ -83,6 +83,167 @@ Current checkpoint: `2.4.16`
 2. Log/chat noise:
    - Watch for remaining chat/log spam during manual testing.
    - Keep important warnings visible, move routine diagnostics to `debug`.
+
+## Deep-Dive Audit (2026-05-30)
+
+Full read-through of all three segments (Sort / Search / Catalogue) plus infra,
+mixins, and config. Severity: 🔴 high, 🟠 medium, 🟡 low, 🟢 nit. Nothing here is
+implemented yet — this is the backlog backup.
+
+### Confirmed UI bugs
+
+1. 🔴 Black text on near-black input background (both text inputs):
+   - `ServerWorldProfileScreen` world-name box sets `setTextColor(0xFF000000)`
+     (`ServerWorldProfileScreen.java:44`) over `drawRecessedPanel` fill
+     `COLOR_RECESSED_BACKGROUND = 0xFF121212` → typed text is invisible. This is
+     the reported world-selector bug.
+   - Same root cause in the Search modal search box (`SearchModalScreen.java:120`
+     + recessed panel at `:222`). Fix both: use a light text color (or lighten
+     the recessed fill) so input is legible. Consider a shared helper so all mod
+     inputs stay consistent.
+
+### Other UI issues
+
+1. 🔴 Search results: name column overlaps the count column.
+   - `nameMaxW = listContentW - 94` lets the name run to ~`listX+278`, but the
+     count is hardcoded at `listX + 230` (`SearchModalScreen.java:263` and `:284`).
+     Long names render over the count value. Bound name width by the count column.
+2. 🟠 Count column position (`230`) is hardcoded, not derived from `modalW`
+   (header `:217`, values `:284`). On smaller windows / higher GUI scale the count
+   drifts into or past the expand/scroll columns and the scissor edge (`rowRightX`),
+   clipping or colliding. Make it a fraction of content width like the other columns.
+3. 🟠 Esc abandons the parent screen. `SearchModalScreen` (and the profile screen
+   opened from it) never override `onClose()`, so Esc does `setScreen(null)` (drops
+   to game) while the ✕ button returns to parent. Nested screens lose the whole
+   stack. Route close → parent.
+4. 🟡 Wheel scroll always moves `ROW_H+4` (24px) even past expanded rows (~80px)
+   (`SearchModalScreen.java:189`) — feels sticky over expanded entries.
+5. 🟡 Bottom-most visible row often can't be expanded: `updateLayout` `withinClip`
+   check (`SearchModalScreen.java:367`) hides a ▶ button if partially clipped even
+   though the row text is on screen.
+6. 🟡 Sort buttons vs recipe book: `calcButtonX` (`HandledScreenMixin.java:44`)
+   anchors right then falls back to left edge; when the recipe book shifts `leftPos`
+   on narrow screens the buttons can float over the GUI.
+
+### Dead scaffolding / consistency
+
+1. 🔴 Dead template code (safe to delete):
+   - `InventorySort.java` (`ModInitializer`) is never invoked — no `main`
+     entrypoint in `fabric.mod.json`.
+   - `ExampleMixin.java` is not listed in `inventorysort.mixins.json`.
+   - `inventory-sort.client.mixins.json` points at a non-existent
+     `ExampleClientMixin` in package `…mixin.client` and is not referenced by
+     `fabric.mod.json`; wiring it in would crash at load.
+2. 🟡 `MOD_ID` inconsistent: `InventorySort.MOD_ID = "inventory-sort"` vs
+   `InventorySortClient.MOD_ID = "inventorysort"` vs json id `inventorysort`.
+
+### Sort segment
+
+1. 🟠 Small containers get no sort/transfer buttons: `HandledScreenMixin.java:69`
+   gates container UI on `totalSlots > 46`, excluding hoppers/dispensers/droppers/
+   furnaces/brewing stands. The name-based detection in `InventorySorter`
+   (`:257`, `:834`) lists those types but is never reached for them — the two
+   detection schemes disagree.
+2. 🟠 Click-storm desync risk: sorting/transfers drive hundreds of synchronous
+   `slotClicked` packets (compact→restack→apply→restack→compact; shift-all quick-
+   moves every slot). Risk of ghost items / rollback / kicks on rate-limited
+   servers. Consider throttling/batching or a known-limitation note.
+3. 🟡 `"Crafting"` name match (`InventorySorter.java:257`, `:834`) would include the
+   crafting result slot if ever reached (`containerSize = total-36`). Currently
+   unreachable but a latent trap.
+4. 🟡 Dead/misleading code:
+   - `fillPlayerStacksFromContainer` (`:199`) never called.
+   - `findFirstEmptyNonBundle` (`:722`) is identical to `findFirstEmpty` — does not
+     actually skip bundles despite the name.
+   - Bundle-skip branches in `ensureCursorEmpty` (`:749`, `:759`) are unreachable
+     (sit after an `isEmpty()` early-return).
+5. 🟢 "Sort container" also tops up the hotbar from main inventory first (`:34-40`)
+   — a container action silently reshuffles player inventory.
+
+### Search segment
+
+1. 🟠 Shulker tracking never explicitly saved: `trackItemInShulker`
+   (`ItemLocationTracker.java:90`) calls `addOrUpdateLocation` with no `save()`;
+   portable-shulker contents only reach disk on the next unrelated save or the
+   shutdown hook. A crash loses them.
+2. 🔴 Modded dimensions corrupt on reload: `parseDimensionKey`
+   (`ItemLocationTracker.java:444-456`) defaults any non-vanilla dimension to
+   `Level.OVERWORLD`, and the `LocationEntry` constructor then re-derives the
+   dimension string from it → chests in custom dims reload labeled overworld.
+   (Overlaps P2 #2; note `CatalogStore` stores dimension ids generically and is
+   already correct here.)
+3. 🟠 Per-keystroke eager work: `buildRowForEntry` (`SearchModalScreen.java:445`)
+   queries the tracker and formats every location string for up to 400 results
+   (`:404`) even though strings are only shown when a row is expanded. Lazy-format
+   on expand to cut hundreds of lookups + a full re-sort per keystroke.
+4. 🟡 Dead branch: `formatLocation` INVENTORY case checks `loc.getPos() != null`
+   (`SearchModalScreen.java:515`) but inventory entries always have `pos == null`
+   and are filtered out before formatting anyway.
+5. 🟡 World-confirmation uses global GLFW ENTER/BACKSPACE polling
+   (`ServerWorldProfileManager.java:91`); ignores keybind remaps and hijacks those
+   keys while active (does correctly bail when a screen is open). A real keybinding
+   would be cleaner.
+
+### Catalogue segment (new code, self-review)
+
+1. 🟡 Empty containers are recorded as zero-item snapshots, inflating "locations
+   catalogued" without adding items. Conscious decision needed.
+2. 🟡 Inherits identical-shulker collision: portable shulkers keyed by a 5-slot
+   content hash (`ContainerTrackingMixin.generateContainerHash`), so two identically
+   filled shulkers collide and count once.
+3. 🟢 No atomic/`.bak` write on `CatalogStore.save()`; a crash mid-write loses that
+   namespace's catalogue (loader catches and starts fresh — no crash).
+4. 🟢 No in-game catalogue GUI yet (command-only). Natural future feature reusing
+   the search modal styling.
+
+### Performance
+
+1. 🟠 Inventory sampler disk churn: `InventoryHistorySampler.sample` runs every tick
+   and any inventory-total change triggers a full-file `save()`
+   (`ItemLocationTracker.java:141`). Mining/combat → many whole-JSON rewrites/sec.
+   Debounce / dirty-flag with periodic flush. (Overlaps "Performance And Logging" #1.)
+
+## Mod Split Plan: InvSort / InvSearch / InvCatalogue
+
+A clean flat 3-way split is not possible without extracting a shared **Core**.
+Recommended shape: **Core + Sort + Search + Catalogue** (Sort/Search/Catalogue all
+depend on Core; Catalogue and Search both need Core's identity/namespace/event layer).
+
+### Goes in Core (shared by 2+ features)
+
+- Identity & capture: `ContainerIdentity`, `ContainerPositionCapture`,
+  `MultiPlayerGameModeMixin`.
+- World scoping: `TrackingNamespace`, `ServerWorldProfileManager`,
+  `ServerWorldProfileHud`, `ServerWorldProfileScreen`.
+- UI primitives: `InventorySortUIUtils`, the three button classes.
+- Accessor/invoker mixins: `ScreenAccessor`, `AbstractContainerScreenAccessor`,
+  `AbstractContainerScreenInvoker`, `AbstractContainerMenuInvoker`.
+
+### Hard coupling points that must be broken first
+
+1. `ContainerTrackingMixin` calls BOTH `ItemLocationTracker` (Search) and
+   `CatalogSession` (Catalogue) directly. Core should own this mixin and fire events
+   (`onContainerClosed(identity, items)`, `onInventorySnapshot(items)`); Search and
+   Catalogue subscribe. Today Catalogue cannot exist without Search's mixin.
+2. `ServerWorldProfileManager.setActiveProfile` reaches into Search
+   (`ItemLocationTracker.reloadForCurrentNamespace`, `InventoryHistorySampler.reset`).
+   Replace with a "namespace changed" event each store subscribes to (incl.
+   `CatalogStore`).
+3. `ModCommands` mixes Catalogue commands and World-profile commands under one
+   `/inventorysort` root. Three mods can't share a root literal cleanly — give each
+   its own root or have Core own the root + a registration hook.
+4. `InventorySortClient` is one entrypoint doing everything (tracker init, commands,
+   tick sampler + confirmation, HUD, shutdown save). Each mod needs its own
+   `ClientModInitializer`, `fabric.mod.json`, mixin json + package, partitioned
+   registrations.
+
+### Notes
+
+- Sort is the most independent (only Core invoker/accessor mixins + UI).
+- The event-bus refactor (points 1–2) is the keystone; without it Search and
+  Catalogue stay welded together through `ContainerTrackingMixin`.
+- Repackage `tempeststudios.inventorysort.*` into `…core` / `…invsort` /
+  `…invsearch` / `…invcatalogue`; split the single mixin json accordingly.
 
 ## Release Process
 
