@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: `2.6.1`
+Current checkpoint: `2.6.2`
 
 ## Confirmed Working
 
@@ -13,6 +13,11 @@ Current checkpoint: `2.6.1`
 - Catalog `includeInventory` uses a stable per-session player-inventory fingerprint.
 
 ## Recently Fixed
+
+-1. Small grid containers (2.6.2):
+   - Sort + transfer buttons now appear on droppers and dispensers via a
+     `DispenserMenu` gate in `HandledScreenMixin`; dispenser counts as a 3-row grid.
+   - Hoppers, furnaces, and brewing stands stay excluded (functional / not wanted).
 
 0. Quick-win patch (2.6.1) — from the deep-dive audit:
    - Legible input text: world-selector and search boxes now use light text on the
@@ -143,11 +148,10 @@ implemented yet — this is the backlog backup.
 
 ### Sort segment
 
-1. 🟠 Small containers get no sort/transfer buttons: `HandledScreenMixin.java:69`
-   gates container UI on `totalSlots > 46`, excluding hoppers/dispensers/droppers/
-   furnaces/brewing stands. The name-based detection in `InventorySorter`
-   (`:257`, `:834`) lists those types but is never reached for them — the two
-   detection schemes disagree.
+1. 🟠 (DONE 2.6.2) Small containers get no sort/transfer buttons — gate now also
+   accepts `DispenserMenu` (dropper/dispenser). Hoppers, furnaces, and brewing
+   stands remain excluded on purpose. `InventorySorter`'s existing name-based slot
+   detection already handled these once buttons were wired.
 2. 🟠 Click-storm desync risk: sorting/transfers drive hundreds of synchronous
    `slotClicked` packets (compact→restack→apply→restack→compact; shift-all quick-
    moves every slot). Risk of ghost items / rollback / kicks on rate-limited

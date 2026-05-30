@@ -6,6 +6,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.inventory.DispenserMenu;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -65,12 +66,21 @@ public abstract class HandledScreenMixin implements RecipeBookAwareButtonScreen 
 		inventorySort$trackedButtons.clear();
 		inventorySort$trackedButtonRoles.clear();
 
-		int totalSlots = screen.getMenu().slots.size();
-		inventorySort$isContainer = totalSlots > 46 && !(screen instanceof CreativeModeInventoryScreen);
+		var menu = screen.getMenu();
+		int totalSlots = menu.slots.size();
+		// Chests/barrels/shulkers exceed 46 slots; also explicitly include droppers and
+		// dispensers, whose 3x3 grid sits below that threshold. Hoppers, furnaces, and brewing
+		// stands are intentionally excluded - their slots are functional, not free-form.
+		boolean smallGridContainer = menu instanceof DispenserMenu;
+		inventorySort$isContainer = !(screen instanceof CreativeModeInventoryScreen)
+				&& (totalSlots > 46 || smallGridContainer);
 
 		if (inventorySort$isContainer) {
 			int containerSlots = totalSlots - 36;
-			inventorySort$containerRows = (int) Math.ceil(containerSlots / 9.0);
+			// Dispenser/dropper show their 9 slots as a 3x3 grid; ceil(9/9) would say 1 row.
+			inventorySort$containerRows = menu instanceof DispenserMenu
+					? 3
+					: (int) Math.ceil(containerSlots / 9.0);
 		} else {
 			inventorySort$containerRows = 0;
 		}

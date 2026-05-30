@@ -11,7 +11,7 @@ A lightweight **client-side** Minecraft mod that adds robust sorting capabilitie
 ## Features
 
 ### 1. Sorting Capabilities
-- **Inventory & Container Sorting:** Adds a **Sort** button to supported container screens, letting you organize any supported GUI instantly.
+- **Inventory & Container Sorting:** Adds a **Sort** button to supported container screens, letting you organize any supported GUI instantly. Works on chests, barrels, shulker boxes, droppers, and dispensers (hoppers, furnaces, and brewing stands are skipped — their slots are functional).
 - **Hotbar-friendly Top-up Behavior:** Intelligently tops up partial hotbar stacks from your main inventory *before* sorting, ensuring your tools and blocks are ready to use.
 - **Restacking and Compaction:** Performs restacking and stable compaction so full stacks and empties are arranged cleanly, leaving no awkward gaps.
 - **Practical Category-based Ordering:** Sorts items by practical priorities:
