@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: `2.6.0`
+Current checkpoint: `2.6.1`
 
 ## Confirmed Working
 
@@ -13,6 +13,16 @@ Current checkpoint: `2.6.0`
 - Catalog `includeInventory` uses a stable per-session player-inventory fingerprint.
 
 ## Recently Fixed
+
+0. Quick-win patch (2.6.1) — from the deep-dive audit:
+   - Legible input text: world-selector and search boxes now use light text on the
+     dark recessed field (was black-on-near-black, invisible).
+   - Search columns: count column position scales from modal width and the item
+     name truncates before it, so long names no longer overlap the count.
+   - Esc returns to parent: `SearchModalScreen` and `ServerWorldProfileScreen`
+     override `onClose()` to go back to the screen that opened them.
+   - Shulker tracking now flushed to disk on container close instead of waiting for
+     the next unrelated save / shutdown hook.
 
 1. Placed shulker identical-content collision:
    - Restored same-content cleanup for placed shulkers.
@@ -92,7 +102,7 @@ implemented yet — this is the backlog backup.
 
 ### Confirmed UI bugs
 
-1. 🔴 Black text on near-black input background (both text inputs):
+1. 🔴 (DONE 2.6.1) Black text on near-black input background (both text inputs):
    - `ServerWorldProfileScreen` world-name box sets `setTextColor(0xFF000000)`
      (`ServerWorldProfileScreen.java:44`) over `drawRecessedPanel` fill
      `COLOR_RECESSED_BACKGROUND = 0xFF121212` → typed text is invisible. This is
@@ -104,18 +114,12 @@ implemented yet — this is the backlog backup.
 
 ### Other UI issues
 
-1. 🔴 Search results: name column overlaps the count column.
-   - `nameMaxW = listContentW - 94` lets the name run to ~`listX+278`, but the
-     count is hardcoded at `listX + 230` (`SearchModalScreen.java:263` and `:284`).
-     Long names render over the count value. Bound name width by the count column.
-2. 🟠 Count column position (`230`) is hardcoded, not derived from `modalW`
-   (header `:217`, values `:284`). On smaller windows / higher GUI scale the count
-   drifts into or past the expand/scroll columns and the scissor edge (`rowRightX`),
-   clipping or colliding. Make it a fraction of content width like the other columns.
-3. 🟠 Esc abandons the parent screen. `SearchModalScreen` (and the profile screen
-   opened from it) never override `onClose()`, so Esc does `setScreen(null)` (drops
-   to game) while the ✕ button returns to parent. Nested screens lose the whole
-   stack. Route close → parent.
+1. 🔴 (DONE 2.6.1) Search results: name column overlaps the count column. Count
+   column now scales from content width and the name truncates before it.
+2. 🟠 (DONE 2.6.1) Count column position no longer hardcoded — derived from
+   `listContentW` with reserved room on the right.
+3. 🟠 (DONE 2.6.1) Esc abandons the parent screen — `SearchModalScreen` and
+   `ServerWorldProfileScreen` now override `onClose()` to route back to parent.
 4. 🟡 Wheel scroll always moves `ROW_H+4` (24px) even past expanded rows (~80px)
    (`SearchModalScreen.java:189`) — feels sticky over expanded entries.
 5. 🟡 Bottom-most visible row often can't be expanded: `updateLayout` `withinClip`
@@ -162,10 +166,8 @@ implemented yet — this is the backlog backup.
 
 ### Search segment
 
-1. 🟠 Shulker tracking never explicitly saved: `trackItemInShulker`
-   (`ItemLocationTracker.java:90`) calls `addOrUpdateLocation` with no `save()`;
-   portable-shulker contents only reach disk on the next unrelated save or the
-   shutdown hook. A crash loses them.
+1. 🟠 (DONE 2.6.1) Shulker tracking never explicitly saved — `ContainerTrackingMixin`
+   now flushes `tracker.save()` after tracking a portable shulker's contents.
 2. 🔴 Modded dimensions corrupt on reload: `parseDimensionKey`
    (`ItemLocationTracker.java:444-456`) defaults any non-vanilla dimension to
    `Level.OVERWORLD`, and the `LocationEntry` constructor then re-derives the

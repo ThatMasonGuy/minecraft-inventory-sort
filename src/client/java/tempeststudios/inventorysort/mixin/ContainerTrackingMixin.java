@@ -178,6 +178,11 @@ public abstract class ContainerTrackingMixin {
         }
 
         if (inventorySort$isShulker) {
+            // Shulker tracking is additive (no snapshot replace that would save), so flush
+            // it now instead of waiting for the next unrelated save or the shutdown hook.
+            if (itemsTracked > 0) {
+                tracker.save();
+            }
             InventorySortClient.LOGGER.debug("Completed shulker box tracking (ID: {})", inventorySort$shulkerIdentifier);
         }
     }

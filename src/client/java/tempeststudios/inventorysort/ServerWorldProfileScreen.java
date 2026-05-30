@@ -37,11 +37,13 @@ public class ServerWorldProfileScreen extends Screen {
         int panelX = (this.width - panelW) / 2;
         int panelY = (this.height - panelH) / 2;
 
-        this.profileBox = new EditBox(this.font, panelX + 16, panelY + 50, panelW - 96, 14,
+        // Recessed field is at panelY+48, 18px tall. EditBox is unbordered, so it draws
+        // text flush at its Y (no auto-centering) - offset by +5 to center text in the field.
+        this.profileBox = new EditBox(this.font, panelX + 16, panelY + 53, panelW - 96, 14,
                 Component.literal("World name"));
         this.profileBox.setMaxLength(32);
         this.profileBox.setBordered(false);
-        this.profileBox.setTextColor(0xFF000000);
+        this.profileBox.setTextColor(0xFFE0E0E0); // Light text on the dark recessed field
         this.addRenderableWidget(profileBox);
 
         this.addRenderableWidget(new InventorySortTextButton(panelX + panelW - 72, panelY + 48, 58, 18, Component.literal("Use"), button -> useTypedProfile()));
@@ -151,6 +153,12 @@ public class ServerWorldProfileScreen extends Screen {
 
     private void closeToParent() {
         Minecraft.getInstance().setScreen(parent);
+    }
+
+    @Override
+    public void onClose() {
+        // Return to whatever opened us (e.g. the search modal) rather than the game.
+        closeToParent();
     }
 
     @Override

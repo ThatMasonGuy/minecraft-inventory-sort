@@ -65,6 +65,7 @@ public class SearchModalScreen extends Screen {
     private int scrollColX;
     private int rowRightX;     // right edge of row background (stops before scroll column)
     private int listContentW;  // width available for icon+text before expand column
+    private int countColX;     // x of the count column, scaled from content width
 
     private static final int PAD = 14;
     private static final int ROW_H = 20;
@@ -109,15 +110,20 @@ public class SearchModalScreen extends Screen {
         this.expandColX = scrollColX - 20; // 2px gap between expand and scroll
         this.rowRightX = expandColX + 18;  // row background includes expand button column
         this.listContentW = (expandColX - 6) - listX; // icon+text space ends before expand
+        // Count column scales with content width and always reserves room on the right,
+        // so the name truncates before it instead of overlapping (see updateResults render).
+        this.countColX = listX + Math.max(60, listContentW - 56);
 
         // Search box
         int boxX = modalX + PAD;
         int boxW = (scrollColX - 6) - boxX; // stop before right-side columns
-        this.searchBox = new EditBox(this.font, boxX + 2, searchBoxY + 2, boxW - 4, 14, Component.literal("Search"));
+        // Recessed field is at searchBoxY, 18px tall. EditBox is unbordered, so it draws text
+        // flush at its Y (no auto-centering) - offset by +5 to center text in the field.
+        this.searchBox = new EditBox(this.font, boxX + 2, searchBoxY + 5, boxW - 4, 14, Component.literal("Search"));
         this.searchBox.setMaxLength(64);
         this.searchBox.setValue("");
         this.searchBox.setBordered(false); // We draw our own beveled border
-        this.searchBox.setTextColor(0xFF000000);
+        this.searchBox.setTextColor(0xFFE0E0E0); // Light text on the dark recessed field
         this.addRenderableWidget(this.searchBox);
 
         // Close button — keep it inside panel ✅
@@ -173,6 +179,12 @@ public class SearchModalScreen extends Screen {
         }
     }
 
+    @Override
+    public void onClose() {
+        // Esc should return to the container/inventory we opened from, not drop to the game.
+        closeToParent();
+    }
+
     private void closeToParent() {
         Minecraft mc = Minecraft.getInstance();
         if (mc != null) mc.setScreen(parent);
@@ -214,7 +226,7 @@ public class SearchModalScreen extends Screen {
         // Column headers
         int headerY = modalY + 48;
         g.drawString(this.font, "Item", listX + 0, headerY, 0xFF555555, false);
-        g.drawString(this.font, "Count", listX + 230, headerY, 0xFF555555, false);
+        g.drawString(this.font, "Count", countColX, headerY, 0xFF555555, false);
 
         // Search Box recessed area
         int boxX = modalX + PAD;
@@ -261,7 +273,8 @@ public class SearchModalScreen extends Screen {
 
                 // Name + count
                 int nameX = listX + 16 + 8;
-                int nameMaxW = Math.max(80, listContentW - 16 - 8 - 70);
+                // Stop the name before the count column so long names never overlap it.
+                int nameMaxW = Math.max(40, countColX - nameX - 6);
                 String name = this.font.plainSubstrByWidth(row.name, nameMaxW);
                 g.drawString(this.font, name, nameX, y + 6, 0xFF000000, false);
 
@@ -281,7 +294,7 @@ public class SearchModalScreen extends Screen {
                     countStr = "—";
                     countColor = 0xFF777777; // Darker gray
                 }
-                g.drawString(this.font, countStr, listX + 230, y + 6, countColor, false);
+                g.drawString(this.font, countStr, countColX, y + 6, countColor, false);
 
                 // Expanded details
                 if (isOpen) {
