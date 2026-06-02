@@ -69,7 +69,11 @@ A lightweight **client-side** Minecraft mod that adds robust sorting capabilitie
 ./gradlew buildAllMods
 ```
 
-Built feature artifacts are generated in:
+Publish-ready feature artifacts are collected in:
+
+- `build/release/`
+
+Module-local build artifacts are also generated in:
 
 - `modules/inventorysort/build/libs/`
 - `modules/inventorysearch/build/libs/`

@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: `2.6.3` + unreleased hard-coupling break
+Current checkpoint: `2.6.3` + unreleased release jar collection
 
 ## Project Workflow
 
@@ -20,6 +20,13 @@ Current checkpoint: `2.6.3` + unreleased hard-coupling break
 - Catalog `includeInventory` uses a stable per-session player-inventory fingerprint.
 
 ## Recently Fixed
+
+-8. One-click release jar collection (unreleased):
+   - Added `collectReleaseJars`, which copies only the three public feature jars
+     into `build/release/`.
+   - `buildAllMods` now builds Core + Sort/Search/Catalogue and produces a
+     publish-ready `build/release/` folder in one command.
+   - CI artifact upload now collects `build/release/` instead of module-local libs.
 
 -7. Public module structure (unreleased):
    - Added Gradle subprojects for `inventorysort-core`, `inventorysort`,
@@ -313,8 +320,8 @@ depend on Core; Catalogue and Search both need Core's identity/namespace/event l
 5. Add one-click local build:
    - Add root Gradle tasks such as `buildAllMods` and later `publishAllModrinth`.
    - Collect public release jars in a predictable output folder.
-   - Current status: `buildAllMods` builds the three public feature jars plus the
-     internal Core artifact. A dedicated release collection folder is still next.
+   - Current status: DONE for local release builds. `buildAllMods` now leaves the
+     three public, publish-ready jars in `build/release/`.
 6. Validate install combinations:
    - Test Sort only, Search only, Catalogue only, pairwise combinations, and all
      three together.

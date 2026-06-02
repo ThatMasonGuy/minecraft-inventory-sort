@@ -12,6 +12,12 @@ allprojects {
 	}
 }
 
+def publicFeatureProjects = [
+		project(':inventorysort'),
+		project(':inventorysearch'),
+		project(':inventorycatalogue')
+]
+
 subprojects {
 	apply plugin: 'net.fabricmc.fabric-loom-remap'
 	apply plugin: 'maven-publish'
@@ -68,10 +74,26 @@ subprojects {
 	}
 }
 
+tasks.register('collectReleaseJars', Copy) {
+	group = 'build'
+	description = 'Collects publish-ready public feature jars into build/release.'
+	dependsOn publicFeatureProjects.collect { it.tasks.named('remapJar') }
+
+	from(publicFeatureProjects.collect { featureProject ->
+		featureProject.tasks.named('remapJar').flatMap { it.archiveFile }
+	})
+	into layout.buildDirectory.dir('release')
+
+	doFirst {
+		delete layout.buildDirectory.dir('release')
+	}
+}
+
 tasks.register('buildAllMods') {
 	group = 'build'
-	description = 'Builds all public feature mod jars.'
+	description = 'Builds all mod jars and collects public feature jars into build/release.'
 	dependsOn ':inventorysort-core:build', ':inventorysort:build', ':inventorysearch:build', ':inventorycatalogue:build'
+	dependsOn tasks.named('collectReleaseJars')
 }
 
 tasks.named('build') {
