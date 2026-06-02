@@ -1,0 +1,31 @@
+# AGENTS.md
+
+## Project Workflow
+
+- Keep the repo in a clean checkpoint-driven state while splitting the mod and preparing multi-version releases.
+- After each major change or implementation step:
+  1. Update `TODO.md` with the completed work, current state, and next relevant task.
+  2. Update `CHANGELOG.md` with the user-facing or engineering changes.
+  3. Run the appropriate verification command, usually `.\gradlew.bat clean build` for baseline/build changes.
+  4. Commit the change before starting the next major step.
+- If multiple major changes happen in one session, stop between each major boundary to update `TODO.md`, update `CHANGELOG.md`, verify, and commit.
+- Keep commits focused. Do not bundle unrelated split, cleanup, publishing, or version-migration work into one commit.
+- Before editing or committing, check `git status --short` and preserve any user changes that are unrelated to the current task.
+
+## Major Change Boundaries
+
+Examples of major boundaries for this project:
+
+- Baseline cleanup or metadata correction.
+- Core extraction.
+- Event bus or namespace-change refactor.
+- Splitting Sort, Search, or Catalogue into separate modules.
+- Gradle build/publish task changes.
+- Modrinth publishing configuration.
+- Minecraft/Fabric/Loom version migration.
+
+## Current Direction
+
+- Keep user installation simple: each public feature mod should be installable on its own.
+- Shared Core code should be packaged so users do not need to download a separate Core mod manually.
+- Split the current single mod on the existing Minecraft target first, then port the split modules to newer Minecraft versions.

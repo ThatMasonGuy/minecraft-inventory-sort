@@ -1,6 +1,13 @@
 # Inventory Search TODO
 
-Current checkpoint: `2.6.3`
+Current checkpoint: `2.6.3` + unreleased split-prep cleanup
+
+## Project Workflow
+
+- After every major change, update `TODO.md`, update `CHANGELOG.md`, verify the
+  relevant Gradle build/task, and commit before starting the next major step.
+- If a session includes more than one major change, stop between major boundaries
+  to update notes and commit each checkpoint separately.
 
 ## Confirmed Working
 
@@ -13,6 +20,15 @@ Current checkpoint: `2.6.3`
 - Catalog `includeInventory` uses a stable per-session player-inventory fingerprint.
 
 ## Recently Fixed
+
+-3. Baseline cleanup / split prep (unreleased):
+   - Added `AGENTS.md` so future work keeps `TODO.md`, `CHANGELOG.md`, verification,
+     and commits synchronized after every major step.
+   - Added `CHANGELOG.md` and recorded the current baseline cleanup.
+   - Removed unused Fabric template scaffolding: `InventorySort.java`,
+     `ExampleMixin.java`, and the unused client mixin config referencing the missing
+     `ExampleClientMixin`.
+   - Fixed `fabric.mod.json` icon path to match `assets/inventory-sort/icon.png`.
 
 -2. Tracker/search hardening (2.6.3):
    - Modded/custom dimensions now round-trip: `LocationEntry` stores the dimension as
@@ -147,15 +163,16 @@ implemented yet — this is the backlog backup.
 
 ### Dead scaffolding / consistency
 
-1. 🔴 Dead template code (safe to delete):
-   - `InventorySort.java` (`ModInitializer`) is never invoked — no `main`
-     entrypoint in `fabric.mod.json`.
-   - `ExampleMixin.java` is not listed in `inventorysort.mixins.json`.
-   - `inventory-sort.client.mixins.json` points at a non-existent
-     `ExampleClientMixin` in package `…mixin.client` and is not referenced by
-     `fabric.mod.json`; wiring it in would crash at load.
-2. 🟡 `MOD_ID` inconsistent: `InventorySort.MOD_ID = "inventory-sort"` vs
-   `InventorySortClient.MOD_ID = "inventorysort"` vs json id `inventorysort`.
+1. DONE (baseline cleanup): Dead template code removed:
+   - Deleted unused `InventorySort.java` (`ModInitializer`).
+   - Deleted unused `ExampleMixin.java`.
+   - Deleted unused `inventory-sort.client.mixins.json` that referenced the missing
+     `ExampleClientMixin`.
+2. DONE (baseline cleanup): `MOD_ID` inconsistency removed with the unused
+   `InventorySort` initializer. Active client id remains `inventorysort`, matching
+   `fabric.mod.json`.
+3. DONE (baseline cleanup): `fabric.mod.json` icon path now matches the checked-in
+   `assets/inventory-sort/icon.png` asset.
 
 ### Sort segment
 

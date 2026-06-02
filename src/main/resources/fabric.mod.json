@@ -7,7 +7,7 @@
   "authors": ["Tempest Studios"],
   "contact": {},
   "license": "MIT",
-  "icon": "assets/inventorysort/icon.png",
+  "icon": "assets/inventory-sort/icon.png",
   "environment": "client",
   "entrypoints": {
     "client": ["tempeststudios.inventorysort.InventorySortClient"]
