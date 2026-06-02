@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: `2.6.3` + unreleased Core foundation
+Current checkpoint: `2.6.3` + unreleased hard-coupling break
 
 ## Project Workflow
 
