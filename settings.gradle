@@ -1,4 +1,19 @@
 pluginManagement {
+	def profileName = providers.gradleProperty('minecraft_version_profile')
+			.orElse(providers.gradleProperty('target_minecraft_version'))
+			.orElse('1.21.11')
+			.get()
+	def profileFile = file("gradle/version-profiles/${profileName}.properties")
+	if (!profileFile.isFile()) {
+		throw new RuntimeException("Unknown Minecraft version profile '${profileName}'. Add ${profileFile}.")
+	}
+	def profile = new Properties()
+	profileFile.withInputStream { profile.load(it) }
+	def selectedLoomVersion = profile.getProperty('loom_version')
+	if (!selectedLoomVersion) {
+		throw new RuntimeException("Minecraft version profile '${profileName}' is missing loom_version.")
+	}
+
 	repositories {
 		maven {
 			name = 'Fabric'
@@ -6,6 +21,9 @@ pluginManagement {
 		}
 		mavenCentral()
 		gradlePluginPortal()
+	}
+	plugins {
+		id 'net.fabricmc.fabric-loom-remap' version selectedLoomVersion
 	}
 }
 

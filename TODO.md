@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: `2.6.3` + LGPL license alignment
+Current checkpoint: `2.6.3` + multi-version build profile foundation
 
 ## Project Workflow
 
@@ -34,6 +34,14 @@ Current checkpoint: `2.6.3` + LGPL license alignment
 
 ## Recently Fixed
 
+-12. Multi-version build profile foundation (unreleased):
+   - Added Gradle Minecraft version profiles under `gradle/version-profiles/`.
+   - Default and supported release builds remain on the tested `1.21.11` profile.
+   - Added candidate `26.1.2` and `26.2-pre-3` profiles for migration work; both
+     require Java 25 before source/API compile validation.
+   - Upgraded the Gradle wrapper to 9.4.0 for Loom 1.16 candidate profile support.
+   - Release jars now collect under `build/release/<minecraft_version>/`.
+
 -11. License alignment (unreleased):
    - Replaced the old repo license text with LGPL-3.0-only and added the GPLv3
      text referenced by LGPLv3.
@@ -63,10 +71,11 @@ Current checkpoint: `2.6.3` + LGPL license alignment
 
 -8. One-click release jar collection (unreleased):
    - Added `collectReleaseJars`, which copies only the three public feature jars
-     into `build/release/`.
+     into `build/release/<minecraft_version>/`.
    - `buildAllMods` now builds Core + Sort/Search/Catalogue and produces a
-     publish-ready `build/release/` folder in one command.
-   - CI artifact upload now collects `build/release/` instead of module-local libs.
+     publish-ready `build/release/<minecraft_version>/` folder in one command.
+   - CI artifact upload now collects `build/release/` recursively instead of
+     module-local libs.
 
 -7. Public module structure (unreleased):
    - Added Gradle subprojects for `inventorysort-core`, `inventorysort`,
@@ -360,13 +369,17 @@ depend on Core; Catalogue and Search both need Core's identity/namespace/event l
    - Add root Gradle tasks such as `buildAllMods` and later `publishAllModrinth`.
    - Collect public release jars in a predictable output folder.
    - Current status: DONE for local release builds. `buildAllMods` now leaves the
-     three public, publish-ready jars in `build/release/`.
+     three public, publish-ready jars in `build/release/<minecraft_version>/`.
 6. Validate install combinations:
    - Test Sort only, Search only, Catalogue only, pairwise combinations, and all
      three together.
+   - Current status: DONE for the `1.21.11` split release jars.
 7. Add multi-version support:
    - Once the split is stable on the current target, compile the same modules
      against newer Minecraft/Fabric/Loom targets for the v26 migration.
+   - Current status: STARTED. Gradle profile support is in place for the current
+     release and candidate 26.x targets. Next blocker is installing/running a Java
+     25 toolchain, then compiling a 26.x profile and fixing source/API breaks.
 8. Configure Modrinth publishing:
    - Give each public feature mod its own Modrinth project id and upload metadata.
    - Publish the correct jar, Minecraft version, loader, dependencies, and

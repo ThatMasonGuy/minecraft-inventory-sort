@@ -15,7 +15,8 @@ All notable project changes will be documented here.
 - Moved split-mod commands to feature-specific roots: `/inventorycatalogue ...`, `/inventorycatalogue world ...`, and `/inventorysearch world ...`.
 - Split sort/search screen-button ownership and added separate Core/Search/Catalogue client entrypoints as preparation for public modules.
 - Added Gradle subprojects for Core, Sort, Search, and Catalogue. The three public feature jars now build separately and each nests the shared Core jar.
-- Added `collectReleaseJars` and updated `buildAllMods` so publish-ready Sort, Search, and Catalogue jars are collected in `build/release/`.
+- Added `collectReleaseJars` and updated `buildAllMods` so publish-ready Sort, Search, and Catalogue jars are collected under `build/release/<minecraft_version>/`.
+- Added Minecraft version profiles and upgraded the Gradle wrapper to 9.4.0 so 26.x migration profiles can be configured separately from the current release target.
 - Confirmed the rebuilt split release jars launch in normal launcher installs individually and together.
 
 ### Fixed

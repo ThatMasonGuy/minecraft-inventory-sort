@@ -71,7 +71,16 @@ A lightweight **client-side** Minecraft mod that adds robust sorting capabilitie
 
 Publish-ready feature artifacts are collected in:
 
-- `build/release/`
+- `build/release/<minecraft_version>/`
+
+The default Minecraft version profile is `1.21.11`. To inspect or switch build
+profiles:
+
+```bash
+./gradlew printVersionProfile
+./gradlew buildAllMods -Pminecraft_version_profile=1.21.11
+./gradlew buildAllVersions
+```
 
 Module-local build artifacts are also generated in:
 

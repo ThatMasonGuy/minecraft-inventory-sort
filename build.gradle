@@ -1,7 +1,39 @@
+import org.gradle.api.tasks.GradleBuild
+
 plugins {
 	id 'base'
-	id 'net.fabricmc.fabric-loom-remap' version "${loom_version}" apply false
+	id 'net.fabricmc.fabric-loom-remap' apply false
 }
+
+def versionProfileName = providers.gradleProperty('minecraft_version_profile')
+		.orElse(providers.gradleProperty('target_minecraft_version'))
+		.orElse('1.21.11')
+		.get()
+def versionProfileFile = file("gradle/version-profiles/${versionProfileName}.properties")
+if (!versionProfileFile.isFile()) {
+	throw new GradleException("Unknown Minecraft version profile '${versionProfileName}'. Add ${versionProfileFile}.")
+}
+def versionProfile = new Properties()
+versionProfileFile.withInputStream { versionProfile.load(it) }
+
+[
+		'minecraft_version',
+		'loader_version',
+		'loom_version',
+		'fabric_api_version',
+		'java_version'
+].each { key ->
+	if (!versionProfile.getProperty(key)) {
+		throw new GradleException("Minecraft version profile '${versionProfileName}' is missing ${key}.")
+	}
+}
+
+ext.minecraft_version_profile = versionProfileName
+ext.minecraft_version = versionProfile.getProperty('minecraft_version')
+ext.loader_version = versionProfile.getProperty('loader_version')
+ext.loom_version = versionProfile.getProperty('loom_version')
+ext.fabric_api_version = versionProfile.getProperty('fabric_api_version')
+ext.target_java_version = versionProfile.getProperty('java_version') as int
 
 allprojects {
 	version = rootProject.mod_version
@@ -17,6 +49,12 @@ def publicFeatureProjects = [
 		project(':inventorysearch'),
 		project(':inventorycatalogue')
 ]
+def releaseOutputDirectory = layout.buildDirectory.dir("release/${minecraft_version}")
+def supportedMinecraftVersionProfiles = (findProperty('supported_minecraft_version_profiles') ?: minecraft_version_profile)
+		.toString()
+		.split(',')
+		.collect { it.trim() }
+		.findAll { !it.isEmpty() }
 
 subprojects {
 	apply plugin: 'net.fabricmc.fabric-loom-remap'
@@ -38,7 +76,8 @@ subprojects {
 				version: rootProject.mod_version,
 				minecraft_version: rootProject.minecraft_version,
 				loader_version: rootProject.loader_version,
-				fabric_api_version: rootProject.fabric_api_version
+				fabric_api_version: rootProject.fabric_api_version,
+				java_version: rootProject.target_java_version
 		]
 
 		inputs.properties(resourceProperties)
@@ -52,13 +91,13 @@ subprojects {
 	}
 
 	tasks.withType(JavaCompile).configureEach {
-		it.options.release = 21
+		it.options.release = rootProject.target_java_version
 	}
 
 	java {
 		withSourcesJar()
-		sourceCompatibility = JavaVersion.VERSION_21
-		targetCompatibility = JavaVersion.VERSION_21
+		sourceCompatibility = JavaVersion.toVersion(rootProject.target_java_version)
+		targetCompatibility = JavaVersion.toVersion(rootProject.target_java_version)
 	}
 
 	jar {
@@ -85,10 +124,10 @@ tasks.register('collectReleaseJars', Copy) {
 	from(publicFeatureProjects.collect { featureProject ->
 		featureProject.tasks.named('remapJar').flatMap { it.archiveFile }
 	})
-	into layout.buildDirectory.dir('release')
+	into releaseOutputDirectory
 
 	doFirst {
-		delete layout.buildDirectory.dir('release')
+		delete releaseOutputDirectory
 	}
 }
 
@@ -102,7 +141,7 @@ tasks.register('verifyReleaseJars') {
 		String forbiddenDevCoreJar = "META-INF/jars/inventory-sort-core-${version}-dev.jar"
 
 		publicFeatureProjects.each { featureProject ->
-			def releaseJar = layout.buildDirectory.file("release/${featureProject.base.archivesName.get()}-${version}.jar").get().asFile
+			def releaseJar = layout.buildDirectory.file("release/${minecraft_version}/${featureProject.base.archivesName.get()}-${version}.jar").get().asFile
 			if (!releaseJar.isFile()) {
 				throw new GradleException("Missing release jar: ${releaseJar}")
 			}
@@ -125,12 +164,44 @@ tasks.register('verifyReleaseJars') {
 	}
 }
 
+tasks.register('printVersionProfile') {
+	group = 'help'
+	description = 'Prints the active Minecraft/Fabric build profile.'
+
+	doLast {
+		println "Minecraft version profile: ${minecraft_version_profile}"
+		println "Minecraft: ${minecraft_version}"
+		println "Fabric Loader: ${loader_version}"
+		println "Fabric API: ${fabric_api_version}"
+		println "Loom: ${loom_version}"
+		println "Java release: ${target_java_version}"
+		println "Release output: ${releaseOutputDirectory.get().asFile}"
+	}
+}
+
 tasks.register('buildAllMods') {
 	group = 'build'
 	description = 'Builds all mod jars and collects public feature jars into build/release.'
 	dependsOn ':inventorysort-core:build', ':inventorysort:build', ':inventorysearch:build', ':inventorycatalogue:build'
 	dependsOn tasks.named('collectReleaseJars')
 	dependsOn tasks.named('verifyReleaseJars')
+}
+
+def versionBuildTasks = supportedMinecraftVersionProfiles.collect { profile ->
+	def taskName = "buildMinecraft${profile.replaceAll(/[^A-Za-z0-9]/, '_')}"
+	tasks.register(taskName, GradleBuild) {
+		group = 'build'
+		description = "Builds all mod jars for Minecraft version profile ${profile}."
+		tasks = ['buildAllMods']
+		startParameter.projectProperties = new LinkedHashMap<>(gradle.startParameter.projectProperties)
+		startParameter.projectProperties.put('minecraft_version_profile', profile)
+	}
+}
+
+tasks.register('buildAllVersions') {
+	group = 'build'
+	description = 'Builds every supported Minecraft version profile.'
+	dependsOn versionBuildTasks
 }
 
 tasks.named('build') {
