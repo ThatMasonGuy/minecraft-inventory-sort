@@ -5,11 +5,11 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallba
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import tempeststudios.inventorysort.core.InventorySortCore;
 
 public class InventorySortClient implements ClientModInitializer {
-	public static final String MOD_ID = "inventorysort";
-	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+	public static final String MOD_ID = InventorySortCore.MOD_ID;
+	public static final Logger LOGGER = InventorySortCore.LOGGER;
 
 	@Override
 	public void onInitializeClient() {

@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: `2.6.3` + unreleased split-prep cleanup
+Current checkpoint: `2.6.3` + unreleased Core foundation
 
 ## Project Workflow
 
@@ -20,6 +20,15 @@ Current checkpoint: `2.6.3` + unreleased split-prep cleanup
 - Catalog `includeInventory` uses a stable per-session player-inventory fingerprint.
 
 ## Recently Fixed
+
+-4. Core foundation / split prep (unreleased):
+   - Added `tempeststudios.inventorysort.core.InventorySortCore` for shared mod id
+     and logger ownership.
+   - Added `tempeststudios.inventorysort.core.InventorySortEvents` with Core event
+     contracts for namespace changes, container snapshots, and inventory snapshots.
+   - Switched `InventorySortClient` to read its active mod id/logger from Core.
+   - Behavior is intentionally unchanged; the next checkpoint wires Search and
+     Catalogue through these events to remove direct coupling.
 
 -3. Baseline cleanup / split prep (unreleased):
    - Added `AGENTS.md` so future work keeps `TODO.md`, `CHANGELOG.md`, verification,
@@ -247,6 +256,9 @@ depend on Core; Catalogue and Search both need Core's identity/namespace/event l
 2. Extract Core:
    - Create the shared Core layer for identity/capture, world scoping, common UI,
      accessor/invoker mixins, and feature events.
+   - Current status: Core constants/logger and event contracts are in place.
+     Remaining extraction work is moving/wiring shared identity, world, UI, and
+     mixin code as modules are split.
 3. Break hard coupling:
    - Replace direct Search/Catalogue calls in shared code with Core events.
    - Replace direct namespace reload calls with a namespace-change event.
