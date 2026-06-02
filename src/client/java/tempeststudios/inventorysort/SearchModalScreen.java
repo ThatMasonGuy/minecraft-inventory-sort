@@ -734,7 +734,7 @@ public class SearchModalScreen extends Screen {
                 }
                 trackedCount = sum;
             } catch (Exception e) {
-                InventorySortClient.LOGGER.error("Failed to query tracking for " + id, e);
+                tempeststudios.inventorysort.core.InventorySortCore.LOGGER.error("Failed to query tracking for " + id, e);
             }
         }
     }

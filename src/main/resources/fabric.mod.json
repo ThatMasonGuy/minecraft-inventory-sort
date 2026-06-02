@@ -10,7 +10,12 @@
   "icon": "assets/inventory-sort/icon.png",
   "environment": "client",
   "entrypoints": {
-    "client": ["tempeststudios.inventorysort.InventorySortClient"]
+    "client": [
+      "tempeststudios.inventorysort.InventorySortCoreClient",
+      "tempeststudios.inventorysort.InventorySortClient",
+      "tempeststudios.inventorysort.InventorySearchClient",
+      "tempeststudios.inventorysort.InventoryCatalogueClient"
+    ]
   },
   "mixins": ["inventorysort.mixins.json"],
   "depends": {

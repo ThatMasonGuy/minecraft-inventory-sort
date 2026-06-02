@@ -18,9 +18,9 @@ public final class InventorySearchFeature {
 
         try {
             ItemLocationTracker.getInstance();
-            InventorySortClient.LOGGER.info("Item location tracking enabled");
+            tempeststudios.inventorysort.core.InventorySortCore.LOGGER.info("Item location tracking enabled");
         } catch (Exception e) {
-            InventorySortClient.LOGGER.error("Failed to initialize item location tracker", e);
+            tempeststudios.inventorysort.core.InventorySortCore.LOGGER.error("Failed to initialize item location tracker", e);
         }
 
         InventorySortEvents.NAMESPACE_CHANGED.register(context -> {
@@ -31,10 +31,10 @@ public final class InventorySearchFeature {
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
-                InventorySortClient.LOGGER.info("Saving item location data on shutdown");
+                tempeststudios.inventorysort.core.InventorySortCore.LOGGER.info("Saving item location data on shutdown");
                 ItemLocationTracker.getInstance().save();
             } catch (Exception e) {
-                InventorySortClient.LOGGER.error("Failed to save item location data", e);
+                tempeststudios.inventorysort.core.InventorySortCore.LOGGER.error("Failed to save item location data", e);
             }
         }, "ItemLocationTracker-Shutdown"));
     }
@@ -57,12 +57,12 @@ public final class InventorySearchFeature {
             if (itemsTracked > 0) {
                 tracker.save();
             }
-            InventorySortClient.LOGGER.debug("Completed shulker box tracking (ID: {})", context.portableShulkerId());
+            tempeststudios.inventorysort.core.InventorySortCore.LOGGER.debug("Completed shulker box tracking (ID: {})", context.portableShulkerId());
             return;
         }
 
         if (context.identity() == null) {
-            InventorySortClient.LOGGER.debug("Skipping search snapshot without an identity: {}", context.screenClassName());
+            tempeststudios.inventorysort.core.InventorySortCore.LOGGER.debug("Skipping search snapshot without an identity: {}", context.screenClassName());
             return;
         }
 
@@ -70,9 +70,9 @@ public final class InventorySearchFeature {
         itemsTracked = context.items().size();
 
         if (itemsTracked == 0) {
-            InventorySortClient.LOGGER.debug("No items found in {} (container is empty)", context.containerType());
+            tempeststudios.inventorysort.core.InventorySortCore.LOGGER.debug("No items found in {} (container is empty)", context.containerType());
         } else {
-            InventorySortClient.LOGGER.debug("Tracked {} items from {} container", itemsTracked, context.containerType());
+            tempeststudios.inventorysort.core.InventorySortCore.LOGGER.debug("Tracked {} items from {} container", itemsTracked, context.containerType());
         }
     }
 }

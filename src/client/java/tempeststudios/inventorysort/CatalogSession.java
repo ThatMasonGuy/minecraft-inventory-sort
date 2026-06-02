@@ -242,7 +242,7 @@ public final class CatalogSession {
                         entry.getValue(), formatItemName(entry.getKey()), entry.getKey()));
             }
         } catch (IOException e) {
-            InventorySortClient.LOGGER.error("Failed to write catalog report file", e);
+            tempeststudios.inventorysort.core.InventorySortCore.LOGGER.error("Failed to write catalog report file", e);
             return null;
         }
         return file;

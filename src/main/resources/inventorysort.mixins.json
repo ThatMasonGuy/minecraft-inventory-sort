@@ -11,6 +11,7 @@
     "AbstractContainerMenuInvoker",
     "AbstractContainerScreenInvoker",
     "ContainerTrackingMixin",
+    "SearchButtonMixin",
     "MultiPlayerGameModeMixin"
   ],
   "injectors": {

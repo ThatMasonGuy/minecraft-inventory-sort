@@ -53,7 +53,7 @@ public final class CatalogStore {
         try {
             Files.createDirectories(catalogDir);
         } catch (IOException e) {
-            InventorySortClient.LOGGER.error("Failed to create catalog directory", e);
+            tempeststudios.inventorysort.core.InventorySortCore.LOGGER.error("Failed to create catalog directory", e);
         }
 
         ensureNamespaceLoaded(TrackingNamespace.current(mc));
@@ -104,7 +104,7 @@ public final class CatalogStore {
                 Files.deleteIfExists(saveFile);
             }
         } catch (IOException e) {
-            InventorySortClient.LOGGER.error("Failed to delete catalog file for {}", activeNamespace, e);
+            tempeststudios.inventorysort.core.InventorySortCore.LOGGER.error("Failed to delete catalog file for {}", activeNamespace, e);
         }
     }
 
@@ -179,9 +179,9 @@ public final class CatalogStore {
         }
         try (Writer writer = new FileWriter(saveFile.toFile())) {
             GSON.toJson(snapshots, writer);
-            InventorySortClient.LOGGER.debug("Saved catalog data for {}", activeNamespace);
+            tempeststudios.inventorysort.core.InventorySortCore.LOGGER.debug("Saved catalog data for {}", activeNamespace);
         } catch (IOException e) {
-            InventorySortClient.LOGGER.error("Failed to save catalog data", e);
+            tempeststudios.inventorysort.core.InventorySortCore.LOGGER.error("Failed to save catalog data", e);
         }
     }
 
@@ -199,12 +199,12 @@ public final class CatalogStore {
                         snapshots.put(entry.getKey(), snapshot);
                     }
                 }
-                InventorySortClient.LOGGER.info("Loaded catalog with {} locations for {}",
+                tempeststudios.inventorysort.core.InventorySortCore.LOGGER.info("Loaded catalog with {} locations for {}",
                         snapshots.size(), activeNamespace);
             }
         } catch (Exception e) {
             // Bad/partial catalog JSON should never crash the client - start fresh for this namespace.
-            InventorySortClient.LOGGER.error("Failed to load catalog data for {}, starting fresh", activeNamespace, e);
+            tempeststudios.inventorysort.core.InventorySortCore.LOGGER.error("Failed to load catalog data for {}, starting fresh", activeNamespace, e);
             snapshots.clear();
         }
     }

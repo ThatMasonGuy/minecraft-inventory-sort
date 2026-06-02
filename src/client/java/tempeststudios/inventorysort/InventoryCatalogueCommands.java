@@ -55,7 +55,7 @@ public final class InventoryCatalogueCommands {
         context.getSource().sendFeedback(Component.empty());
         context.getSource().sendFeedback(Component.literal("Use /inventorysort catalog stop when done.").withStyle(ChatFormatting.YELLOW));
 
-        InventorySortClient.LOGGER.info("Catalog session started (includeInventory: {})", includeInventory);
+        tempeststudios.inventorysort.core.InventorySortCore.LOGGER.info("Catalog session started (includeInventory: {})", includeInventory);
         return 1;
     }
 
@@ -71,7 +71,7 @@ public final class InventoryCatalogueCommands {
             context.getSource().sendFeedback(line);
         }
 
-        InventorySortClient.LOGGER.info("Catalog session stopped and report generated");
+        tempeststudios.inventorysort.core.InventorySortCore.LOGGER.info("Catalog session stopped and report generated");
         return 1;
     }
 

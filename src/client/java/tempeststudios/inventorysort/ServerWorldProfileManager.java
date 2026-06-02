@@ -39,7 +39,7 @@ public final class ServerWorldProfileManager {
         try {
             Files.createDirectories(modDir);
         } catch (IOException e) {
-            InventorySortClient.LOGGER.error("Failed to create inventorysort directory", e);
+            tempeststudios.inventorysort.core.InventorySortCore.LOGGER.error("Failed to create inventorysort directory", e);
         }
         load();
     }
@@ -185,7 +185,7 @@ public final class ServerWorldProfileManager {
                 }
             }
         } catch (Exception e) {
-            InventorySortClient.LOGGER.error("Failed to load server world profiles", e);
+            tempeststudios.inventorysort.core.InventorySortCore.LOGGER.error("Failed to load server world profiles", e);
         }
     }
 
@@ -193,7 +193,7 @@ public final class ServerWorldProfileManager {
         try (Writer writer = Files.newBufferedWriter(saveFile)) {
             GSON.toJson(profilesByServer, writer);
         } catch (IOException e) {
-            InventorySortClient.LOGGER.error("Failed to save server world profiles", e);
+            tempeststudios.inventorysort.core.InventorySortCore.LOGGER.error("Failed to save server world profiles", e);
         }
     }
 

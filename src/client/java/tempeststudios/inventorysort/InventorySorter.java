@@ -16,7 +16,7 @@ import java.util.*;
 public class InventorySorter {
 
 	public static void sortInventory(AbstractContainerScreen<?> screen, Player player) {
-		InventorySortClient.LOGGER.info("Sort button clicked! Screen: {}", screen.getClass().getSimpleName());
+		tempeststudios.inventorysort.core.InventorySortCore.LOGGER.info("Sort button clicked! Screen: {}", screen.getClass().getSimpleName());
 
 		AbstractContainerMenu menu = screen.getMenu();
 		AbstractContainerScreenInvoker invoker = (AbstractContainerScreenInvoker) screen;
@@ -27,7 +27,7 @@ public class InventorySorter {
 		List<Slot> playerHotbar = regions.hotbar;
 		List<Slot> playerMain = regions.main;
 
-		InventorySortClient.LOGGER.debug("Found {} hotbar slots, {} main inventory slots",
+		tempeststudios.inventorysort.core.InventorySortCore.LOGGER.debug("Found {} hotbar slots, {} main inventory slots",
 				playerHotbar.size(), playerMain.size());
 
 		// 1) Top up partial stacks in hotbar (pull from player main only)
@@ -43,15 +43,15 @@ public class InventorySorter {
 		// - Container screens: sort only the container part (no player inventory, no hotbar)
 		// - Player inventory: sort only MAIN inventory (leave hotbar alone)
 		List<Slot> slotsToSort = getSortableSlots(menu, screen, playerMain);
-		InventorySortClient.LOGGER.debug("Found {} slots to sort", slotsToSort.size());
+		tempeststudios.inventorysort.core.InventorySortCore.LOGGER.debug("Found {} slots to sort", slotsToSort.size());
 
 		sortSlots(menu, invoker, slotsToSort, playerMain);
 
-		InventorySortClient.LOGGER.info("Sorting complete!");
+		tempeststudios.inventorysort.core.InventorySortCore.LOGGER.info("Sorting complete!");
 	}
 
 	public static void sortPlayerInventory(AbstractContainerScreen<?> screen, Player player) {
-		InventorySortClient.LOGGER.info("Player inventory sort button clicked! Screen: {}", screen.getClass().getSimpleName());
+		tempeststudios.inventorysort.core.InventorySortCore.LOGGER.info("Player inventory sort button clicked! Screen: {}", screen.getClass().getSimpleName());
 
 		AbstractContainerMenu menu = screen.getMenu();
 		AbstractContainerScreenInvoker invoker = (AbstractContainerScreenInvoker) screen;
@@ -70,7 +70,7 @@ public class InventorySorter {
 
 		sortSlots(menu, invoker, new ArrayList<>(playerMain), playerHotbar);
 
-		InventorySortClient.LOGGER.info("Player inventory sorting complete!");
+		tempeststudios.inventorysort.core.InventorySortCore.LOGGER.info("Player inventory sorting complete!");
 	}
 
 	private static void sortSlots(AbstractContainerMenu menu,
@@ -122,7 +122,7 @@ public class InventorySorter {
 
 		List<Slot> containerSlots = getContainerSlots(menu, screen);
 		if (containerSlots.isEmpty()) {
-			InventorySortClient.LOGGER.debug("transferUp: no container slots detected, skipping.");
+			tempeststudios.inventorysort.core.InventorySortCore.LOGGER.debug("transferUp: no container slots detected, skipping.");
 			return;
 		}
 
@@ -161,7 +161,7 @@ public class InventorySorter {
 
 		List<Slot> containerSlots = getContainerSlots(menu, screen);
 		if (containerSlots.isEmpty()) {
-			InventorySortClient.LOGGER.debug("transferDown: no container slots detected, skipping.");
+			tempeststudios.inventorysort.core.InventorySortCore.LOGGER.debug("transferDown: no container slots detected, skipping.");
 			return;
 		}
 
@@ -818,7 +818,7 @@ public class InventorySorter {
 		String screenName = screen.getClass().getSimpleName();
 		int totalSlots = handler.slots.size();
 
-		InventorySortClient.LOGGER.debug("Screen: {}, Total slots: {}", screenName, totalSlots);
+		tempeststudios.inventorysort.core.InventorySortCore.LOGGER.debug("Screen: {}, Total slots: {}", screenName, totalSlots);
 
 		boolean isContainer = totalSlots > 46;
 
@@ -837,15 +837,15 @@ public class InventorySorter {
 			int containerSize = totalSlots - 36;
 
 			if (containerSize <= 0) {
-				InventorySortClient.LOGGER.warn("Container size is {}, falling back to player main", containerSize);
+				tempeststudios.inventorysort.core.InventorySortCore.LOGGER.warn("Container size is {}, falling back to player main", containerSize);
 				return new ArrayList<>(playerMainSlots);
 			}
 
-			InventorySortClient.LOGGER.debug("Detected container with {} slots", containerSize);
+			tempeststudios.inventorysort.core.InventorySortCore.LOGGER.debug("Detected container with {} slots", containerSize);
 			return new ArrayList<>(handler.slots.subList(0, containerSize));
 		}
 
-		InventorySortClient.LOGGER.debug("Detected player inventory, sorting {} main slots", playerMainSlots.size());
+		tempeststudios.inventorysort.core.InventorySortCore.LOGGER.debug("Detected player inventory, sorting {} main slots", playerMainSlots.size());
 		return new ArrayList<>(playerMainSlots);
 	}
 

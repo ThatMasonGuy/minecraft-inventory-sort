@@ -15,7 +15,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import tempeststudios.inventorysort.InventorySortIconButton;
 import tempeststudios.inventorysort.InventorySorter;
 import tempeststudios.inventorysort.RecipeBookAwareButtonScreen;
-import tempeststudios.inventorysort.SearchModalScreen;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +30,6 @@ public abstract class HandledScreenMixin implements RecipeBookAwareButtonScreen 
 	@Unique private static final int inventorySort$CONTAINER_SORT = 3;
 	@Unique private static final int inventorySort$CONTAINER_MATCHING_TO_PLAYER = 4;
 	@Unique private static final int inventorySort$CONTAINER_ALL_TO_PLAYER = 5;
-	@Unique private static final int inventorySort$SEARCH = 6;
 
 	@Unique private final List<Button> inventorySort$trackedButtons = new ArrayList<>();
 	@Unique private final List<Integer> inventorySort$trackedButtonRoles = new ArrayList<>();
@@ -123,15 +121,7 @@ public abstract class HandledScreenMixin implements RecipeBookAwareButtonScreen 
 						InventorySorter.transferDown(screen, client.player, true);
 						inventorySort$clearFocus(client, screen, btn);
 					});
-		} else {
-			inventorySort$addButton(screen, screenAccessor, inventorySort$SEARCH, InventorySortIconButton.SEARCH,
-					"Search inventory",
-					btn -> {
-						client.setScreen(new SearchModalScreen(screen));
-						inventorySort$clearFocus(client, screen, btn);
-					});
 		}
-
 	}
 
 	@Unique
@@ -195,7 +185,7 @@ public abstract class HandledScreenMixin implements RecipeBookAwareButtonScreen 
 			y = inventorySort$containerGroupY(accessor) + inventorySort$rowOffset(1);
 		} else if (role == inventorySort$CONTAINER_ALL_TO_PLAYER) {
 			y = inventorySort$containerGroupY(accessor) + inventorySort$rowOffset(2);
-		} else if (role == inventorySort$PLAYER_MATCHING_TO_CONTAINER || role == inventorySort$SEARCH) {
+		} else if (role == inventorySort$PLAYER_MATCHING_TO_CONTAINER) {
 			y = inventorySort$playerGroupY(accessor) + inventorySort$rowOffset(1);
 		} else if (role == inventorySort$PLAYER_ALL_TO_CONTAINER) {
 			y = inventorySort$playerGroupY(accessor) + inventorySort$rowOffset(2);

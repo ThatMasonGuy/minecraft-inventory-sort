@@ -40,7 +40,7 @@ public class ItemLocationTracker {
         try {
             Files.createDirectories(modDir);
         } catch (IOException e) {
-            InventorySortClient.LOGGER.error("Failed to create mod directory", e);
+            tempeststudios.inventorysort.core.InventorySortCore.LOGGER.error("Failed to create mod directory", e);
         }
 
         this.activeNamespace = null;
@@ -245,7 +245,7 @@ public class ItemLocationTracker {
             // Replace with new entry (updates containerType, timestamp, etc.)
             locations.remove(existing);
             locations.addFirst(newEntry);
-            InventorySortClient.LOGGER.debug("Updated existing location for {} with new containerType and timestamp", itemId);
+            tempeststudios.inventorysort.core.InventorySortCore.LOGGER.debug("Updated existing location for {} with new containerType and timestamp", itemId);
         } else {
             // Add new location at front
             locations.addFirst(newEntry);
@@ -315,9 +315,9 @@ public class ItemLocationTracker {
             }
 
             GSON.toJson(serializable, writer);
-            InventorySortClient.LOGGER.debug("Saved item location tracking data for {}", activeNamespace);
+            tempeststudios.inventorysort.core.InventorySortCore.LOGGER.debug("Saved item location tracking data for {}", activeNamespace);
         } catch (IOException e) {
-            InventorySortClient.LOGGER.error("Failed to save item location data", e);
+            tempeststudios.inventorysort.core.InventorySortCore.LOGGER.error("Failed to save item location data", e);
         }
     }
 
@@ -355,7 +355,7 @@ public class ItemLocationTracker {
     private void load() {
         if (saveFile == null) return;
         if (!Files.exists(saveFile)) {
-            InventorySortClient.LOGGER.info("No saved item location data found for {}", activeNamespace);
+            tempeststudios.inventorysort.core.InventorySortCore.LOGGER.info("No saved item location data found for {}", activeNamespace);
             return;
         }
 
@@ -372,10 +372,10 @@ public class ItemLocationTracker {
                     trackedLocations.put(entry.getKey(), locations);
                 }
 
-                InventorySortClient.LOGGER.info("Loaded tracking data for {} items in {}", trackedLocations.size(), activeNamespace);
+                tempeststudios.inventorysort.core.InventorySortCore.LOGGER.info("Loaded tracking data for {} items in {}", trackedLocations.size(), activeNamespace);
             }
         } catch (IOException e) {
-            InventorySortClient.LOGGER.error("Failed to load item location data", e);
+            tempeststudios.inventorysort.core.InventorySortCore.LOGGER.error("Failed to load item location data", e);
         }
     }
 

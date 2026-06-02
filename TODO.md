@@ -21,6 +21,17 @@ Current checkpoint: `2.6.3` + unreleased hard-coupling break
 
 ## Recently Fixed
 
+-6. Module-readiness split prep (unreleased):
+   - Split the old combined `HandledScreenMixin` so Sort owns sort/transfer buttons
+     and Search owns its inventory search button through `SearchButtonMixin`.
+   - Added separate client entrypoints for Core, Search, and Catalogue while keeping
+     the existing Sort client entrypoint.
+   - Moved feature/shared logging onto `InventorySortCore.LOGGER` so Search and
+     Catalogue no longer depend on the Sort client class.
+   - Updated the temporary combined `fabric.mod.json` entrypoint list so local
+     single-project runs still initialize all features before the Gradle module
+     split lands.
+
 -5. Core event wiring / hard-coupling break (unreleased):
    - `ContainerTrackingMixin` now publishes Core inventory/container snapshot events
      instead of directly calling Search (`ItemLocationTracker`) and Catalogue
@@ -284,6 +295,8 @@ depend on Core; Catalogue and Search both need Core's identity/namespace/event l
    - Build separate Sort, Search, and Catalogue modules from the shared Core.
    - Keep user installation simple by packaging Core so users do not install it
      manually.
+   - Current status: source-level ownership is split enough for module Gradle
+     wiring. Remaining work: add actual Gradle subprojects and module metadata.
 5. Add one-click local build:
    - Add root Gradle tasks such as `buildAllMods` and later `publishAllModrinth`.
    - Collect public release jars in a predictable output folder.

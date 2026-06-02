@@ -37,7 +37,7 @@ public final class InventoryCatalogueFeature {
             result = session.recordContainer(context.identity(), context.items());
             label = context.containerType();
         } else {
-            InventorySortClient.LOGGER.warn("Cannot catalog container - no identity captured");
+            tempeststudios.inventorysort.core.InventorySortCore.LOGGER.warn("Cannot catalog container - no identity captured");
             displayMessage(context.client(), "Container position unknown - not counted", net.minecraft.ChatFormatting.RED);
             return;
         }
@@ -60,16 +60,16 @@ public final class InventoryCatalogueFeature {
                                             int itemCount) {
         switch (result) {
             case ADDED:
-                InventorySortClient.LOGGER.info("Cataloged {} ({} stacks)", label, itemCount);
+                tempeststudios.inventorysort.core.InventorySortCore.LOGGER.info("Cataloged {} ({} stacks)", label, itemCount);
                 displayMessage(client, String.format("Cataloged %s (%d stacks)", label, itemCount), net.minecraft.ChatFormatting.GREEN);
                 break;
             case UPDATED:
-                InventorySortClient.LOGGER.debug("Refreshed cataloged {} ({} stacks)", label, itemCount);
+                tempeststudios.inventorysort.core.InventorySortCore.LOGGER.debug("Refreshed cataloged {} ({} stacks)", label, itemCount);
                 displayMessage(client, String.format("Updated %s (%d stacks)", label, itemCount), net.minecraft.ChatFormatting.YELLOW);
                 break;
             case SKIPPED:
             default:
-                InventorySortClient.LOGGER.debug("Skipped cataloging {} (tracking not allowed or world changed)", label);
+                tempeststudios.inventorysort.core.InventorySortCore.LOGGER.debug("Skipped cataloging {} (tracking not allowed or world changed)", label);
                 break;
         }
     }
