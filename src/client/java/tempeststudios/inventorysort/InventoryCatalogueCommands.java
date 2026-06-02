@@ -15,7 +15,7 @@ public final class InventoryCatalogueCommands {
     }
 
     public static LiteralArgumentBuilder<FabricClientCommandSource> build() {
-        return ClientCommandManager.literal("catalog")
+        return ClientCommandManager.literal("inventorycatalogue")
                 .then(ClientCommandManager.literal("start")
                         .executes(context -> startCatalog(context, false))
                         .then(ClientCommandManager.literal("includeInventory")
@@ -38,7 +38,7 @@ public final class InventoryCatalogueCommands {
 
     private static int startCatalog(CommandContext<FabricClientCommandSource> context, boolean includeInventory) {
         if (CatalogSession.isActive()) {
-            context.getSource().sendError(Component.literal("A catalog session is already active! Use /inventorysort catalog stop to end it."));
+            context.getSource().sendError(Component.literal("A catalog session is already active! Use /inventorycatalogue stop to end it."));
             return 0;
         }
 
@@ -51,9 +51,9 @@ public final class InventoryCatalogueCommands {
         context.getSource().sendFeedback(Component.literal("World: " + CatalogSession.getActive().getNamespace()).withStyle(ChatFormatting.GRAY));
         context.getSource().sendFeedback(Component.literal("Open containers to catalog their contents.").withStyle(ChatFormatting.GRAY));
         context.getSource().sendFeedback(Component.literal(String.format("Include inventory: %s", includeInventory ? "Yes" : "No")).withStyle(ChatFormatting.GRAY));
-        context.getSource().sendFeedback(Component.literal("Existing catalogue for this world is kept - use 'catalog clear' to reset.").withStyle(ChatFormatting.GRAY));
+        context.getSource().sendFeedback(Component.literal("Existing catalogue for this world is kept - use /inventorycatalogue clear to reset.").withStyle(ChatFormatting.GRAY));
         context.getSource().sendFeedback(Component.empty());
-        context.getSource().sendFeedback(Component.literal("Use /inventorysort catalog stop when done.").withStyle(ChatFormatting.YELLOW));
+        context.getSource().sendFeedback(Component.literal("Use /inventorycatalogue stop when done.").withStyle(ChatFormatting.YELLOW));
 
         tempeststudios.inventorysort.core.InventorySortCore.LOGGER.info("Catalog session started (includeInventory: {})", includeInventory);
         return 1;
@@ -61,7 +61,7 @@ public final class InventoryCatalogueCommands {
 
     private static int stopCatalog(CommandContext<FabricClientCommandSource> context) {
         if (!CatalogSession.isActive()) {
-            context.getSource().sendError(Component.literal("No active catalog session! Use /inventorysort catalog start to begin."));
+            context.getSource().sendError(Component.literal("No active catalog session! Use /inventorycatalogue start to begin."));
             return 0;
         }
 
@@ -92,14 +92,14 @@ public final class InventoryCatalogueCommands {
         context.getSource().sendFeedback(Component.literal(String.format("Unique items: %d", session.getUniqueItems())).withStyle(ChatFormatting.WHITE));
         context.getSource().sendFeedback(Component.literal(String.format("Total items: %,d", session.getTotalItems())).withStyle(ChatFormatting.WHITE));
         context.getSource().sendFeedback(Component.empty());
-        context.getSource().sendFeedback(Component.literal("Use /inventorysort catalog stop to finish.").withStyle(ChatFormatting.GRAY));
+        context.getSource().sendFeedback(Component.literal("Use /inventorycatalogue stop to finish.").withStyle(ChatFormatting.GRAY));
 
         return 1;
     }
 
     private static int catalogReport(CommandContext<FabricClientCommandSource> context) {
         if (!CatalogSession.isActive()) {
-            context.getSource().sendError(Component.literal("No active catalog session! Use /inventorysort catalog start to begin."));
+            context.getSource().sendError(Component.literal("No active catalog session! Use /inventorycatalogue start to begin."));
             return 0;
         }
 
@@ -111,7 +111,7 @@ public final class InventoryCatalogueCommands {
 
     private static int clearCatalog(CommandContext<FabricClientCommandSource> context) {
         if (CatalogSession.isActive()) {
-            context.getSource().sendError(Component.literal("Stop the active session before clearing (use /inventorysort catalog stop)."));
+            context.getSource().sendError(Component.literal("Stop the active session before clearing (use /inventorycatalogue stop)."));
             return 0;
         }
 

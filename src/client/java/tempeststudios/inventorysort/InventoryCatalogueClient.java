@@ -13,8 +13,8 @@ public class InventoryCatalogueClient implements ClientModInitializer {
         LOGGER.info("Initializing Inventory Catalogue Mod");
         InventoryCatalogueFeature.initialize();
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
-            dispatcher.register(net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal("inventorysort")
-                    .then(InventoryCatalogueCommands.build()));
+            dispatcher.register(InventoryCatalogueCommands.build()
+                    .then(WorldProfileCommands.build()));
             LOGGER.info("Registered inventory catalogue commands");
         });
     }

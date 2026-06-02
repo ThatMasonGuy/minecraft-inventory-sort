@@ -36,10 +36,10 @@ A lightweight **client-side** Minecraft mod that adds robust sorting capabilitie
 - **World Confirmation HUD:** Uses a non-intrusive HUD prompt to confirm the world/profile context, preventing writes to the wrong database until confirmed without blocking your gameplay.
 
 ### 4. Catalogue Mode
-- **Cataloguing Sessions:** Start a session with `/inventorysort catalog start` (add `includeInventory` to also count your own inventory), then walk your base opening every chest, shulker, ender chest, minecart, and other storage. Finish with `catalog stop` to get a deduplicated tally of everything you own.
+- **Cataloguing Sessions:** Start a session with `/inventorycatalogue start` (use `/inventorycatalogue start includeInventory` to also count your own inventory), then walk your base opening every chest, shulker, ender chest, minecart, and other storage. Finish with `/inventorycatalogue stop` to get a deduplicated tally of everything you own.
 - **Identity-Based Deduplication:** Built on the same container-identity system as Tracked Storage, so single vs. double chests, individual shulkers, per-player ender chests, and minecarts are each counted once. Reopening a container refreshes its snapshot instead of double-counting it.
-- **Per-World & Persistent:** Catalogue data is scoped per server/world profile and saved to disk, so a tally accumulates across play sessions and survives restarts — perfect for seeing exactly how much of everything you hoarded by the end of a world. Reset a world's catalogue with `catalog clear`.
-- **Reports:** `catalog status` and `catalog report` show running totals in chat; `catalog stop` also writes a full plain-text report to `.minecraft/inventorysort/catalog/`.
+- **Per-World & Persistent:** Catalogue data is scoped per server/world profile and saved to disk, so a tally accumulates across play sessions and survives restarts — perfect for seeing exactly how much of everything you hoarded by the end of a world. Reset a world's catalogue with `/inventorycatalogue clear`.
+- **Reports:** `/inventorycatalogue status` and `/inventorycatalogue report` show running totals in chat; `/inventorycatalogue stop` also writes a full plain-text report to `.minecraft/inventorysort/catalog/`.
 
 ## Compatibility & Scope
 

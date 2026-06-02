@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: `2.6.3` + split release jar launcher validation
+Current checkpoint: `2.6.3` + split command root tidy
 
 ## Project Workflow
 
@@ -23,7 +23,26 @@ Current checkpoint: `2.6.3` + split release jar launcher validation
   Search+Catalogue was not separately tested, but is expected to work after the
   standalone and all-three validation passed.
 
+## Current Command Roots
+
+- Inventory Catalogue owns `/inventorycatalogue start|stop|status|report|clear`.
+- Inventory Catalogue also exposes shared world-profile commands as
+  `/inventorycatalogue world list|use|default|current`.
+- Inventory Search exposes shared world-profile commands as
+  `/inventorysearch world list|use|default|current`.
+- Core no longer registers a public `/inventorysort` command root.
+
 ## Recently Fixed
+
+-10. Split command root tidy (unreleased):
+   - Removed the old combined `ModCommands` aggregator and stopped Core from
+     registering `/inventorysort world`.
+   - Moved Catalogue commands from `/inventorysort catalog ...` to
+     `/inventorycatalogue ...`.
+   - Registered shared world-profile commands under feature roots:
+     `/inventorycatalogue world ...` and `/inventorysearch world ...`.
+   - Updated README command examples and in-game Catalogue prompt/error text to
+     use the new command roots.
 
 -9. Release jar runtime crash fix (unreleased):
    - Public Sort/Search/Catalogue jars now embed Core's remapped release jar
@@ -76,8 +95,7 @@ Current checkpoint: `2.6.3` + split release jar launcher validation
    - `InventorySortClient` delegates Search/Catalogue startup to feature bridge
      classes.
    - Split command implementation into `InventoryCatalogueCommands` and
-     `WorldProfileCommands`, with `ModCommands` now acting only as the combined
-     `/inventorysort` root aggregator.
+     `WorldProfileCommands`.
 
 -4. Core foundation / split prep (unreleased):
    - Added `tempeststudios.inventorysort.core.InventorySortCore` for shared mod id
@@ -323,7 +341,7 @@ depend on Core; Catalogue and Search both need Core's identity/namespace/event l
    - Split feature command registration and client startup responsibilities.
    - Current status: snapshot events, namespace-change event wiring, and feature
      startup bridges are in place. Catalogue/world command implementations are
-     split behind the existing `/inventorysort` root.
+     split and now register through feature-specific roots.
 4. Create public modules:
    - Build separate Sort, Search, and Catalogue modules from the shared Core.
    - Keep user installation simple by packaging Core so users do not install it
@@ -364,8 +382,8 @@ Current status:
   Search/Catalogue internals directly.
 - DONE: `ServerWorldProfileManager.setActiveProfile` publishes a namespace-change
   event instead of directly reloading Search state.
-- DONE: Catalogue and world-profile command implementations are split behind the
-  existing `/inventorysort` root aggregator.
+- DONE: Catalogue and world-profile command implementations are split and
+  registered through feature-specific roots.
 - PARTIAL: `InventorySortClient` delegates Search/Catalogue startup to bridge
   classes. Full completion waits for separate modules, entrypoints, metadata, and
   mixin configs.
@@ -380,9 +398,9 @@ Original audit bullets, retained for context:
    (`ItemLocationTracker.reloadForCurrentNamespace`, `InventoryHistorySampler.reset`).
    Replace with a "namespace changed" event each store subscribes to (incl.
    `CatalogStore`).
-3. `ModCommands` mixes Catalogue commands and World-profile commands under one
-   `/inventorysort` root. Three mods can't share a root literal cleanly — give each
-   its own root or have Core own the root + a registration hook.
+3. DONE: Catalogue and World-profile commands no longer share a combined
+   `/inventorysort` root. Catalogue owns `/inventorycatalogue ...`, and shared
+   world-profile commands are registered under feature roots.
 4. `InventorySortClient` is one entrypoint doing everything (tracker init, commands,
    tick sampler + confirmation, HUD, shutdown save). Each mod needs its own
    `ClientModInitializer`, `fabric.mod.json`, mixin json + package, partitioned
