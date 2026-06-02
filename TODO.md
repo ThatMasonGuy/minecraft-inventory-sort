@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: `2.6.3` + split command root tidy
+Current checkpoint: `2.6.3` + LGPL license alignment
 
 ## Project Workflow
 
@@ -33,6 +33,13 @@ Current checkpoint: `2.6.3` + split command root tidy
 - Core no longer registers a public `/inventorysort` command root.
 
 ## Recently Fixed
+
+-11. License alignment (unreleased):
+   - Replaced the old repo license text with LGPL-3.0-only and added the GPLv3
+     text referenced by LGPLv3.
+   - Updated README and all Fabric metadata to report `LGPL-3.0-only`, matching
+     the Modrinth project license selection.
+   - Updated jar packaging so public artifacts include both license documents.
 
 -10. Split command root tidy (unreleased):
    - Removed the old combined `ModCommands` aggregator and stopped Core from

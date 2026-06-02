@@ -6,7 +6,7 @@
   "description": "Client-side inventory search and known-location tracking",
   "authors": ["Tempest Studios"],
   "contact": {},
-  "license": "MIT",
+  "license": "LGPL-3.0-only",
   "icon": "assets/inventory-sort/icon.png",
   "environment": "client",
   "entrypoints": {

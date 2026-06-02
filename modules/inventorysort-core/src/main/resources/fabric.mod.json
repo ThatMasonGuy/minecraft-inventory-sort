@@ -6,7 +6,7 @@
   "description": "Shared client-side support for Inventory Sort feature mods",
   "authors": ["Tempest Studios"],
   "contact": {},
-  "license": "MIT",
+  "license": "LGPL-3.0-only",
   "icon": "assets/inventory-sort/icon.png",
   "environment": "client",
   "entrypoints": {

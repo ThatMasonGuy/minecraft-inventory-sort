@@ -6,6 +6,7 @@ All notable project changes will be documented here.
 
 ### Changed
 
+- Changed the repo and Fabric metadata license to LGPL-3.0-only to match the Modrinth projects.
 - Added `AGENTS.md` with the project workflow for updating `TODO.md`, updating this changelog, verifying, and committing after each major change.
 - Recorded the 8-step split and multi-version migration roadmap in `TODO.md` so it survives future context compaction.
 - Added the initial Core foundation with shared mod id/logger ownership and event contracts for namespace changes, container snapshots, and inventory snapshots.

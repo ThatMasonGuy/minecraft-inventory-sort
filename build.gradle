@@ -67,6 +67,9 @@ subprojects {
 		from(rootProject.file("LICENSE")) {
 			rename { "${it}_${inputs.properties.archivesName}" }
 		}
+		from(rootProject.file("LICENSE-GPL-3.0")) {
+			rename { "${it}_${inputs.properties.archivesName}" }
+		}
 	}
 
 	tasks.matching { it.name == 'runClient' }.configureEach {

@@ -6,7 +6,7 @@ A lightweight **client-side** Minecraft mod that adds robust sorting capabilitie
 - **Minecraft:** `1.21.11`
 - **Loader:** Fabric
 - **Java:** 21+
-- **License:** MIT
+- **License:** LGPL-3.0-only
 
 ## Features
 
