@@ -10,6 +10,7 @@ All notable project changes will be documented here.
 - Recorded the 8-step split and multi-version migration roadmap in `TODO.md` so it survives future context compaction.
 - Added the initial Core foundation with shared mod id/logger ownership and event contracts for namespace changes, container snapshots, and inventory snapshots.
 - Routed container/inventory snapshot handling and namespace-change handling through Core events, with Search and Catalogue now subscribed via feature bridge classes.
+- Split catalogue and world-profile command implementation into separate command classes while preserving the existing `/inventorysort` command root.
 
 ### Fixed
 

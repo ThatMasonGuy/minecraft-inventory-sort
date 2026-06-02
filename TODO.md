@@ -30,7 +30,10 @@ Current checkpoint: `2.6.3` + unreleased Core foundation
    - `ServerWorldProfileManager` now publishes a Core namespace-change event instead
      of directly reloading Search tracker state.
    - `InventorySortClient` delegates Search/Catalogue startup to feature bridge
-     classes; command registration split remains the next hard-coupling task.
+     classes.
+   - Split command implementation into `InventoryCatalogueCommands` and
+     `WorldProfileCommands`, with `ModCommands` now acting only as the combined
+     `/inventorysort` root aggregator.
 
 -4. Core foundation / split prep (unreleased):
    - Added `tempeststudios.inventorysort.core.InventorySortCore` for shared mod id
@@ -275,7 +278,8 @@ depend on Core; Catalogue and Search both need Core's identity/namespace/event l
    - Replace direct namespace reload calls with a namespace-change event.
    - Split feature command registration and client startup responsibilities.
    - Current status: snapshot events, namespace-change event wiring, and feature
-     startup bridges are in place. Remaining work: split command registration.
+     startup bridges are in place. Catalogue/world command implementations are
+     split behind the existing `/inventorysort` root.
 4. Create public modules:
    - Build separate Sort, Search, and Catalogue modules from the shared Core.
    - Keep user installation simple by packaging Core so users do not install it
@@ -305,6 +309,19 @@ depend on Core; Catalogue and Search both need Core's identity/namespace/event l
   `AbstractContainerScreenInvoker`, `AbstractContainerMenuInvoker`.
 
 ### Hard coupling points that must be broken first
+
+Current status:
+- DONE: `ContainerTrackingMixin` publishes Core snapshot events instead of calling
+  Search/Catalogue internals directly.
+- DONE: `ServerWorldProfileManager.setActiveProfile` publishes a namespace-change
+  event instead of directly reloading Search state.
+- DONE: Catalogue and world-profile command implementations are split behind the
+  existing `/inventorysort` root aggregator.
+- PARTIAL: `InventorySortClient` delegates Search/Catalogue startup to bridge
+  classes. Full completion waits for separate modules, entrypoints, metadata, and
+  mixin configs.
+
+Original audit bullets, retained for context:
 
 1. `ContainerTrackingMixin` calls BOTH `ItemLocationTracker` (Search) and
    `CatalogSession` (Catalogue) directly. Core should own this mixin and fire events
