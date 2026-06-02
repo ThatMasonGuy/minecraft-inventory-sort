@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "inventorysort",
+  "version": "${version}",
+  "name": "Inventory Sort",
+  "description": "Client-side inventory sorting and auto-stacking for containers",
+  "authors": ["Tempest Studios"],
+  "contact": {},
+  "license": "MIT",
+  "icon": "assets/inventory-sort/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["tempeststudios.inventorysort.InventorySortClient"]
+  },
+  "mixins": ["inventorysort.mixins.json"],
+  "depends": {
+    "inventorysort_core": ">=${version}",
+    "fabricloader": ">=${loader_version}",
+    "fabric-api": "*",
+    "minecraft": "~${minecraft_version}",
+    "java": ">=21"
+  }
+}

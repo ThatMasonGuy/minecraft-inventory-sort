@@ -66,17 +66,23 @@ A lightweight **client-side** Minecraft mod that adds robust sorting capabilitie
 ## Building from Source
 
 ```bash
-./gradlew build
+./gradlew buildAllMods
 ```
 
-Built artifacts are generated in `build/libs/`.
+Built feature artifacts are generated in:
+
+- `modules/inventorysort/build/libs/`
+- `modules/inventorysearch/build/libs/`
+- `modules/inventorycatalogue/build/libs/`
+
+Each public feature JAR includes the shared Core JAR internally.
 
 ## Development
 
 Run the client for local testing:
 
 ```bash
-./gradlew runClient
+./gradlew :inventorysort:runClient
 ```
 
 ## Project Structure
@@ -87,7 +93,9 @@ Run the client for local testing:
 - `src/client/java/.../CatalogSession.java` – Cataloguing session lifecycle (start/stop/status/report) and report generation.
 - `src/client/java/.../CatalogStore.java` – Persistent, per-world catalogue store keyed by container identity.
 - `src/client/java/.../ServerWorldProfileManager.java` – Manages different tracking databases across multiplayer servers and single-player worlds.
-- `src/client/java/.../mixin/HandledScreenMixin.java` – Injects and renders the **Sort** button and search integration into existing container screens.
+- `src/client/java/.../mixin/HandledScreenMixin.java` - Injects and renders the **Sort** and transfer buttons into existing container screens.
+- `src/client/java/.../mixin/SearchButtonMixin.java` - Injects the inventory search button independently from the sorting feature.
+- `modules/` - Gradle subprojects for Core, Sort, Search, and Catalogue release artifacts.
 
 ## Credits
 

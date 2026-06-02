@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "inventorycatalogue",
+  "version": "${version}",
+  "name": "Inventory Catalogue",
+  "description": "Client-side storage catalogue sessions and reports",
+  "authors": ["Tempest Studios"],
+  "contact": {},
+  "license": "MIT",
+  "icon": "assets/inventory-sort/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["tempeststudios.inventorysort.InventoryCatalogueClient"]
+  },
+  "depends": {
+    "inventorysort_core": ">=${version}",
+    "fabricloader": ">=${loader_version}",
+    "fabric-api": "*",
+    "minecraft": "~${minecraft_version}",
+    "java": ">=21"
+  }
+}

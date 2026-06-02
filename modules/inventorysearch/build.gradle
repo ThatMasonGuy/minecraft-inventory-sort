@@ -1,0 +1,32 @@
+base {
+	archivesName = 'inventory-search'
+}
+
+loom {
+	mods {
+		"inventorysearch" {
+			sourceSet sourceSets.main
+			sourceSet sourceSets.client
+		}
+	}
+}
+
+sourceSets {
+	client {
+		java {
+			srcDir rootProject.file("src/client/java")
+			include "tempeststudios/inventorysort/InventoryHistorySampler.java"
+			include "tempeststudios/inventorysort/InventorySearchClient.java"
+			include "tempeststudios/inventorysort/InventorySearchFeature.java"
+			include "tempeststudios/inventorysort/ItemLocationTracker.java"
+			include "tempeststudios/inventorysort/LocationEntry.java"
+			include "tempeststudios/inventorysort/SearchModalScreen.java"
+			include "tempeststudios/inventorysort/mixin/SearchButtonMixin.java"
+		}
+	}
+}
+
+dependencies {
+	implementation project(path: ':inventorysort-core', configuration: 'namedElements')
+	include project(path: ':inventorysort-core', configuration: 'namedElements')
+}

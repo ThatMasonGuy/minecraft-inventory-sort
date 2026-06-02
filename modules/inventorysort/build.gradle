@@ -1,0 +1,28 @@
+base {
+	archivesName = 'inventory-sort'
+}
+
+loom {
+	mods {
+		"inventorysort" {
+			sourceSet sourceSets.main
+			sourceSet sourceSets.client
+		}
+	}
+}
+
+sourceSets {
+	client {
+		java {
+			srcDir rootProject.file("src/client/java")
+			include "tempeststudios/inventorysort/InventorySortClient.java"
+			include "tempeststudios/inventorysort/InventorySorter.java"
+			include "tempeststudios/inventorysort/mixin/HandledScreenMixin.java"
+		}
+	}
+}
+
+dependencies {
+	implementation project(path: ':inventorysort-core', configuration: 'namedElements')
+	include project(path: ':inventorysort-core', configuration: 'namedElements')
+}

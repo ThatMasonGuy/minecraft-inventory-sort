@@ -1,64 +1,79 @@
 plugins {
-	id 'net.fabricmc.fabric-loom-remap' version "${loom_version}"
-	id 'maven-publish'
+	id 'base'
+	id 'net.fabricmc.fabric-loom-remap' version "${loom_version}" apply false
 }
 
-version = project.mod_version
-group = project.maven_group
+allprojects {
+	version = rootProject.mod_version
+	group = rootProject.maven_group
 
-base {
-	archivesName = project.archives_base_name
+	repositories {
+		// Loom adds essential repositories automatically
+	}
 }
 
-repositories {
-	// Loom adds essential repositories automatically
-}
+subprojects {
+	apply plugin: 'net.fabricmc.fabric-loom-remap'
+	apply plugin: 'maven-publish'
 
-loom {
-	splitEnvironmentSourceSets()
+	loom {
+		splitEnvironmentSourceSets()
+	}
 
-	mods {
-		"inventorysort" {
-			sourceSet sourceSets.main
-			sourceSet sourceSets.client
+	dependencies {
+		minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
+		mappings loom.officialMojangMappings()
+		modImplementation "net.fabricmc:fabric-loader:${rootProject.loader_version}"
+		modImplementation "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}"
+	}
+
+	processResources {
+		def resourceProperties = [
+				version: rootProject.mod_version,
+				minecraft_version: rootProject.minecraft_version,
+				loader_version: rootProject.loader_version,
+				fabric_api_version: rootProject.fabric_api_version
+		]
+
+		inputs.properties(resourceProperties)
+		filesMatching("fabric.mod.json") {
+			expand(resourceProperties)
+		}
+		from(rootProject.file("src/main/resources/assets")) {
+			into "assets"
+		}
+		duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+	}
+
+	tasks.withType(JavaCompile).configureEach {
+		it.options.release = 21
+	}
+
+	java {
+		withSourcesJar()
+		sourceCompatibility = JavaVersion.VERSION_21
+		targetCompatibility = JavaVersion.VERSION_21
+	}
+
+	jar {
+		inputs.property "archivesName", project.base.archivesName
+
+		from(rootProject.file("LICENSE")) {
+			rename { "${it}_${inputs.properties.archivesName}" }
 		}
 	}
-}
 
-dependencies {
-	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings loom.officialMojangMappings()
-	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
-}
-
-processResources {
-	inputs.property "version", project.version
-
-	filesMatching("fabric.mod.json") {
-		expand "version": inputs.properties.version
+	tasks.matching { it.name == 'runClient' }.configureEach {
+		jvmArgs('-Xmx4G', '-Xms2G')
 	}
 }
 
-tasks.withType(JavaCompile).configureEach {
-	it.options.release = 21
+tasks.register('buildAllMods') {
+	group = 'build'
+	description = 'Builds all public feature mod jars.'
+	dependsOn ':inventorysort-core:build', ':inventorysort:build', ':inventorysearch:build', ':inventorycatalogue:build'
 }
 
-java {
-	withSourcesJar()
-	sourceCompatibility = JavaVersion.VERSION_21
-	targetCompatibility = JavaVersion.VERSION_21
-}
-
-jar {
-	inputs.property "archivesName", project.base.archivesName
-
-	from("LICENSE") {
-		rename { "${it}_${inputs.properties.archivesName}"}
-	}
-}
-
-// Hot reload configuration
-tasks.named('runClient') {
-	jvmArgs('-Xmx4G', '-Xms2G')
+tasks.named('build') {
+	dependsOn tasks.named('buildAllMods')
 }

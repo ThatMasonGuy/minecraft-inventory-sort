@@ -21,6 +21,18 @@ Current checkpoint: `2.6.3` + unreleased hard-coupling break
 
 ## Recently Fixed
 
+-7. Public module structure (unreleased):
+   - Added Gradle subprojects for `inventorysort-core`, `inventorysort`,
+     `inventorysearch`, and `inventorycatalogue`.
+   - Public feature jars now build separately as `inventory-sort`,
+     `inventory-search`, and `inventory-catalogue`.
+   - Each public feature jar nests the shared Core jar, so users do not need to
+     manually download a separate Core mod.
+   - Module source ownership is selected from the existing shared `src/client/java`
+     tree, preserving one code location while producing separate artifacts.
+   - Added module-specific `fabric.mod.json` and mixin configs for Core, Sort, and
+     Search; Catalogue has no mixins.
+
 -6. Module-readiness split prep (unreleased):
    - Split the old combined `HandledScreenMixin` so Sort owns sort/transfer buttons
      and Search owns its inventory search button through `SearchButtonMixin`.
@@ -295,11 +307,14 @@ depend on Core; Catalogue and Search both need Core's identity/namespace/event l
    - Build separate Sort, Search, and Catalogue modules from the shared Core.
    - Keep user installation simple by packaging Core so users do not install it
      manually.
-   - Current status: source-level ownership is split enough for module Gradle
-     wiring. Remaining work: add actual Gradle subprojects and module metadata.
+   - Current status: DONE for the current Minecraft target. Gradle now builds
+     Core + Sort/Search/Catalogue modules, with Core nested inside each public
+     feature jar.
 5. Add one-click local build:
    - Add root Gradle tasks such as `buildAllMods` and later `publishAllModrinth`.
    - Collect public release jars in a predictable output folder.
+   - Current status: `buildAllMods` builds the three public feature jars plus the
+     internal Core artifact. A dedicated release collection folder is still next.
 6. Validate install combinations:
    - Test Sort only, Search only, Catalogue only, pairwise combinations, and all
      three together.

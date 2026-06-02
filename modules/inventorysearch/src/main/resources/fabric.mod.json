@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "inventorysearch",
+  "version": "${version}",
+  "name": "Inventory Search",
+  "description": "Client-side inventory search and known-location tracking",
+  "authors": ["Tempest Studios"],
+  "contact": {},
+  "license": "MIT",
+  "icon": "assets/inventory-sort/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["tempeststudios.inventorysort.InventorySearchClient"]
+  },
+  "mixins": ["inventorysearch.mixins.json"],
+  "depends": {
+    "inventorysort_core": ">=${version}",
+    "fabricloader": ">=${loader_version}",
+    "fabric-api": "*",
+    "minecraft": "~${minecraft_version}",
+    "java": ">=21"
+  }
+}

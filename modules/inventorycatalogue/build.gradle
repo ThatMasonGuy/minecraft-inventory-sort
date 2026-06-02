@@ -1,0 +1,30 @@
+base {
+	archivesName = 'inventory-catalogue'
+}
+
+loom {
+	mods {
+		"inventorycatalogue" {
+			sourceSet sourceSets.main
+			sourceSet sourceSets.client
+		}
+	}
+}
+
+sourceSets {
+	client {
+		java {
+			srcDir rootProject.file("src/client/java")
+			include "tempeststudios/inventorysort/CatalogSession.java"
+			include "tempeststudios/inventorysort/CatalogStore.java"
+			include "tempeststudios/inventorysort/InventoryCatalogueClient.java"
+			include "tempeststudios/inventorysort/InventoryCatalogueCommands.java"
+			include "tempeststudios/inventorysort/InventoryCatalogueFeature.java"
+		}
+	}
+}
+
+dependencies {
+	implementation project(path: ':inventorysort-core', configuration: 'namedElements')
+	include project(path: ':inventorysort-core', configuration: 'namedElements')
+}

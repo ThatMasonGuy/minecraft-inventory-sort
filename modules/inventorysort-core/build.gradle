@@ -1,0 +1,41 @@
+base {
+	archivesName = 'inventory-sort-core'
+}
+
+loom {
+	mods {
+		"inventorysort_core" {
+			sourceSet sourceSets.main
+			sourceSet sourceSets.client
+		}
+	}
+}
+
+sourceSets {
+	client {
+		java {
+			srcDir rootProject.file("src/client/java")
+			include "tempeststudios/inventorysort/core/**"
+			include "tempeststudios/inventorysort/ContainerIdentity.java"
+			include "tempeststudios/inventorysort/ContainerPositionCapture.java"
+			include "tempeststudios/inventorysort/InventorySortCoreClient.java"
+			include "tempeststudios/inventorysort/InventorySortIconButton.java"
+			include "tempeststudios/inventorysort/InventorySortModalIconButton.java"
+			include "tempeststudios/inventorysort/InventorySortTextButton.java"
+			include "tempeststudios/inventorysort/InventorySortUIUtils.java"
+			include "tempeststudios/inventorysort/RecipeBookAwareButtonScreen.java"
+			include "tempeststudios/inventorysort/ServerWorldProfileHud.java"
+			include "tempeststudios/inventorysort/ServerWorldProfileManager.java"
+			include "tempeststudios/inventorysort/ServerWorldProfileScreen.java"
+			include "tempeststudios/inventorysort/TrackingNamespace.java"
+			include "tempeststudios/inventorysort/WorldProfileCommands.java"
+			include "tempeststudios/inventorysort/mixin/AbstractContainerMenuInvoker.java"
+			include "tempeststudios/inventorysort/mixin/AbstractContainerScreenAccessor.java"
+			include "tempeststudios/inventorysort/mixin/AbstractContainerScreenInvoker.java"
+			include "tempeststudios/inventorysort/mixin/AbstractRecipeBookScreenMixin.java"
+			include "tempeststudios/inventorysort/mixin/ContainerTrackingMixin.java"
+			include "tempeststudios/inventorysort/mixin/MultiPlayerGameModeMixin.java"
+			include "tempeststudios/inventorysort/mixin/ScreenAccessor.java"
+		}
+	}
+}
