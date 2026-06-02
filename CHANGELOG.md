@@ -7,6 +7,7 @@ All notable project changes will be documented here.
 ### Changed
 
 - Added `AGENTS.md` with the project workflow for updating `TODO.md`, updating this changelog, verifying, and committing after each major change.
+- Recorded the 8-step split and multi-version migration roadmap in `TODO.md` so it survives future context compaction.
 
 ### Fixed
 

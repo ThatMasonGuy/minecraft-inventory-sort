@@ -239,6 +239,36 @@ A clean flat 3-way split is not possible without extracting a shared **Core**.
 Recommended shape: **Core + Sort + Search + Catalogue** (Sort/Search/Catalogue all
 depend on Core; Catalogue and Search both need Core's identity/namespace/event layer).
 
+### Implementation Roadmap
+
+1. Baseline cleanup:
+   - Remove dead template scaffolding and fix metadata drift while preserving the
+     current single-mod behavior.
+2. Extract Core:
+   - Create the shared Core layer for identity/capture, world scoping, common UI,
+     accessor/invoker mixins, and feature events.
+3. Break hard coupling:
+   - Replace direct Search/Catalogue calls in shared code with Core events.
+   - Replace direct namespace reload calls with a namespace-change event.
+   - Split feature command registration and client startup responsibilities.
+4. Create public modules:
+   - Build separate Sort, Search, and Catalogue modules from the shared Core.
+   - Keep user installation simple by packaging Core so users do not install it
+     manually.
+5. Add one-click local build:
+   - Add root Gradle tasks such as `buildAllMods` and later `publishAllModrinth`.
+   - Collect public release jars in a predictable output folder.
+6. Validate install combinations:
+   - Test Sort only, Search only, Catalogue only, pairwise combinations, and all
+     three together.
+7. Add multi-version support:
+   - Once the split is stable on the current target, compile the same modules
+     against newer Minecraft/Fabric/Loom targets for the v26 migration.
+8. Configure Modrinth publishing:
+   - Give each public feature mod its own Modrinth project id and upload metadata.
+   - Publish the correct jar, Minecraft version, loader, dependencies, and
+     changelog for each target.
+
 ### Goes in Core (shared by 2+ features)
 
 - Identity & capture: `ContainerIdentity`, `ContainerPositionCapture`,
