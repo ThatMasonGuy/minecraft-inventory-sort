@@ -17,6 +17,7 @@ All notable project changes will be documented here.
 
 ### Fixed
 
+- Fixed split release jars embedding the development-namespaced Core jar, which could crash client entrypoints in normal launcher installs. Public jars now embed the remapped Core jar and `clean build` verifies this.
 - Corrected the Fabric metadata icon path to use the checked-in `assets/inventory-sort/icon.png` asset.
 
 ### Removed

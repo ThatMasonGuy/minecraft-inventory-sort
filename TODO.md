@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: `2.6.3` + unreleased release jar collection
+Current checkpoint: `2.6.3` + release jar runtime crash fix
 
 ## Project Workflow
 
@@ -20,6 +20,14 @@ Current checkpoint: `2.6.3` + unreleased release jar collection
 - Catalog `includeInventory` uses a stable per-session player-inventory fingerprint.
 
 ## Recently Fixed
+
+-9. Release jar runtime crash fix (unreleased):
+   - Public Sort/Search/Catalogue jars now embed Core's remapped release jar
+     instead of the development-namespaced `-dev` jar.
+   - This should fix normal launcher crashes at Core/Search client entrypoint time
+     when installing the split public jars.
+   - Added `verifyReleaseJars` to `clean build`/`buildAllMods` so future release
+     builds fail if a public jar embeds the development Core jar again.
 
 -8. One-click release jar collection (unreleased):
    - Added `collectReleaseJars`, which copies only the three public feature jars

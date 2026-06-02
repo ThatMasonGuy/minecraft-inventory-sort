@@ -89,13 +89,51 @@ tasks.register('collectReleaseJars', Copy) {
 	}
 }
 
+tasks.register('verifyReleaseJars') {
+	group = 'verification'
+	description = 'Verifies public release jars embed the remapped Core jar.'
+	dependsOn tasks.named('collectReleaseJars')
+
+	doLast {
+		String expectedCoreJar = "META-INF/jars/inventory-sort-core-${version}.jar"
+		String forbiddenDevCoreJar = "META-INF/jars/inventory-sort-core-${version}-dev.jar"
+
+		publicFeatureProjects.each { featureProject ->
+			def releaseJar = layout.buildDirectory.file("release/${featureProject.base.archivesName.get()}-${version}.jar").get().asFile
+			if (!releaseJar.isFile()) {
+				throw new GradleException("Missing release jar: ${releaseJar}")
+			}
+
+			def entries = [] as Set
+			new java.util.zip.ZipFile(releaseJar).withCloseable { zip ->
+				def entryEnumeration = zip.entries()
+				while (entryEnumeration.hasMoreElements()) {
+					entries.add(entryEnumeration.nextElement().name)
+				}
+			}
+
+			if (entries.contains(forbiddenDevCoreJar)) {
+				throw new GradleException("${releaseJar.name} embeds development Core jar ${forbiddenDevCoreJar}")
+			}
+			if (!entries.contains(expectedCoreJar)) {
+				throw new GradleException("${releaseJar.name} does not embed remapped Core jar ${expectedCoreJar}")
+			}
+		}
+	}
+}
+
 tasks.register('buildAllMods') {
 	group = 'build'
 	description = 'Builds all mod jars and collects public feature jars into build/release.'
 	dependsOn ':inventorysort-core:build', ':inventorysort:build', ':inventorysearch:build', ':inventorycatalogue:build'
 	dependsOn tasks.named('collectReleaseJars')
+	dependsOn tasks.named('verifyReleaseJars')
 }
 
 tasks.named('build') {
 	dependsOn tasks.named('buildAllMods')
+}
+
+tasks.named('check') {
+	dependsOn tasks.named('verifyReleaseJars')
 }
