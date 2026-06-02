@@ -17,13 +17,8 @@ public class InventorySortClient implements ClientModInitializer {
 		LOGGER.info("Sort button will render on all container screens");
 		LOGGER.info("Click handling via mixins");
 
-		// Initialize item location tracker
-		try {
-			ItemLocationTracker.getInstance();
-			LOGGER.info("Item location tracking enabled");
-		} catch (Exception e) {
-			LOGGER.error("Failed to initialize item location tracker", e);
-		}
+		InventorySearchFeature.initialize();
+		InventoryCatalogueFeature.initialize();
 
 		// Register commands
 		ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
@@ -33,18 +28,8 @@ public class InventorySortClient implements ClientModInitializer {
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			ServerWorldProfileManager.getInstance().handleConfirmationInput(client);
-			InventoryHistorySampler.sample(client);
+			InventorySearchFeature.sampleInventory(client);
 		});
 		HudRenderCallback.EVENT.register((graphics, tickCounter) -> ServerWorldProfileHud.render(graphics));
-
-		// Register shutdown hook to save tracking data
-		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-			try {
-				LOGGER.info("Saving item location data on shutdown");
-				ItemLocationTracker.getInstance().save();
-			} catch (Exception e) {
-				LOGGER.error("Failed to save item location data", e);
-			}
-		}, "ItemLocationTracker-Shutdown"));
 	}
 }

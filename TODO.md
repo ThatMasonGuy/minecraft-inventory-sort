@@ -21,6 +21,17 @@ Current checkpoint: `2.6.3` + unreleased Core foundation
 
 ## Recently Fixed
 
+-5. Core event wiring / hard-coupling break (unreleased):
+   - `ContainerTrackingMixin` now publishes Core inventory/container snapshot events
+     instead of directly calling Search (`ItemLocationTracker`) and Catalogue
+     (`CatalogSession`) internals.
+   - Added `InventorySearchFeature` and `InventoryCatalogueFeature` as event
+     subscribers around the existing Search and Catalogue behavior.
+   - `ServerWorldProfileManager` now publishes a Core namespace-change event instead
+     of directly reloading Search tracker state.
+   - `InventorySortClient` delegates Search/Catalogue startup to feature bridge
+     classes; command registration split remains the next hard-coupling task.
+
 -4. Core foundation / split prep (unreleased):
    - Added `tempeststudios.inventorysort.core.InventorySortCore` for shared mod id
      and logger ownership.
@@ -263,6 +274,8 @@ depend on Core; Catalogue and Search both need Core's identity/namespace/event l
    - Replace direct Search/Catalogue calls in shared code with Core events.
    - Replace direct namespace reload calls with a namespace-change event.
    - Split feature command registration and client startup responsibilities.
+   - Current status: snapshot events, namespace-change event wiring, and feature
+     startup bridges are in place. Remaining work: split command registration.
 4. Create public modules:
    - Build separate Sort, Search, and Catalogue modules from the shared Core.
    - Keep user installation simple by packaging Core so users do not install it

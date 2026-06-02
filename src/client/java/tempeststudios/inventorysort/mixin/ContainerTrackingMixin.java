@@ -8,14 +8,14 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.Unique;
-import tempeststudios.inventorysort.CatalogSession;
 import tempeststudios.inventorysort.ContainerIdentity;
-import tempeststudios.inventorysort.ItemLocationTracker;
-import tempeststudios.inventorysort.InventorySortClient;
+import tempeststudios.inventorysort.ContainerPositionCapture;
+import tempeststudios.inventorysort.core.InventorySortCore;
+import tempeststudios.inventorysort.core.InventorySortEvents;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,7 +42,7 @@ public abstract class ContainerTrackingMixin {
         inventorySort$screenClassName = screen.getClass().getSimpleName();
         String menuClassName = menu.getClass().getSimpleName();
 
-        InventorySortClient.LOGGER.debug("Container screen opened: screen={}, menu={}, totalSlots={}",
+        InventorySortCore.LOGGER.debug("Container screen opened: screen={}, menu={}, totalSlots={}",
                 inventorySort$screenClassName, menuClassName, menu.slots.size());
 
         inventorySort$isPlayerInventory = inventorySort$screenClassName.equals("InventoryScreen") ||
@@ -50,25 +50,25 @@ public abstract class ContainerTrackingMixin {
         inventorySort$skipTracking = false;
 
         if (!inventorySort$isPlayerInventory) {
-            BlockPos containerPos = tempeststudios.inventorysort.ContainerPositionCapture.getLastLookedAtBlock();
-            
+            BlockPos containerPos = ContainerPositionCapture.getLastLookedAtBlock();
+
             if (containerPos != null) {
                 inventorySort$capturedIdentity = ContainerIdentity.fromLookedAt(client, containerPos);
-                
+
                 // If we captured an identity, consume the interaction so other screens (like crafting tables)
                 // don't accidentally reuse it.
                 if (inventorySort$capturedIdentity != null) {
-                    tempeststudios.inventorysort.ContainerPositionCapture.clear();
+                    ContainerPositionCapture.clear();
                 }
             }
 
             if (inventorySort$capturedIdentity == null) {
-                inventorySort$capturedIdentity = tempeststudios.inventorysort.ContainerPositionCapture.getLastInteractedEntityContainer();
+                inventorySort$capturedIdentity = ContainerPositionCapture.getLastInteractedEntityContainer();
                 if (inventorySort$capturedIdentity != null) {
-                    tempeststudios.inventorysort.ContainerPositionCapture.clear();
+                    ContainerPositionCapture.clear();
                 }
             }
-            
+
             inventorySort$capturedContainerType = "Container";
             if (inventorySort$capturedIdentity != null) {
                 inventorySort$capturedContainerType = inventorySort$capturedIdentity.getContainerType();
@@ -86,7 +86,8 @@ public abstract class ContainerTrackingMixin {
                     if (!blockName.isEmpty()) {
                         inventorySort$capturedContainerType = blockName.substring(0, 1).toUpperCase() + blockName.substring(1);
                     }
-                } catch (Exception e) {}
+                } catch (Exception ignored) {
+                }
             }
 
             inventorySort$shulkerIdentifier = null;
@@ -98,7 +99,7 @@ public abstract class ContainerTrackingMixin {
                 inventorySort$capturedContainerType = "Shulker Box";
             } else if (inventorySort$capturedIdentity == null) {
                 inventorySort$skipTracking = true;
-                InventorySortClient.LOGGER.info("Skipping transient or unsupported screen: {} (menu: {}, clicked block: {})",
+                InventorySortCore.LOGGER.info("Skipping transient or unsupported screen: {} (menu: {}, clicked block: {})",
                         inventorySort$screenClassName, menuClassName, containerPos);
             }
         }
@@ -106,39 +107,30 @@ public abstract class ContainerTrackingMixin {
 
     @Inject(method = "removed", at = @At("HEAD"))
     private void onContainerClosed(CallbackInfo ci) {
-        trackContainerItems();
+        publishTrackingEvents();
     }
 
-    private void trackContainerItems() {
+    private void publishTrackingEvents() {
         Minecraft client = Minecraft.getInstance();
-        if (client.player == null || client.level == null) return;
+        if (client == null || client.player == null || client.level == null) return;
 
-        ItemLocationTracker tracker = ItemLocationTracker.getInstance();
-
-        InventorySortClient.LOGGER.debug("Tracking screen on close: {} (isPlayerInventory: {})", inventorySort$screenClassName, inventorySort$isPlayerInventory);
+        InventorySortCore.LOGGER.debug("Tracking screen on close: {} (isPlayerInventory: {})",
+                inventorySort$screenClassName, inventorySort$isPlayerInventory);
 
         if (inventorySort$isPlayerInventory) {
-            // Player inventory is tracked continuously by InventoryHistorySampler, no need to duplicate
-            if (CatalogSession.isActive() && CatalogSession.getActive().shouldIncludeInventory()) {
-                trackInventoryForCatalog(client);
-            }
+            InventorySortEvents.INVENTORY_SNAPSHOT.invoker().onInventorySnapshot(
+                    new InventorySortEvents.InventorySnapshotContext(client, collectPlayerInventoryItems()));
         } else if (inventorySort$skipTracking) {
-            InventorySortClient.LOGGER.debug("Skipped tracking transient or unsupported screen: {}", inventorySort$screenClassName);
+            InventorySortCore.LOGGER.debug("Skipped tracking transient or unsupported screen: {}", inventorySort$screenClassName);
         } else {
-            trackContainer(tracker, client, inventorySort$screenClassName);
-
-            if (CatalogSession.isActive()) {
-                trackContainerForCatalog(client, inventorySort$screenClassName);
-            }
+            publishContainerSnapshot(client);
         }
     }
 
-    private void trackContainer(ItemLocationTracker tracker, Minecraft client, String screenClassName) {
+    private void publishContainerSnapshot(Minecraft client) {
         int containerSlots = menu.slots.size() - 36; // Subtract player inventory
-        int itemsTracked = 0;
-        List<ItemStack> fixedContainerItems = new ArrayList<>();
 
-        InventorySortClient.LOGGER.debug("Scanning {} container slots for items on close", containerSlots);
+        InventorySortCore.LOGGER.debug("Scanning {} container slots for items on close", containerSlots);
 
         // Validation: If we have a captured identity, ensure the slot count matches the container type.
         // This prevents "ghost" tracking where a different screen (like a crafting table) uses the
@@ -146,45 +138,29 @@ public abstract class ContainerTrackingMixin {
         if (inventorySort$capturedIdentity != null) {
             int expected = inventorySort$capturedIdentity.getExpectedSlotCount();
             if (expected != -1 && expected != containerSlots) {
-                InventorySortClient.LOGGER.warn("Rejecting tracking for {} - slot count mismatch (got {}, expected {})",
+                InventorySortCore.LOGGER.warn("Rejecting tracking for {} - slot count mismatch (got {}, expected {})",
                         inventorySort$capturedIdentity.getPositionLabel(), containerSlots, expected);
                 return;
             }
         }
 
-        for (int i = 0; i < containerSlots; i++) {
-            Slot slot = menu.slots.get(i);
-            ItemStack stack = slot.getItem();
-
-            if (!stack.isEmpty()) {
-                if (inventorySort$isShulker && inventorySort$shulkerIdentifier != null) {
-                    tracker.trackItemInShulker(stack, inventorySort$shulkerIdentifier);
-                    itemsTracked++;
-                } else if (inventorySort$capturedIdentity != null) {
-                    fixedContainerItems.add(stack.copy());
-                    itemsTracked++;
-                }
-            }
-        }
-
-        if (inventorySort$capturedIdentity != null && !inventorySort$isShulker) {
-            tracker.replaceContainerSnapshot(inventorySort$capturedIdentity, fixedContainerItems);
-        }
-
-        if (itemsTracked == 0) {
-            InventorySortClient.LOGGER.debug("No items found in {} (container is empty)", inventorySort$capturedContainerType);
+        List<ItemStack> items = collectContainerItems();
+        if (items.isEmpty()) {
+            InventorySortCore.LOGGER.debug("No items found in {} (container is empty)", inventorySort$capturedContainerType);
         } else {
-            InventorySortClient.LOGGER.debug("Tracked {} items from {} container", itemsTracked, inventorySort$capturedContainerType);
+            InventorySortCore.LOGGER.debug("Captured {} item stacks from {} container",
+                    items.size(), inventorySort$capturedContainerType);
         }
 
-        if (inventorySort$isShulker) {
-            // Shulker tracking is additive (no snapshot replace that would save), so flush
-            // it now instead of waiting for the next unrelated save or the shutdown hook.
-            if (itemsTracked > 0) {
-                tracker.save();
-            }
-            InventorySortClient.LOGGER.debug("Completed shulker box tracking (ID: {})", inventorySort$shulkerIdentifier);
-        }
+        InventorySortEvents.CONTAINER_SNAPSHOT.invoker().onContainerSnapshot(
+                new InventorySortEvents.ContainerSnapshotContext(
+                        client,
+                        inventorySort$screenClassName,
+                        inventorySort$capturedContainerType,
+                        inventorySort$capturedIdentity,
+                        inventorySort$isShulker,
+                        inventorySort$shulkerIdentifier,
+                        items));
     }
 
     /**
@@ -223,47 +199,7 @@ public abstract class ContainerTrackingMixin {
         return Integer.toHexString(Math.abs(itemHash));
     }
 
-    /**
-     * Record a container (or portable shulker) into the active catalog session, keyed by its
-     * canonical identity so reopening it refreshes rather than double-counts.
-     */
-    private void trackContainerForCatalog(Minecraft client, String screenClassName) {
-        List<ItemStack> items = collectContainerItems();
-        CatalogSession session = CatalogSession.getActive();
-
-        CatalogSession.RecordResult result;
-        String label;
-        String containerType = inventorySort$capturedContainerType;
-
-        if (inventorySort$isShulker && inventorySort$shulkerIdentifier != null) {
-            result = session.recordShulker(inventorySort$shulkerIdentifier, items);
-            label = "Shulker Box";
-        } else if (inventorySort$capturedIdentity != null) {
-            // Same ghost guard as the search tracker: if the live slot count does not match the
-            // captured identity's container type, a different screen reused this position - skip it
-            // so we never catalog wrong contents under a chest's identity.
-            int expected = inventorySort$capturedIdentity.getExpectedSlotCount();
-            int containerSlots = menu.slots.size() - 36;
-            if (expected != -1 && expected != containerSlots) {
-                InventorySortClient.LOGGER.warn("Rejecting catalog for {} - slot count mismatch (got {}, expected {})",
-                        inventorySort$capturedIdentity.getPositionLabel(), containerSlots, expected);
-                return;
-            }
-            result = session.recordContainer(inventorySort$capturedIdentity, items);
-            label = containerType;
-        } else {
-            InventorySortClient.LOGGER.warn("Cannot catalog container - no identity captured");
-            client.player.displayClientMessage(net.minecraft.network.chat.Component.literal("⚠ Container position unknown - not counted").withStyle(net.minecraft.ChatFormatting.RED), false);
-            return;
-        }
-
-        reportCatalogResult(client, result, label, items.size());
-    }
-
-    /**
-     * Record the player inventory into the active catalog session.
-     */
-    private void trackInventoryForCatalog(Minecraft client) {
+    private List<ItemStack> collectPlayerInventoryItems() {
         List<ItemStack> items = new ArrayList<>();
         for (Slot slot : menu.slots) {
             if (slot.getContainerSlot() < 36) {
@@ -273,9 +209,7 @@ public abstract class ContainerTrackingMixin {
                 }
             }
         }
-
-        CatalogSession.RecordResult result = CatalogSession.getActive().recordInventory(items);
-        reportCatalogResult(client, result, "inventory", items.size());
+        return items;
     }
 
     private List<ItemStack> collectContainerItems() {
@@ -288,22 +222,5 @@ public abstract class ContainerTrackingMixin {
             }
         }
         return items;
-    }
-
-    private void reportCatalogResult(Minecraft client, CatalogSession.RecordResult result, String label, int itemCount) {
-        switch (result) {
-            case ADDED:
-                InventorySortClient.LOGGER.info("Cataloged {} ({} stacks)", label, itemCount);
-                client.player.displayClientMessage(net.minecraft.network.chat.Component.literal(String.format("✓ Cataloged %s (%d stacks)", label, itemCount)).withStyle(net.minecraft.ChatFormatting.GREEN), false);
-                break;
-            case UPDATED:
-                InventorySortClient.LOGGER.debug("Refreshed cataloged {} ({} stacks)", label, itemCount);
-                client.player.displayClientMessage(net.minecraft.network.chat.Component.literal(String.format("↻ Updated %s (%d stacks)", label, itemCount)).withStyle(net.minecraft.ChatFormatting.YELLOW), false);
-                break;
-            case SKIPPED:
-            default:
-                InventorySortClient.LOGGER.debug("Skipped cataloging {} (tracking not allowed or world changed)", label);
-                break;
-        }
     }
 }

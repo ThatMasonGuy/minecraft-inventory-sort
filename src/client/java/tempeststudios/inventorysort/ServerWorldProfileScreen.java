@@ -146,7 +146,6 @@ public class ServerWorldProfileScreen extends Screen {
     private void confirmOrClose() {
         if (serverKey != null && requiresConfirmation) {
             ServerWorldProfileManager.getInstance().confirmActiveProfile(serverKey);
-            InventoryHistorySampler.reset();
         }
         closeToParent();
     }

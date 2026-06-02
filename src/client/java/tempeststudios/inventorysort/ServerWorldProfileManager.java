@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import net.minecraft.client.Minecraft;
 import org.lwjgl.glfw.GLFW;
+import tempeststudios.inventorysort.core.InventorySortEvents;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -85,7 +86,6 @@ public final class ServerWorldProfileManager {
             return;
         }
         confirmedThisSession.add(confirmationKey(serverKey, getActiveProfile(serverKey)));
-        InventoryHistorySampler.reset();
     }
 
     public void handleConfirmationInput(Minecraft client) {
@@ -130,8 +130,7 @@ public final class ServerWorldProfileManager {
         serverProfiles.activeProfile = profile;
         save();
         confirmActiveProfile(serverKey);
-        ItemLocationTracker.getInstance().reloadForCurrentNamespace();
-        InventoryHistorySampler.reset();
+        publishNamespaceChanged(serverKey, profile);
     }
 
     public String displayName(String profile) {
@@ -157,6 +156,16 @@ public final class ServerWorldProfileManager {
 
     private String confirmationKey(String serverKey, String profile) {
         return serverKey + ":" + profile;
+    }
+
+    private void publishNamespaceChanged(String serverKey, String profile) {
+        Minecraft client = Minecraft.getInstance();
+        InventorySortEvents.NAMESPACE_CHANGED.invoker().onNamespaceChanged(
+                new InventorySortEvents.NamespaceChangedContext(
+                        client,
+                        serverKey,
+                        profile,
+                        TrackingNamespace.current(client)));
     }
 
     private void load() {
