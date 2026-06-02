@@ -14,6 +14,7 @@ All notable project changes will be documented here.
 - Split sort/search screen-button ownership and added separate Core/Search/Catalogue client entrypoints as preparation for public modules.
 - Added Gradle subprojects for Core, Sort, Search, and Catalogue. The three public feature jars now build separately and each nests the shared Core jar.
 - Added `collectReleaseJars` and updated `buildAllMods` so publish-ready Sort, Search, and Catalogue jars are collected in `build/release/`.
+- Confirmed the rebuilt split release jars launch in normal launcher installs individually and together.
 
 ### Fixed
 

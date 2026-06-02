@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: `2.6.3` + release jar runtime crash fix
+Current checkpoint: `2.6.3` + split release jar launcher validation
 
 ## Project Workflow
 
@@ -18,16 +18,22 @@ Current checkpoint: `2.6.3` + release jar runtime crash fix
 - Server/world tracking profiles work for multiplayer HC resets.
 - World confirmation HUD blocks writes until confirmed, without blocking gameplay.
 - Catalog `includeInventory` uses a stable per-session player-inventory fingerprint.
+- Split release jars launch successfully in a normal launcher when installed as
+  Sort-only, Search-only, Catalogue-only, Sort+Search, and all three together.
+  Search+Catalogue was not separately tested, but is expected to work after the
+  standalone and all-three validation passed.
 
 ## Recently Fixed
 
 -9. Release jar runtime crash fix (unreleased):
    - Public Sort/Search/Catalogue jars now embed Core's remapped release jar
      instead of the development-namespaced `-dev` jar.
-   - This should fix normal launcher crashes at Core/Search client entrypoint time
-     when installing the split public jars.
+   - Fixed normal launcher crashes at Core/Search client entrypoint time when
+     installing the split public jars.
    - Added `verifyReleaseJars` to `clean build`/`buildAllMods` so future release
      builds fail if a public jar embeds the development Core jar again.
+   - Manual launcher validation now passes for Sort-only, Search-only,
+     Catalogue-only, Sort+Search, and all-three installs.
 
 -8. One-click release jar collection (unreleased):
    - Added `collectReleaseJars`, which copies only the three public feature jars
