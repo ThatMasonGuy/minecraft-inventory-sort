@@ -30,16 +30,16 @@ as:
 The smoke launcher arms `InventorySortSmokeTest`, waits until the Minecraft
 client reaches the tick loop, logs `INVENTORYSORT_SMOKE_TEST_PASS`, and closes
 the client. On GitHub Actions, the manual Modrinth publish workflow runs these
-launches under `xvfb` before upload. The full `1.20.x`/`1.21.x` supported
-matrix is intentionally broad, so `ciValidation` or `publishValidation` can
-take close to an hour on a local machine.
+launches under `xvfb` before upload. Broad supported matrices can take close to
+an hour on a local machine; the current `3.1.0` publish lane is the smaller
+smoke-passed `26.x` matrix.
 
 Normal push/PR builds intentionally run only `buildAllMods` for the default
 profile. Use local full smoke testing only when you specifically need it; the
 manual Modrinth publish workflow is the normal expensive release gate.
 For focused migration work, the manual GitHub Actions `compatibility validation`
-workflow can run one candidate profile, such as `26.1.2`, with Java 25 before it
-is promoted into the full smoke matrix.
+workflow can run one candidate profile with Java 25 before it is promoted into
+the full smoke matrix.
 
 Useful commands:
 

@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: Minecraft 26.x candidate smoke testing complete
+Current checkpoint: Minecraft 26.x 3.1.0 promotion ready for publish workflow
 
 ## Project Workflow
 
@@ -36,6 +36,25 @@ Current checkpoint: Minecraft 26.x candidate smoke testing complete
 - Core no longer registers a public `/inventorysort` command root.
 
 ## Recently Fixed
+
+-40. Minecraft `26.x` `3.1.0` release promotion (unreleased):
+   - Bumped `mod_version` to `3.1.0`.
+   - Promoted the smoke-passed `26.x` release profiles into
+     `supported_minecraft_version_profiles`: `26.1.2` and `26.2-pre-3`.
+   - Cleared `candidate_minecraft_version_profiles` so the publish automation
+     only targets the `26.x` release lane for `3.1.0`.
+   - Kept the existing `3.0.0` Modrinth release lane as the public
+     compatibility set for Minecraft `1.20.x` and `1.21.x`.
+   - Updated `gradle/release-notes/3.1.0.md` with user-facing Modrinth notes
+     for the validated `26.x` versions.
+   - Verified `verifySmokeTestMatrix`, both `26.x` profile summaries, the
+     default fast `buildAllMods`, and both promoted `26.x` `buildAllMods`
+     profiles.
+   - Verified `publishModrinthDryRun -x smokeTestSupportedClients` writes the
+     expected six-upload `3.1.0` Modrinth plan: Sort/Search/Catalogue for
+     `26.1-26.1.2`, plus Sort/Search/Catalogue for `26.2-pre-3`.
+   - Next step is committing, pushing, and running the guarded Modrinth publish
+     workflow with Java 25.
 
 -39. Minecraft `26.x` automated smoke testing (unreleased):
    - Ran the selected `26.x` candidate smoke matrix with packaged release jars.
@@ -248,8 +267,8 @@ Current checkpoint: Minecraft 26.x candidate smoke testing complete
    - Clarified in `AGENTS.md` that `CHANGELOG.md` remains the repo-facing
      engineering history, while `gradle/release-notes/3.1.0.md` should only
      collect user-visible `3.1.0` release notes.
-   - Do not bump `mod_version` to `3.1.0` until the `26.x` compile, smoke, and
-     supported-profile promotion gates pass.
+   - Completed by item 40 after the `26.x` compile, smoke, and
+     supported-profile promotion gates passed.
 
 -28. Minecraft 26.x forward-development roadmap (unreleased):
    - Decided to keep shared source anchored to the proven `1.20.x`/`1.21.x`
@@ -1073,10 +1092,9 @@ Forward tasks:
    - Once passing, promote it to `supported_minecraft_version_profiles`.
    - Add `gradle/release-notes/<version>.md`, run the Modrinth publish workflow,
      and list the smoke-passed `26.x` versions.
-   - Current status: NEXT. The compile and smoke gates now pass for the current
-     `26.x` candidate profiles; promotion should bump the release to `3.1.0`
-     and move only the smoke-passed profile files into the supported publish
-     lane.
+   - Current status: IN PROGRESS. The smoke-passed `26.x` profiles have been
+     promoted for `3.1.0`; the remaining gate is the guarded GitHub Actions
+     Modrinth publish workflow with Java 25.
 10. Branch fallback trigger:
    - Branch only if `26.x` forces duplicated feature logic rather than isolated
      build config, rendering adapters, and mixin surfaces.

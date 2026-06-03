@@ -11,8 +11,8 @@ The default profile is configured in `gradle.properties`:
 
 ```properties
 minecraft_version_profile=1.21.11
-supported_minecraft_version_profiles=1.21.11,1.21.9-1.21.10,1.21.6-1.21.8,1.21-1.21.5,1.20.5-1.20.6,1.20-1.20.4
-candidate_minecraft_version_profiles=26.1.2,26.2-pre-3
+supported_minecraft_version_profiles=26.1.2,26.2-pre-3
+candidate_minecraft_version_profiles=
 ```
 
 Useful commands:
@@ -78,33 +78,30 @@ Exact runtime-only profiles may also exist for smoke testing. For example,
 be added to `supported_minecraft_version_profiles` or
 `candidate_minecraft_version_profiles`.
 
-Current 26.x candidate range plan:
+Current 26.x release range plan:
 
 - `26.1.2.properties` is the compile-anchor profile for the grouped
-  `26.1-26.1.2` candidate jar. Fabric API `0.150.0+26.1.2` declares
-  compatibility with Minecraft `26.1`, `26.1.1`, and `26.1.2`, so this is the
-  broad candidate range to smoke-test before promotion.
+  `26.1-26.1.2` release jar. Fabric API `0.150.0+26.1.2` declares
+  compatibility with Minecraft `26.1`, `26.1.1`, and `26.1.2`, and this jar
+  has passed automated smoke launches on every listed runtime.
 - `26.1.properties` and `26.1.1.properties` are exact runtime-only smoke
   profiles. They use the `26.1.2` compatibility overlay and the same Fabric API
-  artifact so the grouped candidate jar can be launched on every listed runtime.
+  artifact so the grouped release jar can be launched on every listed runtime.
 - `26.2-pre-3.properties` stays exact and provisional. Current Fabric API
   `26.2` pre-release artifacts are scoped to individual pre-releases, and
   Minecraft `26.2` final is not available yet. Its `minecraft_dependency` uses
   Fabric API's `~26.2-` range because Fabric Loader reports the runtime version
   as `26.2-pre.3`, while `modrinth_game_versions` keeps the public Modrinth
-  label `26.2-pre-3`.
+  label `26.2-pre-3`. This jar has passed automated smoke launches on
+  `26.2-pre-3`.
 
 Only add a profile to `supported_minecraft_version_profiles` after it compiles
-and launches cleanly. Current supported groups for `1.20.x` and `1.21.x`
-compile, build release jars, and pass automated smoke launches on every listed
-game version. `ciValidation` builds supported and candidate profiles, runs
-automated client smoke launches, and only allows supported profiles to publish
-when their smoke records are `pass`. Candidate 26.x profiles may be added later
-so migration work can start without making the default release build depend on
-Java 25.
+and launches cleanly. The current `3.1.0` supported publish lane is `26.x` only.
+The earlier `3.0.0` Modrinth release remains the published `1.20.x`/`1.21.x`
+lane. `ciValidation` builds supported and candidate profiles, runs automated
+client smoke launches, and only allows supported profiles to publish when their
+smoke records are `pass`.
 
 The 26.x profiles now configure through the non-remapping build lane. The manual
-GitHub Actions `compatibility validation` workflow defaults to Java 25 and can
-run focused candidate builds without changing the fast push/PR workflow.
-Compile and smoke-test migration work still requires the version-specific
-source/API shims.
+GitHub Actions Modrinth workflow should use Java 25 for the `3.1.0` publish
+lane without changing the fast push/PR workflow.

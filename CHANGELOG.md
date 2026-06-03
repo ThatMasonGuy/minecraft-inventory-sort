@@ -16,6 +16,11 @@ All notable project changes will be documented here.
   `26.1`, `26.1.1`, and `26.1.2`, and the exact `26.2-pre-3` jar
   smoke-launches after matching Fabric API's prerelease `minecraft` dependency
   range.
+- Promoted the smoke-passed Minecraft `26.x` profiles into the `3.1.0`
+  supported publish lane: `26.1.2` now publishes the grouped
+  `26.1-26.1.2` jar, `26.2-pre-3` publishes the exact pre-release jar,
+  candidate profiles are cleared, and the public release notes now describe the
+  validated 26.x versions.
 - Added Java toolchain handling and manual CI support for Minecraft `26.x`
   migration work: compile/client-run tasks now request the active profile's
   `java_version`, GitHub Actions has a focused Java 25 compatibility-validation

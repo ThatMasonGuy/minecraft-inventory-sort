@@ -3,9 +3,10 @@
 A lightweight **client-side** Minecraft mod that adds robust sorting capabilities and powerful inventory tracking to container screens. Intelligently organize your items, find misplaced gear, and keep tabs on your storage.
 
 - **Mod ID:** `inventorysort`
-- **Minecraft:** `1.20.x` and `1.21.x` compatibility-group releases
+- **Minecraft:** current `3.1.0` release lane targets `26.x`; `1.20.x` and
+  `1.21.x` remain covered by the `3.0.0` compatibility-group releases
 - **Loader:** Fabric
-- **Java:** 21+
+- **Java:** 25+ for `26.x`
 - **License:** LGPL-3.0-only
 
 ## Features
@@ -45,7 +46,10 @@ A lightweight **client-side** Minecraft mod that adds robust sorting capabilitie
 
 - **Client-Side Only:** This mod operates entirely on the client. It adds no new blocks, items, or server-side mechanics, making it usable on vanilla servers where client-side utility mods are allowed.
 - **Framework:** Requires **Fabric Loader** and **Fabric API** matching the target Minecraft version.
-- **Current Release Target:** The split release jars are supported/publishable for Minecraft `1.20.x` and `1.21.x` through smoke-tested compatibility-group builds. See `COMPATIBILITY.md` for the exact profile ranges.
+- **Current Release Target:** The split release jars are supported/publishable
+  for Minecraft `26.1`, `26.1.1`, `26.1.2`, and `26.2-pre-3` through
+  smoke-tested compatibility-group builds. See `COMPATIBILITY.md` for the exact
+  profile ranges.
 - **"Known Current Locations":** The tracking features rely on what your client has *seen*. It provides "known current locations," not guaranteed live server truth. If another player empties a chest while you are away, your client will still remember the old contents until you reopen and rescan that container.
 
 ## Future Plans
@@ -94,11 +98,11 @@ builds candidate profiles, verifies release metadata, checks
 automated smoke matrix. The manual Modrinth publish workflow runs the expensive
 publish gate before upload, so local development can stay on faster builds.
 
-Minecraft `26.x` development requires Java 25. The normal push/PR workflow stays
-on the fast Java 21 default-profile build, while the manual GitHub Actions
-`compatibility validation` workflow can run candidate profiles such as `26.1.2`
-with a Java 25 Gradle runtime. Local `26.x` compile work also needs a Java 25
-JDK installed or exposed through Gradle toolchain detection.
+Minecraft `26.x` builds require Java 25. The normal push/PR workflow stays on
+the fast Java 21 default-profile build, while the manual GitHub Actions
+Modrinth workflow should use its Java 25 Gradle runtime for the `3.1.0`
+publish lane. Local `26.x` compile work also needs a Java 25 JDK installed or
+exposed through Gradle toolchain detection.
 
 Modrinth publishing is configured through supported profiles only:
 

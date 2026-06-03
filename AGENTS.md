@@ -12,9 +12,9 @@
   concise per-release note file at `gradle/release-notes/<mod_version>.md`.
   This file is the Modrinth changelog for that version. Do not rely on the full
   `CHANGELOG.md` or the whole `## Unreleased` section for Modrinth uploads.
-- During the Minecraft 26.x development lane, keep
+- During the Minecraft 26.x development/release lane, keep
   `gradle/release-notes/3.1.0.md` updated only with user-facing changes for the
-  planned `3.1.0` Modrinth release. Put internal build, shim, CI, and migration
+  `3.1.0` Modrinth release. Put internal build, shim, CI, and migration
   details in `CHANGELOG.md` and `TODO.md` instead.
 - If multiple major changes happen in one session, stop between each major boundary to update `TODO.md`, update `CHANGELOG.md`, verify, and commit.
 - Keep commits focused. Do not bundle unrelated split, cleanup, publishing, or version-migration work into one commit.
