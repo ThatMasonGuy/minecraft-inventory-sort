@@ -37,6 +37,7 @@ minecraft_version=1.21.11
 minecraft_dependency=>=1.21.6 <=1.21.11
 modrinth_game_versions=1.21.6,1.21.7,1.21.8,1.21.9,1.21.10,1.21.11
 compat_group=1.21_late
+unobfuscated_minecraft=false
 ```
 
 - `minecraft_version` is the compile anchor used by Loom and Mojang mappings.
@@ -47,6 +48,10 @@ compat_group=1.21_late
   shape.
 - `profile_id` should be used for release output folders when it differs from
   the compile anchor.
+- `unobfuscated_minecraft=true` selects the non-remapping Loom plugin, normal
+  `implementation` dependencies, and plain `jar` release artifacts. Use this for
+  Minecraft 26.x profiles only; 1.20.x and 1.21.x profiles should keep the
+  remapped default.
 
 Compatibility-specific code is selected from:
 
@@ -74,6 +79,6 @@ when their smoke records are `pass`. Candidate 26.x profiles may be added later
 so migration work can start without making the default release build depend on
 Java 25.
 
-The 26.x profiles currently fail during configuration on Java 21 with Minecraft's
-Java 25 requirement. Install or select a Java 25 toolchain before using them for
-compile migration work.
+The 26.x profiles now configure through the non-remapping build lane. Compile
+and smoke-test migration work still requires a Java 25 toolchain plus the
+version-specific source/API shims.

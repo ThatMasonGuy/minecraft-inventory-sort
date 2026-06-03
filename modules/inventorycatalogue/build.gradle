@@ -26,6 +26,6 @@ sourceSets {
 }
 
 dependencies {
-	implementation project(path: ':inventorysort-core', configuration: 'namedElements')
+	implementation rootProject.coreProjectDependency()
 	include project(':inventorysort-core')
 }

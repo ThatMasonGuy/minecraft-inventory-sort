@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: Minecraft 26.x `3.1.0` release-notes lane set up
+Current checkpoint: Minecraft 26.x build-system foundation complete
 
 ## Project Workflow
 
@@ -36,6 +36,26 @@ Current checkpoint: Minecraft 26.x `3.1.0` release-notes lane set up
 - Core no longer registers a public `/inventorysort` command root.
 
 ## Recently Fixed
+
+-30. Minecraft `26.x` build-system foundation (unreleased):
+   - Added `unobfuscated_minecraft=true` profile support for `26.x` profiles.
+   - Gradle now selects `net.fabricmc.fabric-loom-remap`,
+     `modImplementation`, and `remapJar` for the existing `1.20.x`/`1.21.x`
+     lane, while `26.x` selects `net.fabricmc.fabric-loom`, `implementation`,
+     and plain `jar` release artifacts.
+   - Feature modules now use the Core `namedElements` dependency only for
+     remapped profiles; unobfuscated profiles use the normal Core project
+     dependency.
+   - `collectReleaseJars`, `verifyReleaseJars`, and `printVersionProfile` now
+     report/use the profile-selected release jar task.
+   - Verified default `.\gradlew.bat buildAllMods --no-daemon --console=plain`
+     still passes on `1.21.11`.
+   - Verified `26.1.2` and `26.2-pre-3` both configure with the non-remap
+     build lane via `printVersionProfile`.
+   - Verified a `26.1.2` `buildAllMods --dry-run` uses `jar` tasks instead of
+     `remapJar` tasks.
+   - Next step is Java 25 toolchain/CI handling before real `26.x` compile and
+     source/API shim work.
 
 -29. `3.1.0` release-notes lane for Minecraft `26.x` (unreleased):
    - Added `gradle/release-notes/3.1.0.md` as the running Modrinth-facing,
@@ -786,6 +806,10 @@ Forward tasks:
      dependencies when running `26.x` profiles.
    - Verify default `1.21.11` `buildAllMods` still passes and a `26.x`
      `printVersionProfile` configures under Java 25.
+   - Current status: DONE. Profile metadata now selects remap vs non-remap Loom,
+     Fabric dependency configuration, release artifact task, and Core project
+     dependency shape. Default `1.21.11` still builds, and both `26.x` candidate
+     profiles configure through the non-remap lane.
 2. Java 25 toolchain and CI:
    - Decide whether Gradle should always run on Java 25 or whether workflows
      should select Java by profile/job.

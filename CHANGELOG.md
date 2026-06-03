@@ -6,6 +6,11 @@ All notable project changes will be documented here.
 
 ### Changed
 
+- Added profile-selected remap vs non-remap build plumbing for Minecraft
+  `26.x`: `unobfuscated_minecraft=true` profiles now use
+  `net.fabricmc.fabric-loom`, normal `implementation` dependencies, plain `jar`
+  release artifacts, and normal Core project dependencies while the existing
+  `1.20.x`/`1.21.x` profiles keep the remapped Loom path.
 - Added `gradle/release-notes/3.1.0.md` as the running user-facing Modrinth
   changelog for the planned Minecraft `26.x` support release, and clarified in
   `AGENTS.md` that `CHANGELOG.md` remains the repo-facing engineering history.

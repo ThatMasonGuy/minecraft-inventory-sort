@@ -1,6 +1,7 @@
 plugins {
 	id 'base'
 	id 'net.fabricmc.fabric-loom-remap' apply false
+	id 'net.fabricmc.fabric-loom' apply false
 }
 
 def versionProfileName = providers.gradleProperty('minecraft_version_profile')
@@ -45,6 +46,16 @@ ext.modrinth_game_versions = profileProperty('modrinth_game_versions', selectedM
 		.split(',')
 		.collect { it.trim() }
 		.findAll { !it.isEmpty() }
+ext.unobfuscated_minecraft = profileProperty('unobfuscated_minecraft', 'false').toBoolean()
+ext.loom_plugin_id = unobfuscated_minecraft ? 'net.fabricmc.fabric-loom' : 'net.fabricmc.fabric-loom-remap'
+ext.fabric_dependency_configuration = unobfuscated_minecraft ? 'implementation' : 'modImplementation'
+ext.release_jar_task_name = unobfuscated_minecraft ? 'jar' : 'remapJar'
+ext.coreProjectDependency = {
+	if (rootProject.unobfuscated_minecraft) {
+		return rootProject.dependencies.project(path: ':inventorysort-core')
+	}
+	return rootProject.dependencies.project(path: ':inventorysort-core', configuration: 'namedElements')
+}
 
 allprojects {
 	version = rootProject.mod_version
@@ -126,7 +137,7 @@ def profileGameVersionsFor = { Properties profile ->
 }
 
 subprojects {
-	apply plugin: 'net.fabricmc.fabric-loom-remap'
+	apply plugin: rootProject.loom_plugin_id
 	apply plugin: 'maven-publish'
 
 	loom {
@@ -146,9 +157,11 @@ subprojects {
 
 	dependencies {
 		minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
-		mappings loom.officialMojangMappings()
-		modImplementation "net.fabricmc:fabric-loader:${rootProject.loader_version}"
-		modImplementation "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}"
+		if (!rootProject.unobfuscated_minecraft) {
+			mappings loom.officialMojangMappings()
+		}
+		add(rootProject.fabric_dependency_configuration, "net.fabricmc:fabric-loader:${rootProject.loader_version}")
+		add(rootProject.fabric_dependency_configuration, "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}")
 	}
 
 	processResources {
@@ -218,10 +231,10 @@ subprojects {
 tasks.register('collectReleaseJars', Copy) {
 	group = 'build'
 	description = 'Collects publish-ready public feature jars into build/release.'
-	dependsOn publicFeatureProjects.collect { it.tasks.named('remapJar') }
+	dependsOn publicFeatureProjects.collect { it.tasks.named(release_jar_task_name) }
 
 	from(publicFeatureProjects.collect { featureProject ->
-		featureProject.tasks.named('remapJar').flatMap { it.archiveFile }
+		featureProject.tasks.named(release_jar_task_name).flatMap { it.archiveFile }
 	})
 	into releaseOutputDirectory
 
@@ -232,7 +245,7 @@ tasks.register('collectReleaseJars', Copy) {
 
 tasks.register('verifyReleaseJars') {
 	group = 'verification'
-	description = 'Verifies public release jars embed the remapped Core jar and expected metadata/assets.'
+	description = 'Verifies public release jars embed the Core jar and expected metadata/assets.'
 	dependsOn tasks.named('collectReleaseJars')
 
 	doLast {
@@ -268,7 +281,7 @@ tasks.register('verifyReleaseJars') {
 				throw new GradleException("${releaseJar.name} embeds development Core jar ${forbiddenDevCoreJar}")
 			}
 			if (!entries.contains(expectedCoreJar)) {
-				throw new GradleException("${releaseJar.name} does not embed remapped Core jar ${expectedCoreJar}")
+				throw new GradleException("${releaseJar.name} does not embed Core jar ${expectedCoreJar}")
 			}
 			if (fabricMetadata.depends.minecraft != expectedMinecraftDependency) {
 				throw new GradleException("${releaseJar.name} declares Minecraft dependency ${fabricMetadata.depends.minecraft}, expected ${expectedMinecraftDependency}")
@@ -362,8 +375,12 @@ tasks.register('printVersionProfile') {
 		println "Fabric Loader: ${loader_version}"
 		println "Fabric API: ${fabric_api_version}"
 		println "Loom: ${loom_version}"
+		println "Loom plugin: ${loom_plugin_id}"
+		println "Unobfuscated Minecraft: ${unobfuscated_minecraft}"
 		println "Java release: ${target_java_version}"
 		println "Compat group: ${compat_group}"
+		println "Fabric dependency configuration: ${fabric_dependency_configuration}"
+		println "Release jar task: ${release_jar_task_name}"
 		println "Release output: ${releaseOutputDirectory.get().asFile}"
 	}
 }
