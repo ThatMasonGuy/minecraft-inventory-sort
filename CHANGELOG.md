@@ -4,8 +4,23 @@ All notable project changes will be documented here.
 
 ## Unreleased
 
+### Fixed
+
+- Fixed the Minecraft `26.x` Core entity-interaction mixin for
+  `MultiPlayerGameMode`: `26.x` exposes a single `interact(Player, Entity,
+  EntityHitResult, InteractionHand)` method instead of the older separate
+  `interact`/`interactAt` methods, which could crash on launch when another mod
+  eagerly loaded that client class.
+- Hardened automated smoke testing by force-loading
+  `net.minecraft.client.multiplayer.MultiPlayerGameMode` during smoke startup,
+  so lazy mixin target failures are caught by the launcher gate.
+
 ### Changed
 
+- Bumped the Minecraft `26.x` hotfix lane to `3.1.1` and added focused
+  Modrinth-facing release notes for the launch-crash fix.
+- Updated README, compatibility, and version-profile documentation to point at
+  the active `3.1.1` 26.x publish lane after the hotfix.
 - Researched and configured the Minecraft `26.x` candidate range plan before
   smoke testing: `26.1.2` now builds one grouped `26.1-26.1.2` candidate jar
   with exact `26.1`, `26.1.1`, and `26.1.2` smoke runtime profiles, while

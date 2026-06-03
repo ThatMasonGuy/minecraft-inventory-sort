@@ -96,12 +96,12 @@ Current 26.x release range plan:
   `26.2-pre-3`.
 
 Only add a profile to `supported_minecraft_version_profiles` after it compiles
-and launches cleanly. The current `3.1.0` supported publish lane is `26.x` only.
+and launches cleanly. The current `3.1.1` supported publish lane is `26.x` only.
 The earlier `3.0.0` Modrinth release remains the published `1.20.x`/`1.21.x`
 lane. `ciValidation` builds supported and candidate profiles, runs automated
 client smoke launches, and only allows supported profiles to publish when their
 smoke records are `pass`.
 
 The 26.x profiles now configure through the non-remapping build lane. The manual
-GitHub Actions Modrinth workflow should use Java 25 for the `3.1.0` publish
+GitHub Actions Modrinth workflow should use Java 25 for the `3.1.1` publish
 lane without changing the fast push/PR workflow.

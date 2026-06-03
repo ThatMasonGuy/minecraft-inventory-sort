@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: Minecraft 26.x 3.1.0 published through guarded workflow
+Current checkpoint: Minecraft 26.x 3.1.1 launch-crash hotfix prepared
 
 ## Project Workflow
 
@@ -36,6 +36,39 @@ Current checkpoint: Minecraft 26.x 3.1.0 published through guarded workflow
 - Core no longer registers a public `/inventorysort` command root.
 
 ## Recently Fixed
+
+-41. Minecraft `26.x` launch-crash hotfix (unreleased):
+   - Investigated a real Minecraft `26.1.2` launch crash from the published
+     `3.1.0+mc26.1-26.1.2` jars.
+   - Root cause: the shared `MultiPlayerGameModeMixin` still targeted the
+     older `interactAt` method used by the `1.20.x`/`1.21.x` lanes, while
+     checked `26.x` runtimes expose one `interact(Player, Entity,
+     EntityHitResult, InteractionHand)` method.
+   - Added `26.1.2` and `26.2-pre-3` compatibility overlays for
+     `MultiPlayerGameModeMixin`, and excluded the shared mixin source from all
+     `26.x` release/smoke profiles that use those overlays.
+   - Hardened `InventorySortSmokeTest` to force-load
+     `net.minecraft.client.multiplayer.MultiPlayerGameMode` during smoke
+     startup, so this class of lazy mixin-target failure is caught before a
+     smoke run can pass.
+   - Bumped the hotfix lane to `3.1.1` and added
+     `gradle/release-notes/3.1.1.md` for the Modrinth-facing changelog.
+   - Verified `.\gradlew.bat buildAllMods "-Pminecraft_version_profile=26.1.2"
+     --no-daemon --console=plain`.
+   - Verified selected all-public smoke launches for the fixed `26.1-26.1.2`
+     jar on exact runtimes `26.1`, `26.1.1`, and `26.1.2`, plus the sibling
+     `26.2-pre-3` all-public smoke launch.
+   - Verified `.\gradlew.bat publishModrinthDryRun -x smokeTestSupportedClients
+     --no-daemon --console=plain`; it wrote the expected six-upload `3.1.1`
+     Modrinth plan without performing an API upload.
+   - Cleared stale generated `build/release` and `build/modrinth` output, then
+     regenerated the dry-run output so only `26.1-26.1.2` and `26.2-pre-3`
+     `3.1.1` release folders remain locally.
+   - Updated README, compatibility, and version-profile docs so the active
+     Minecraft `26.x` lane points to `3.1.1` instead of the superseded
+     `3.1.0` release.
+   - Next step: run the guarded GitHub Actions Modrinth publish workflow for
+     `3.1.1` with Java 25 after release approval.
 
 -40. Minecraft `26.x` `3.1.0` release promotion (unreleased):
    - Bumped `mod_version` to `3.1.0`.

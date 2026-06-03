@@ -3,7 +3,7 @@
 A lightweight **client-side** Minecraft mod that adds robust sorting capabilities and powerful inventory tracking to container screens. Intelligently organize your items, find misplaced gear, and keep tabs on your storage.
 
 - **Mod ID:** `inventorysort`
-- **Minecraft:** current `3.1.0` release lane targets `26.x`; `1.20.x` and
+- **Minecraft:** current `3.1.1` release lane targets `26.x`; `1.20.x` and
   `1.21.x` remain covered by the `3.0.0` compatibility-group releases
 - **Loader:** Fabric
 - **Java:** 25+ for `26.x`
@@ -100,7 +100,7 @@ publish gate before upload, so local development can stay on faster builds.
 
 Minecraft `26.x` builds require Java 25. The normal push/PR workflow stays on
 the fast Java 21 default-profile build, while the manual GitHub Actions
-Modrinth workflow should use its Java 25 Gradle runtime for the `3.1.0`
+Modrinth workflow should use its Java 25 Gradle runtime for the `3.1.1`
 publish lane. Local `26.x` compile work also needs a Java 25 JDK installed or
 exposed through Gradle toolchain detection.
 

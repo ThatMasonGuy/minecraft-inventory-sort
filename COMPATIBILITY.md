@@ -4,7 +4,7 @@ Research date: 2026-06-03
 
 ## Recommendation
 
-The current `3.1.0` supported/publishable profiles cover **Minecraft 26.x**
+The current `3.1.1` supported/publishable profiles cover **Minecraft 26.x**
 through smoke-tested compatibility-group jars:
 
 - `26.1`, `26.1.1`, and `26.1.2` are covered by the grouped
@@ -78,13 +78,13 @@ dimension id access; shared feature logic should stay in `src/client/java`.
 
 The default development profile remains `1.21.11` so local/push builds stay
 fast on Java 21. These artifacts can be built under `build/release/1.21.11/`,
-but they are not the `3.1.0` publish lane:
+but they are not the `3.1.1` publish lane:
 
 | Jar | Mod id | Minecraft dependency | Java dependency |
 | --- | --- | --- | --- |
-| `inventory-sort-3.1.0.jar` | `inventorysort` | `~1.21.11` | `>=21` |
-| `inventory-search-3.1.0.jar` | `inventorysearch` | `~1.21.11` | `>=21` |
-| `inventory-catalogue-3.1.0.jar` | `inventorycatalogue` | `~1.21.11` | `>=21` |
+| `inventory-sort-<mod_version>.jar` | `inventorysort` | `~1.21.11` | `>=21` |
+| `inventory-search-<mod_version>.jar` | `inventorysearch` | `~1.21.11` | `>=21` |
+| `inventory-catalogue-<mod_version>.jar` | `inventorycatalogue` | `~1.21.11` | `>=21` |
 
 These jars have been launch-tested on `1.21.11` in standalone and combined
 install combinations.
@@ -95,9 +95,9 @@ The supported profiles build public release jars under
 `build/release/<profile_id>/`. Each profile contains the three public feature
 jars:
 
-- `inventory-sort-3.1.0.jar`
-- `inventory-search-3.1.0.jar`
-- `inventory-catalogue-3.1.0.jar`
+- `inventory-sort-3.1.1.jar`
+- `inventory-search-3.1.1.jar`
+- `inventory-catalogue-3.1.1.jar`
 
 Current supported profile metadata:
 
@@ -190,7 +190,7 @@ Final validation commands:
 ## Porting Implications
 
 - `26.x` is now covered by smoke-passed supported compatibility groups for the
-  `3.1.0` publish lane.
+  `3.1.1` publish lane.
 - `1.20.x` and `1.21.x` remain covered by the published `3.0.0`
   compatibility groups.
 - Future candidate groups should stay in `candidate_minecraft_version_profiles`
