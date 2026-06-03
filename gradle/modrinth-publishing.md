@@ -39,6 +39,32 @@ modrinth_token=...
 
 Do not store tokens in this repository.
 
+## Release Notes
+
+Modrinth changelogs come from a concise per-version release note file:
+
+```text
+gradle/release-notes/<mod_version>.md
+```
+
+For example, `mod_version=3.0.0` requires:
+
+```text
+gradle/release-notes/3.0.0.md
+```
+
+The publish tasks fail if the release note file is missing or blank. This keeps
+Modrinth uploads focused on what changed in that release instead of reposting
+the entire project changelog.
+
+Use `CHANGELOG.md` for the broad repo history, and use
+`gradle/release-notes/<version>.md` for the exact Modrinth-facing notes. To test
+or publish with a different notes file, pass:
+
+```powershell
+.\gradlew.bat publishModrinthDryRun "-Pmodrinth_changelog_file=gradle/release-notes/3.0.0.md"
+```
+
 ## Project IDs
 
 The public Modrinth project IDs are stored in `gradle.properties`:

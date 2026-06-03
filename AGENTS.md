@@ -8,6 +8,10 @@
   2. Update `CHANGELOG.md` with the user-facing or engineering changes.
   3. Run the appropriate verification command, usually `.\gradlew.bat clean build` for baseline/build changes.
   4. Commit the change before starting the next major step.
+- Before any Modrinth publish or dry-run publish for a new `mod_version`, add a
+  concise per-release note file at `gradle/release-notes/<mod_version>.md`.
+  This file is the Modrinth changelog for that version. Do not rely on the full
+  `CHANGELOG.md` or the whole `## Unreleased` section for Modrinth uploads.
 - If multiple major changes happen in one session, stop between each major boundary to update `TODO.md`, update `CHANGELOG.md`, verify, and commit.
 - Keep commits focused. Do not bundle unrelated split, cleanup, publishing, or version-migration work into one commit.
 - Before editing or committing, check `git status --short` and preserve any user changes that are unrelated to the current task.
@@ -36,3 +40,5 @@ Examples of major boundaries for this project:
 - Add automated CI validation before Modrinth automation: compile/build checks,
   release jar metadata checks, and launcher smoke tests for every Minecraft version
   claimed by a compatibility-group profile.
+- Keep `CHANGELOG.md` as the broad project history. Keep Modrinth-facing release
+  notes focused and version-specific in `gradle/release-notes/`.

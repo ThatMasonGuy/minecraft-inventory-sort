@@ -100,7 +100,8 @@ Modrinth publishing is configured through supported profiles only:
 ```
 
 Real uploads require `MODRINTH_TOKEN` outside the repo. See
-`gradle/modrinth-publishing.md`.
+`gradle/modrinth-publishing.md`. Each published `mod_version` also needs a
+focused Modrinth changelog at `gradle/release-notes/<mod_version>.md`.
 
 Module-local build artifacts are also generated in:
 

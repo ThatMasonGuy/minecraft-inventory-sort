@@ -638,25 +638,22 @@ def modrinthToken = {
 	return envToken != null && !envToken.isBlank() ? envToken.trim() : null
 }
 
+def modrinthReleaseNotesFile = {
+	def defaultNotesFile = "gradle/release-notes/${mod_version}.md"
+	file(modrinthProperty('modrinth_changelog_file', defaultNotesFile))
+}
+
 def modrinthChangelogText = {
-	def changelogFile = file(modrinthProperty('modrinth_changelog_file', 'CHANGELOG.md'))
-	if (!changelogFile.isFile()) {
-		return 'See CHANGELOG.md.'
+	def notesFile = modrinthReleaseNotesFile()
+	if (!notesFile.isFile()) {
+		throw new GradleException("Missing Modrinth release notes: ${notesFile}. Add gradle/release-notes/${mod_version}.md or pass -Pmodrinth_changelog_file=<path>.")
 	}
 
-	def lines = changelogFile.readLines('UTF-8')
-	def start = lines.findIndexOf { it.trim() == '## Unreleased' }
-	if (start < 0) {
-		def wholeFile = changelogFile.getText('UTF-8').trim()
-		return wholeFile.isBlank() ? 'See CHANGELOG.md.' : wholeFile
+	def notes = notesFile.getText('UTF-8').trim()
+	if (notes.isBlank()) {
+		throw new GradleException("Modrinth release notes file is blank: ${notesFile}")
 	}
-
-	def end = start + 1
-	while (end < lines.size() && !lines[end].startsWith('## ')) {
-		end++
-	}
-	def unreleased = lines.subList(start + 1, end).join('\n').trim()
-	return unreleased.isBlank() ? 'See CHANGELOG.md.' : unreleased
+	return notes
 }
 
 def modrinthVersionNumberFor = { String profileId ->
@@ -749,6 +746,7 @@ def modrinthUploadPlans = {
 def writeModrinthUploadPlan = { List<Map> plans ->
 	def planFile = layout.buildDirectory.file('modrinth/upload-plan.json').get().asFile
 	planFile.parentFile.mkdirs()
+	def notesFile = modrinthReleaseNotesFile()
 	def printablePlans = plans.collect { plan ->
 		[
 				mod              : plan.displayName,
@@ -757,6 +755,7 @@ def writeModrinthUploadPlan = { List<Map> plans ->
 				version_number   : plan.data.version_number,
 				version_type     : plan.data.version_type,
 				requested_status : plan.data.requested_status,
+				release_notes    : notesFile.path,
 				game_versions    : plan.gameVersions,
 				loaders          : plan.data.loaders,
 				jar              : plan.jar.absolutePath,

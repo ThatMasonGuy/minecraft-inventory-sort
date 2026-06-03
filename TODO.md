@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: Step 9 focused Modrinth pipeline validation for 2.6.4 complete
+Current checkpoint: Step 9 per-release Modrinth notes
 
 ## Project Workflow
 
@@ -36,6 +36,21 @@ Current checkpoint: Step 9 focused Modrinth pipeline validation for 2.6.4 comple
 - Core no longer registers a public `/inventorysort` command root.
 
 ## Recently Fixed
+
+-25. Per-release Modrinth notes (unreleased):
+   - Changed Modrinth publish automation to read release notes from
+     `gradle/release-notes/<mod_version>.md` by default instead of pulling the
+     whole `## Unreleased` section from `CHANGELOG.md`.
+   - Publish tasks now fail if the per-version release note file is missing or
+     blank. A custom notes file can still be supplied with
+     `-Pmodrinth_changelog_file=<path>`.
+   - Added `gradle/release-notes/2.6.4.md` for the validation release.
+   - Updated `AGENTS.md`, `README.md`, and `gradle/modrinth-publishing.md` so
+     future work keeps broad repo history in `CHANGELOG.md` and concise
+     Modrinth-facing notes under `gradle/release-notes/`.
+   - Next: create `gradle/release-notes/3.0.0.md`, bump `mod_version`, promote
+     smoke-passed compatibility groups, run full validation, and publish after
+     user approval.
 
 -24. Focused `2.6.4` Modrinth pipeline validation (unreleased):
    - Bumped `mod_version` from `2.6.3` to `2.6.4` for a focused validation
