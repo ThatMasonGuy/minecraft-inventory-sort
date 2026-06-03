@@ -28,12 +28,25 @@ versionProfileFile.withInputStream { versionProfile.load(it) }
 	}
 }
 
+def profileProperty = { String key, String defaultValue ->
+	def value = versionProfile.getProperty(key)
+	return value != null && !value.isBlank() ? value.trim() : defaultValue
+}
+def selectedMinecraftVersion = versionProfile.getProperty('minecraft_version')
+
 ext.minecraft_version_profile = versionProfileName
-ext.minecraft_version = versionProfile.getProperty('minecraft_version')
+ext.minecraft_version_profile_id = profileProperty('profile_id', versionProfileName)
+ext.minecraft_version = selectedMinecraftVersion
 ext.loader_version = versionProfile.getProperty('loader_version')
 ext.loom_version = versionProfile.getProperty('loom_version')
 ext.fabric_api_version = versionProfile.getProperty('fabric_api_version')
 ext.target_java_version = versionProfile.getProperty('java_version') as int
+ext.minecraft_dependency = profileProperty('minecraft_dependency', "~${selectedMinecraftVersion}")
+ext.compat_group = profileProperty('compat_group', minecraft_version_profile_id)
+ext.modrinth_game_versions = profileProperty('modrinth_game_versions', selectedMinecraftVersion)
+		.split(',')
+		.collect { it.trim() }
+		.findAll { !it.isEmpty() }
 
 allprojects {
 	version = rootProject.mod_version
@@ -49,7 +62,7 @@ def publicFeatureProjects = [
 		project(':inventorysearch'),
 		project(':inventorycatalogue')
 ]
-def releaseOutputDirectory = layout.buildDirectory.dir("release/${minecraft_version}")
+def releaseOutputDirectory = layout.buildDirectory.dir("release/${minecraft_version_profile_id}")
 def supportedMinecraftVersionProfiles = (findProperty('supported_minecraft_version_profiles') ?: minecraft_version_profile)
 		.toString()
 		.split(',')
@@ -62,6 +75,17 @@ subprojects {
 
 	loom {
 		splitEnvironmentSourceSets()
+	}
+
+	sourceSets {
+		client {
+			java {
+				srcDir rootProject.file("src/compat/${rootProject.compat_group}/client/java")
+			}
+			resources {
+				srcDir rootProject.file("src/compat/${rootProject.compat_group}/client/resources")
+			}
+		}
 	}
 
 	dependencies {
@@ -77,7 +101,11 @@ subprojects {
 				minecraft_version: rootProject.minecraft_version,
 				loader_version: rootProject.loader_version,
 				fabric_api_version: rootProject.fabric_api_version,
-				java_version: rootProject.target_java_version
+				java_version: rootProject.target_java_version,
+				minecraft_dependency: rootProject.minecraft_dependency,
+				minecraft_version_profile_id: rootProject.minecraft_version_profile_id,
+				compat_group: rootProject.compat_group,
+				modrinth_game_versions: rootProject.modrinth_game_versions.join(',')
 		]
 
 		inputs.properties(resourceProperties)
@@ -139,18 +167,29 @@ tasks.register('verifyReleaseJars') {
 	doLast {
 		String expectedCoreJar = "META-INF/jars/inventory-sort-core-${version}.jar"
 		String forbiddenDevCoreJar = "META-INF/jars/inventory-sort-core-${version}-dev.jar"
+		String expectedMinecraftDependency = rootProject.minecraft_dependency
+		String expectedJavaDependency = ">=${rootProject.target_java_version}"
 
 		publicFeatureProjects.each { featureProject ->
-			def releaseJar = layout.buildDirectory.file("release/${minecraft_version}/${featureProject.base.archivesName.get()}-${version}.jar").get().asFile
+			def releaseJar = layout.buildDirectory.file("release/${minecraft_version_profile_id}/${featureProject.base.archivesName.get()}-${version}.jar").get().asFile
 			if (!releaseJar.isFile()) {
 				throw new GradleException("Missing release jar: ${releaseJar}")
 			}
 
 			def entries = [] as Set
+			def fabricMetadata = null
 			new java.util.zip.ZipFile(releaseJar).withCloseable { zip ->
 				def entryEnumeration = zip.entries()
 				while (entryEnumeration.hasMoreElements()) {
 					entries.add(entryEnumeration.nextElement().name)
+				}
+
+				def modJsonEntry = zip.getEntry('fabric.mod.json')
+				if (modJsonEntry == null) {
+					throw new GradleException("${releaseJar.name} is missing fabric.mod.json")
+				}
+				zip.getInputStream(modJsonEntry).withCloseable { stream ->
+					fabricMetadata = new groovy.json.JsonSlurper().parse(stream)
 				}
 			}
 
@@ -159,6 +198,12 @@ tasks.register('verifyReleaseJars') {
 			}
 			if (!entries.contains(expectedCoreJar)) {
 				throw new GradleException("${releaseJar.name} does not embed remapped Core jar ${expectedCoreJar}")
+			}
+			if (fabricMetadata.depends.minecraft != expectedMinecraftDependency) {
+				throw new GradleException("${releaseJar.name} declares Minecraft dependency ${fabricMetadata.depends.minecraft}, expected ${expectedMinecraftDependency}")
+			}
+			if (fabricMetadata.depends.java != expectedJavaDependency) {
+				throw new GradleException("${releaseJar.name} declares Java dependency ${fabricMetadata.depends.java}, expected ${expectedJavaDependency}")
 			}
 		}
 	}
@@ -170,11 +215,15 @@ tasks.register('printVersionProfile') {
 
 	doLast {
 		println "Minecraft version profile: ${minecraft_version_profile}"
+		println "Profile id: ${minecraft_version_profile_id}"
 		println "Minecraft: ${minecraft_version}"
+		println "Minecraft dependency: ${minecraft_dependency}"
+		println "Modrinth game versions: ${modrinth_game_versions.join(', ')}"
 		println "Fabric Loader: ${loader_version}"
 		println "Fabric API: ${fabric_api_version}"
 		println "Loom: ${loom_version}"
 		println "Java release: ${target_java_version}"
+		println "Compat group: ${compat_group}"
 		println "Release output: ${releaseOutputDirectory.get().asFile}"
 	}
 }

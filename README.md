@@ -72,7 +72,7 @@ A lightweight **client-side** Minecraft mod that adds robust sorting capabilitie
 
 Publish-ready feature artifacts are collected in:
 
-- `build/release/<minecraft_version>/`
+- `build/release/<profile_id>/`
 
 The default Minecraft version profile is `1.21.11`. To inspect or switch build
 profiles:
@@ -109,6 +109,7 @@ Run the client for local testing:
 - `src/client/java/.../ServerWorldProfileManager.java` – Manages different tracking databases across multiplayer servers and single-player worlds.
 - `src/client/java/.../mixin/HandledScreenMixin.java` - Injects and renders the **Sort** and transfer buttons into existing container screens.
 - `src/client/java/.../mixin/SearchButtonMixin.java` - Injects the inventory search button independently from the sorting feature.
+- `src/compat/<compat_group>/` - Optional compatibility overlays selected by Minecraft version profile.
 - `modules/` - Gradle subprojects for Core, Sort, Search, and Catalogue release artifacts.
 
 ## Credits

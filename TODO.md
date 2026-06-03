@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: `2.6.3` + compatibility-group version strategy
+Current checkpoint: `2.6.3` + compatibility-group build profile foundation
 
 ## Project Workflow
 
@@ -33,6 +33,21 @@ Current checkpoint: `2.6.3` + compatibility-group version strategy
 - Core no longer registers a public `/inventorysort` command root.
 
 ## Recently Fixed
+
+-15. Compatibility-group build profile foundation (unreleased):
+   - Extended Gradle profiles with `profile_id`, `minecraft_dependency`,
+     `modrinth_game_versions`, and `compat_group`.
+   - Generated Fabric metadata now uses `minecraft_dependency` instead of always
+     deriving `~<minecraft_version>`.
+   - Release jars now collect under `build/release/<profile_id>/`.
+   - `printVersionProfile` reports compatibility-group metadata and
+     `verifyReleaseJars` checks generated Minecraft/Java dependency metadata.
+   - Added `src/compat/<compat_group>/` wiring and documentation for
+     version-specific API adapters.
+   - Verified `.\gradlew.bat printVersionProfile`, `.\gradlew.bat clean build`,
+     and `.\gradlew.bat buildAllVersions` on the current `1.21.11` profile.
+   - Next Step 7 slice: add the first non-`1.21.11` compatibility-group profile
+     and start moving API differences behind compat adapters until it compiles.
 
 -14. Compatibility-group version strategy (unreleased):
    - Documented that version profiles should become release compatibility groups,
@@ -392,7 +407,7 @@ depend on Core; Catalogue and Search both need Core's identity/namespace/event l
    - Add root Gradle tasks such as `buildAllMods` and later `publishAllModrinth`.
    - Collect public release jars in a predictable output folder.
    - Current status: DONE for local release builds. `buildAllMods` now leaves the
-     three public, publish-ready jars in `build/release/<minecraft_version>/`.
+     three public, publish-ready jars in `build/release/<profile_id>/`.
 6. Validate install combinations:
    - Test Sort only, Search only, Catalogue only, pairwise combinations, and all
      three together.
@@ -408,12 +423,15 @@ depend on Core; Catalogue and Search both need Core's identity/namespace/event l
      - `minecraft_dependency`: Fabric Loader dependency range for metadata.
      - `modrinth_game_versions`: exact game versions to publish after smoke tests.
      - `compat_group`: source overlay group for version-specific APIs.
-   - Current status: STARTED. Gradle profile support is in place for the current
-     release and candidate 26.x targets. Compatibility research confirms the
-     current source only compiles as-is on `1.21.11`; older `1.21.x`, `1.20.x`,
-     and `1.19.x` releases need source/API porting before Modrinth listings.
-     Next blocker for the v26 lane is installing/running a Java 25 toolchain,
-     then compiling a 26.x profile and fixing source/API breaks.
+   - Current status: IN PROGRESS. Gradle now supports compatibility-group profile
+     metadata, profile-id release folders, generated Fabric dependency ranges,
+     profile metadata verification, and `src/compat/<compat_group>/` source
+     overlays. Compatibility research confirms the current source only compiles
+     as-is on `1.21.11`; older `1.21.x`, `1.20.x`, and `1.19.x` releases need
+     source/API porting before Modrinth listings. Next Step 7 slice is adding the
+     first non-`1.21.11` compatibility group and adapter code until it compiles.
+     Next blocker for the v26 lane is still installing/running a Java 25
+     toolchain, then compiling a 26.x profile and fixing source/API breaks.
 8. Add CI validation before publishing:
    - Add automated build verification for every supported compatibility-group
      profile.

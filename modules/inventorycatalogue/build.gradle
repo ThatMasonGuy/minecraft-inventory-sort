@@ -15,6 +15,7 @@ sourceSets {
 	client {
 		java {
 			srcDir rootProject.file("src/client/java")
+			include "tempeststudios/inventorysort/compat/catalogue/**"
 			include "tempeststudios/inventorysort/CatalogSession.java"
 			include "tempeststudios/inventorysort/CatalogStore.java"
 			include "tempeststudios/inventorysort/InventoryCatalogueClient.java"

@@ -8,7 +8,7 @@ All notable project changes will be documented here.
 
 - Changed the repo and Fabric metadata license to LGPL-3.0-only to match the Modrinth projects.
 - Added `AGENTS.md` with the project workflow for updating `TODO.md`, updating this changelog, verifying, and committing after each major change.
-- Recorded the 8-step split and multi-version migration roadmap in `TODO.md` so it survives future context compaction.
+- Recorded the split and multi-version migration roadmap in `TODO.md` so it survives future context compaction.
 - Added the initial Core foundation with shared mod id/logger ownership and event contracts for namespace changes, container snapshots, and inventory snapshots.
 - Routed container/inventory snapshot handling and namespace-change handling through Core events, with Search and Catalogue now subscribed via feature bridge classes.
 - Split catalogue and world-profile command implementation into separate command classes.
@@ -17,6 +17,13 @@ All notable project changes will be documented here.
 - Added Gradle subprojects for Core, Sort, Search, and Catalogue. The three public feature jars now build separately and each nests the shared Core jar.
 - Added `collectReleaseJars` and updated `buildAllMods` so publish-ready Sort, Search, and Catalogue jars are collected under `build/release/<minecraft_version>/`.
 - Added Minecraft version profiles and upgraded the Gradle wrapper to 9.4.0 so 26.x migration profiles can be configured separately from the current release target.
+- Extended Minecraft version profiles into compatibility-group build profiles with
+  `profile_id`, `minecraft_dependency`, `modrinth_game_versions`, and
+  `compat_group` metadata.
+- Release jars now collect under `build/release/<profile_id>/`, and
+  `verifyReleaseJars` checks generated Fabric metadata against the active profile.
+- Added `src/compat/<compat_group>/` overlay wiring for version-specific API
+  adapter sources.
 - Added `COMPATIBILITY.md` with the Minecraft version probe matrix and Modrinth listing recommendation.
 - Confirmed the current split release jars should be published for Minecraft `1.21.11` only until version-specific builds pass compile and launch testing.
 - Documented the compatibility-group profile strategy: one build profile may produce

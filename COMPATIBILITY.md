@@ -18,8 +18,8 @@ one upload.
 
 ## Compatibility-Group Build Strategy
 
-Future multi-version support should use **release compatibility groups** rather
-than one build profile for every Minecraft patch version.
+Multi-version support uses **release compatibility groups** rather than one build
+profile for every Minecraft patch version.
 
 A compatibility-group profile means:
 
@@ -31,6 +31,8 @@ A compatibility-group profile means:
   testing on
 - collect release jars under a profile/range output folder instead of assuming
   the output folder is just the anchor Minecraft version
+
+Gradle now supports these profile fields:
 
 Example:
 
@@ -52,6 +54,16 @@ jar on every Minecraft version listed in `modrinth_game_versions`.
 
 If an in-between version fails, split the range into smaller compatibility groups
 instead of publishing an untested or partially compatible range.
+
+Compatibility-specific source can live under:
+
+```text
+src/compat/<compat_group>/client/java/
+src/compat/<compat_group>/client/resources/
+```
+
+The current `1.21.11` profile uses `compat_group=1.21.11` and has no additional
+compat source yet because the shared source already builds for that target.
 
 ## Current Release Artifacts
 
