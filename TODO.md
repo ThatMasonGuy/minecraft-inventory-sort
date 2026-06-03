@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: Unified Minecraft 1.20.x/1.21.x/26.x 3.1.1 release prepared
+Current checkpoint: Unified Minecraft 1.20.x/1.21.x/26.x 3.1.1 release locally verified; publish retry pending
 
 ## Project Workflow
 
@@ -43,7 +43,7 @@ Current checkpoint: Unified Minecraft 1.20.x/1.21.x/26.x 3.1.1 release prepared
      `3.1.1` supported publish lane:
      `1.20-1.20.4`, `1.20.5-1.20.6`, `1.21-1.21.5`,
      `1.21.6-1.21.8`, `1.21.9-1.21.10`, `1.21.11`,
-     `26.1.2`, and `26.2-pre-3`.
+     `26.1-26.1.2`, and `26.2-pre-3`.
    - Added `JAVA_HOME_17_X64` to Gradle toolchain environment discovery so the
      Java 17 `1.20-1.20.4` lane can be rebuilt locally without changing the
      active Java 21 install.
@@ -58,6 +58,21 @@ Current checkpoint: Unified Minecraft 1.20.x/1.21.x/26.x 3.1.1 release prepared
    - Verified `.\gradlew.bat publishModrinthDryRun -x smokeTestSupportedClients
      --no-daemon --console=plain`; it wrote a 24-upload Modrinth plan covering
      all eight compatibility groups for InvSort, InvSearch, and InvCatalogue.
+   - Cancelled the first guarded GitHub publish attempt after the
+     `1.20-1.20.4` Java 17 smoke launch failed to initialize Mixin because the
+     packaged configs still declared `JAVA_21`.
+   - Made `*.mixins.json` resources expand the active profile Java target
+     (`JAVA_17`, `JAVA_21`, or `JAVA_25`) at build time.
+   - Verified the exact failing slice with
+     `.\gradlew.bat smokeTestSelectedClients "-Pinventorysort_smoke_profiles=1.20-1.20.4" "-Pinventorysort_smoke_game_versions=1.20" "-Pinventorysort_smoke_install_sets=inventorysort-only" --no-daemon --console=plain`.
+   - Re-verified `.\gradlew.bat buildAllVersions --no-daemon --console=plain`;
+     it rebuilt all eight local release folders with 24 total `3.1.1` jars.
+   - Re-verified `.\gradlew.bat publishModrinthDryRun -x smokeTestSupportedClients
+     --no-daemon --console=plain`; it wrote the 24-upload Modrinth plan after
+     the Mixin compatibility-level fix.
+   - Inspected representative packaged release jars and confirmed Mixin configs
+     now emit `JAVA_17` for `1.20-1.20.4`, `JAVA_21` for the later
+     `1.20.x`/`1.21.x` lanes, and `JAVA_25` for the `26.x` lanes.
    - Next step: push to GitHub and trigger the guarded Modrinth publish
      workflow with `dry_run=false`, `version_type=release`,
      `requested_status=listed`, and `gradle_java_version=25`.

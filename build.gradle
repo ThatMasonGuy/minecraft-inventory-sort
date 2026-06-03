@@ -176,6 +176,7 @@ subprojects {
 				loader_version: rootProject.loader_version,
 				fabric_api_version: rootProject.fabric_api_version,
 				java_version: rootProject.target_java_version,
+				mixin_compatibility_level: "JAVA_${rootProject.target_java_version}",
 				minecraft_dependency: rootProject.minecraft_dependency,
 				minecraft_version_profile_id: rootProject.minecraft_version_profile_id,
 				compat_group: rootProject.compat_group,
@@ -184,6 +185,9 @@ subprojects {
 
 		inputs.properties(resourceProperties)
 		filesMatching("fabric.mod.json") {
+			expand(resourceProperties)
+		}
+		filesMatching("*.mixins.json") {
 			expand(resourceProperties)
 		}
 		from(rootProject.file("src/main/resources/assets")) {

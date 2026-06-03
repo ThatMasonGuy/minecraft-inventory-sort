@@ -11,6 +11,9 @@ All notable project changes will be documented here.
   EntityHitResult, InteractionHand)` method instead of the older separate
   `interact`/`interactAt` methods, which could crash on launch when another mod
   eagerly loaded that client class.
+- Fixed generated Mixin configs to use each compatibility profile's Java
+  target instead of always declaring `JAVA_21`, allowing Java 17 Minecraft
+  `1.20.x` smoke launches to initialize correctly.
 - Hardened automated smoke testing by force-loading
   `net.minecraft.client.multiplayer.MultiPlayerGameMode` during smoke startup,
   so lazy mixin target failures are caught by the launcher gate.
