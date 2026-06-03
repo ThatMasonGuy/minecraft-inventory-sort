@@ -53,6 +53,9 @@ All notable project changes will be documented here.
   handling through `MODRINTH_TOKEN`, and a manual GitHub Actions workflow.
 - Bumped the focused Modrinth validation release to `2.6.4` and corrected the
   InvSearch project id used by publishing automation.
+- Validated the guarded GitHub Actions Modrinth publish workflow by uploading
+  unlisted `2.6.4` versions for InvSort, InvSearch, and InvCatalogue on
+  Minecraft `1.21.11`.
 - Moved target-specific custom button render hooks into `1.21.9-1.21.10` and
   `1.21.11` compat overlays while keeping the shared drawing logic in Core.
 - Added `COMPATIBILITY.md` with the Minecraft version probe matrix and Modrinth listing recommendation.

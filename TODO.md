@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: Step 9 focused Modrinth pipeline validation for 2.6.4
+Current checkpoint: Step 9 focused Modrinth pipeline validation for 2.6.4 complete
 
 ## Project Workflow
 
@@ -49,6 +49,15 @@ Current checkpoint: Step 9 focused Modrinth pipeline validation for 2.6.4
      "-Pmodrinth_requested_status=unlisted" --no-daemon --console=plain`; it
      built `2.6.4`, smoke-launched the supported `1.21.11` profile, and
      prepared dry-run upload entries for the three public Modrinth projects.
+   - Pushed commit `f42122c` and triggered GitHub Actions run
+     `26871634493` (`modrinth publish`) with `dry_run=false`,
+     `version_type=release`, and `requested_status=unlisted`.
+   - GitHub Actions used the repository `MODRINTH_TOKEN` secret successfully,
+     smoke-launched all four supported `1.21.11` install combinations, and
+     uploaded:
+     - InvSort `2.6.4`: Modrinth version `l8tVjMEf`
+     - InvSearch `2.6.4`: Modrinth version `ITIdiJHe`
+     - InvCatalogue `2.6.4`: Modrinth version `k3rNn4zA`
    - Keep `supported_minecraft_version_profiles=1.21.11` for this validation
      run. The broad `1.20.x`/`1.21.x` candidate groups should stay candidates
      until the later `3.0.0` promotion.
