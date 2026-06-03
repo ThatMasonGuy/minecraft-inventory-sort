@@ -1,0 +1,75 @@
+name: modrinth publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Validate and print upload plan without publishing'
+        required: true
+        type: boolean
+        default: true
+      version_type:
+        description: 'Modrinth release channel'
+        required: true
+        type: choice
+        default: release
+        options:
+          - release
+          - beta
+          - alpha
+      requested_status:
+        description: 'Requested Modrinth version status'
+        required: true
+        type: choice
+        default: listed
+        options:
+          - listed
+          - unlisted
+          - draft
+
+jobs:
+  modrinth:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v4
+      - name: validate gradle wrapper
+        uses: gradle/actions/wrapper-validation@v4
+      - name: setup jdk
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'microsoft'
+      - name: make gradle wrapper executable
+        run: chmod +x ./gradlew
+      - name: install virtual display
+        run: sudo apt-get update && sudo apt-get install -y xvfb
+      - name: modrinth dry run
+        if: ${{ inputs.dry_run }}
+        run: >
+          ./gradlew publishModrinthDryRun
+          -Pinventorysort_smoke_xvfb=true
+          -Pmodrinth_version_type=${{ inputs.version_type }}
+          -Pmodrinth_requested_status=${{ inputs.requested_status }}
+          --no-daemon
+          --console=plain
+      - name: modrinth publish
+        if: ${{ !inputs.dry_run }}
+        env:
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+        run: >
+          ./gradlew publishModrinth
+          -Pinventorysort_smoke_xvfb=true
+          -Pmodrinth_version_type=${{ inputs.version_type }}
+          -Pmodrinth_requested_status=${{ inputs.requested_status }}
+          -Pmodrinth_confirm_publish=true
+          --no-daemon
+          --console=plain
+      - name: capture upload plan and release jars
+        uses: actions/upload-artifact@v4
+        with:
+          name: Modrinth Upload Plan
+          path: |
+            build/modrinth/upload-plan.json
+            build/release/

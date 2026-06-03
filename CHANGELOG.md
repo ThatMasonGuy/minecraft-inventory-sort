@@ -48,6 +48,9 @@ All notable project changes will be documented here.
 - Added `publishValidation` and `smokeTestSupportedClients` as a fast
   supported-only pre-publish gate, plus `smokeTestSelectedClients` filters for
   local smoke-test spot checks.
+- Added guarded Modrinth publishing automation for the three public projects,
+  including dry-run upload planning, supported-profile-only publishing, token
+  handling through `MODRINTH_TOKEN`, and a manual GitHub Actions workflow.
 - Moved target-specific custom button render hooks into `1.21.9-1.21.10` and
   `1.21.11` compat overlays while keeping the shared drawing logic in Core.
 - Added `COMPATIBILITY.md` with the Minecraft version probe matrix and Modrinth listing recommendation.

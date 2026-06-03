@@ -60,6 +60,23 @@ def publicFeatureProjects = [
 		project(':inventorysearch'),
 		project(':inventorycatalogue')
 ]
+def publicFeatureModrinthProjects = [
+		[
+				project          : project(':inventorysort'),
+				displayName      : 'InvSort',
+				projectIdProperty: 'modrinth_inventorysort_project_id'
+		],
+		[
+				project          : project(':inventorysearch'),
+				displayName      : 'InvSearch',
+				projectIdProperty: 'modrinth_inventorysearch_project_id'
+		],
+		[
+				project          : project(':inventorycatalogue'),
+				displayName      : 'InvCatalogue',
+				projectIdProperty: 'modrinth_inventorycatalogue_project_id'
+		]
+]
 def releaseOutputDirectory = layout.buildDirectory.dir("release/${minecraft_version_profile_id}")
 def profileListProperty = { String key, String defaultValue ->
 	(findProperty(key) ?: defaultValue)
@@ -605,6 +622,241 @@ tasks.register('publishValidation') {
 	dependsOn tasks.named('buildAllVersions')
 	dependsOn tasks.named('smokeTestSupportedClients')
 	dependsOn tasks.named('verifySmokeTestMatrix')
+}
+
+def modrinthProperty = { String key, String defaultValue ->
+	def value = findProperty(key)
+	return value != null && !value.toString().isBlank() ? value.toString().trim() : defaultValue
+}
+
+def modrinthToken = {
+	def propertyToken = findProperty('modrinth_token')
+	if (propertyToken != null && !propertyToken.toString().isBlank()) {
+		return propertyToken.toString().trim()
+	}
+	def envToken = System.getenv('MODRINTH_TOKEN')
+	return envToken != null && !envToken.isBlank() ? envToken.trim() : null
+}
+
+def modrinthChangelogText = {
+	def changelogFile = file(modrinthProperty('modrinth_changelog_file', 'CHANGELOG.md'))
+	if (!changelogFile.isFile()) {
+		return 'See CHANGELOG.md.'
+	}
+
+	def lines = changelogFile.readLines('UTF-8')
+	def start = lines.findIndexOf { it.trim() == '## Unreleased' }
+	if (start < 0) {
+		def wholeFile = changelogFile.getText('UTF-8').trim()
+		return wholeFile.isBlank() ? 'See CHANGELOG.md.' : wholeFile
+	}
+
+	def end = start + 1
+	while (end < lines.size() && !lines[end].startsWith('## ')) {
+		end++
+	}
+	def unreleased = lines.subList(start + 1, end).join('\n').trim()
+	return unreleased.isBlank() ? 'See CHANGELOG.md.' : unreleased
+}
+
+def modrinthVersionNumberFor = { String profileId ->
+	def suffixMode = modrinthProperty('modrinth_profile_version_suffix', 'auto')
+	if (!['auto', 'always', 'never'].contains(suffixMode)) {
+		throw new GradleException("modrinth_profile_version_suffix must be auto, always, or never.")
+	}
+	if (suffixMode == 'always' || (suffixMode == 'auto' && supportedMinecraftVersionProfiles.size() > 1)) {
+		return "${mod_version}+mc${profileId}"
+	}
+	return mod_version.toString()
+}
+
+def modrinthUploadPlans = {
+	def versionType = modrinthProperty('modrinth_version_type', 'release')
+	if (!['release', 'beta', 'alpha'].contains(versionType)) {
+		throw new GradleException("modrinth_version_type must be release, beta, or alpha.")
+	}
+
+	def requestedStatus = modrinthProperty('modrinth_requested_status', 'listed')
+	if (!['listed', 'archived', 'draft', 'unlisted', ''].contains(requestedStatus)) {
+		throw new GradleException("modrinth_requested_status must be listed, archived, draft, unlisted, or blank.")
+	}
+
+	def fabricApiProjectId = modrinthProperty('modrinth_fabric_api_project_id', '')
+	def includeFabricApiDependency = (findProperty('modrinth_include_fabric_api_dependency') ?: 'true').toString().toBoolean()
+	def featured = (findProperty('modrinth_featured') ?: 'false').toString().toBoolean()
+	def changelog = modrinthChangelogText()
+	def plans = []
+
+	supportedMinecraftVersionProfiles.each { profileName ->
+		def profile = loadVersionProfile(profileName)
+		def profileId = profileIdFor(profileName, profile)
+		def gameVersions = profileGameVersionsFor(profile)
+
+		publicFeatureModrinthProjects.each { feature ->
+			def featureProject = feature.project
+			def projectId = modrinthProperty(feature.projectIdProperty, '')
+			if (projectId.isBlank()) {
+				throw new GradleException("Missing ${feature.projectIdProperty}; cannot prepare Modrinth upload for ${featureProject.path}.")
+			}
+
+			def releaseJar = layout.buildDirectory
+					.file("release/${profileId}/${featureProject.base.archivesName.get()}-${version}.jar")
+					.get()
+					.asFile
+			if (!releaseJar.isFile()) {
+				throw new GradleException("Missing Modrinth upload jar: ${releaseJar}")
+			}
+
+			def dependencies = []
+			if (includeFabricApiDependency && !fabricApiProjectId.isBlank()) {
+				dependencies.add([
+						project_id     : fabricApiProjectId,
+						dependency_type: 'required'
+				])
+			}
+
+			def versionNumber = modrinthVersionNumberFor(profileId)
+			def data = [
+					name          : "${feature.displayName} ${mod_version} for Minecraft ${profileId}",
+					version_number: versionNumber,
+					changelog     : changelog,
+					dependencies  : dependencies,
+					game_versions : gameVersions,
+					version_type  : versionType,
+					loaders       : ['fabric'],
+					featured      : featured,
+					project_id    : projectId,
+					file_parts    : ['file'],
+					primary_file  : 'file'
+			]
+			if (!requestedStatus.isBlank()) {
+				data.requested_status = requestedStatus
+			}
+
+			plans.add([
+					displayName: feature.displayName,
+					profileId  : profileId,
+					gameVersions: gameVersions,
+					jar        : releaseJar,
+					data       : data
+			])
+		}
+	}
+
+	return plans
+}
+
+def writeModrinthUploadPlan = { List<Map> plans ->
+	def planFile = layout.buildDirectory.file('modrinth/upload-plan.json').get().asFile
+	planFile.parentFile.mkdirs()
+	def printablePlans = plans.collect { plan ->
+		[
+				mod              : plan.displayName,
+				profile_id       : plan.profileId,
+				project_id       : plan.data.project_id,
+				version_number   : plan.data.version_number,
+				version_type     : plan.data.version_type,
+				requested_status : plan.data.requested_status,
+				game_versions    : plan.gameVersions,
+				loaders          : plan.data.loaders,
+				jar              : plan.jar.absolutePath,
+				dependency_count : plan.data.dependencies.size()
+		]
+	}
+	planFile.text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(printablePlans))
+	println "Wrote Modrinth upload plan: ${planFile}"
+}
+
+def printModrinthUploadPlan = { List<Map> plans ->
+	plans.each { plan ->
+		println "Modrinth plan: ${plan.displayName} ${plan.data.version_number} profile=${plan.profileId} project=${plan.data.project_id} games=${plan.gameVersions.join(',')} jar=${plan.jar.name}"
+	}
+}
+
+def uploadModrinthPlan = { Map plan, String token ->
+	def apiBaseUrl = modrinthProperty('modrinth_api_base_url', 'https://api.modrinth.com/v2').replaceAll('/+$', '')
+	def userAgent = modrinthProperty('modrinth_user_agent', "TempestStudios/inventory-sort/${mod_version}")
+	def boundary = "----InventorySortModrinth${System.currentTimeMillis()}${Math.abs(new Random().nextInt())}"
+	def connection = (java.net.HttpURLConnection) new URL("${apiBaseUrl}/version").openConnection()
+	connection.setRequestMethod('POST')
+	connection.setConnectTimeout(30000)
+	connection.setReadTimeout(120000)
+	connection.setDoOutput(true)
+	connection.setRequestProperty('Authorization', token)
+	connection.setRequestProperty('User-Agent', userAgent)
+	connection.setRequestProperty('Content-Type', "multipart/form-data; boundary=${boundary}")
+
+	connection.outputStream.withCloseable { output ->
+		def writeText = { String text -> output.write(text.getBytes('UTF-8')) }
+		writeText("--${boundary}\r\n")
+		writeText('Content-Disposition: form-data; name="data"\r\n')
+		writeText('Content-Type: application/json\r\n\r\n')
+		writeText(groovy.json.JsonOutput.toJson(plan.data))
+		writeText("\r\n")
+
+		writeText("--${boundary}\r\n")
+		writeText("Content-Disposition: form-data; name=\"file\"; filename=\"${plan.jar.name}\"\r\n")
+		writeText('Content-Type: application/java-archive\r\n\r\n')
+		plan.jar.withInputStream { input -> input.transferTo(output) }
+		writeText("\r\n")
+		writeText("--${boundary}--\r\n")
+	}
+
+	def statusCode = connection.responseCode
+	def responseText = statusCode >= 200 && statusCode < 300
+			? connection.inputStream.getText('UTF-8')
+			: (connection.errorStream != null ? connection.errorStream.getText('UTF-8') : '')
+
+	if (statusCode < 200 || statusCode >= 300) {
+		throw new GradleException("Modrinth upload failed for ${plan.displayName} ${plan.data.version_number} (${statusCode}): ${responseText}")
+	}
+
+	def response = new groovy.json.JsonSlurper().parseText(responseText)
+	println "Uploaded ${plan.displayName} ${plan.data.version_number} to Modrinth version ${response.id}"
+}
+
+tasks.register('prepareModrinthUploads') {
+	group = 'publishing'
+	description = 'Builds, smoke-tests, validates, and writes the Modrinth upload plan for supported profiles.'
+	dependsOn tasks.named('publishValidation')
+
+	doLast {
+		def plans = modrinthUploadPlans()
+		if (plans.isEmpty()) {
+			throw new GradleException('No Modrinth uploads were prepared.')
+		}
+		writeModrinthUploadPlan(plans)
+		printModrinthUploadPlan(plans)
+	}
+}
+
+tasks.register('publishModrinthDryRun') {
+	group = 'publishing'
+	description = 'Runs the supported-profile publish gate and prints the Modrinth uploads without calling the API.'
+	dependsOn tasks.named('prepareModrinthUploads')
+
+	doLast {
+		println 'Modrinth dry run complete. No API upload was performed.'
+	}
+}
+
+tasks.register('publishModrinth') {
+	group = 'publishing'
+	description = 'Runs the supported-profile publish gate and uploads supported release jars to Modrinth.'
+	dependsOn tasks.named('prepareModrinthUploads')
+
+	doLast {
+		if (!(findProperty('modrinth_confirm_publish') ?: 'false').toString().toBoolean()) {
+			throw new GradleException('Real Modrinth publishing requires -Pmodrinth_confirm_publish=true. Use publishModrinthDryRun for a safe test.')
+		}
+
+		def token = modrinthToken()
+		if (token == null) {
+			throw new GradleException('Missing Modrinth token. Set MODRINTH_TOKEN or -Pmodrinth_token=... outside the repo.')
+		}
+
+		modrinthUploadPlans().each { uploadModrinthPlan(it, token) }
+	}
 }
 
 tasks.register('buildAllVersions') {

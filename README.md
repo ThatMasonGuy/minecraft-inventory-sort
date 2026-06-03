@@ -82,6 +82,7 @@ profiles:
 ./gradlew buildAllMods -Pminecraft_version_profile=1.21.11
 ./gradlew buildAllVersions
 ./gradlew publishValidation
+./gradlew publishModrinthDryRun
 ./gradlew ciValidation
 ```
 
@@ -90,6 +91,16 @@ also builds candidate profiles, verifies release metadata, checks
 `gradle/smoke-tests.json`, and launches packaged release jars through the
 automated smoke matrix. `publishValidation` is the faster supported-only gate
 for release publishing.
+
+Modrinth publishing is configured through supported profiles only:
+
+```bash
+./gradlew publishModrinthDryRun
+./gradlew publishModrinth -Pmodrinth_confirm_publish=true
+```
+
+Real uploads require `MODRINTH_TOKEN` outside the repo. See
+`gradle/modrinth-publishing.md`.
 
 Module-local build artifacts are also generated in:
 

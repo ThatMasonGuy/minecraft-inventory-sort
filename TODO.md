@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: Step 8 fast supported-only publish validation gate
+Current checkpoint: Step 9 Modrinth publishing automation
 
 ## Project Workflow
 
@@ -36,6 +36,29 @@ Current checkpoint: Step 8 fast supported-only publish validation gate
 - Core no longer registers a public `/inventorysort` command root.
 
 ## Recently Fixed
+
+-23. Modrinth publishing automation (unreleased):
+   - Added Modrinth project IDs for InvSort, InvSearch, and InvCatalogue in
+     non-secret Gradle properties.
+   - Added `prepareModrinthUploads`, which runs the supported-only publish gate,
+     validates supported-profile upload metadata, and writes
+     `build/modrinth/upload-plan.json`.
+   - Added `publishModrinthDryRun` for safe local/CI pipeline testing without
+     calling the Modrinth API.
+   - Added `publishModrinth`, which uploads to Modrinth only after
+     `-Pmodrinth_confirm_publish=true` and a token from `MODRINTH_TOKEN` or a
+     user-level Gradle property.
+   - Added a manual GitHub Actions `modrinth publish` workflow with dry-run and
+     real-publish modes.
+   - Documented project IDs, token handling, version-number suffix behavior, and
+     publishing options in `gradle/modrinth-publishing.md`.
+   - Verified `.\gradlew.bat publishModrinthDryRun --no-daemon
+     --console=plain`; it built and smoke-launched the supported `1.21.11`
+     profile, then prepared dry-run upload entries for InvSort, InvSearch, and
+     InvCatalogue without calling the Modrinth API.
+   - Important: publishing reads `supported_minecraft_version_profiles` only.
+     Candidate compatibility groups remain invisible to Modrinth automation
+     until promoted.
 
 -22. Fast supported-only publish validation gate (unreleased):
    - Added `smokeTestSupportedClients`, which launches the same Sort-only,
@@ -597,8 +620,10 @@ depend on Core; Catalogue and Search both need Core's identity/namespace/event l
    - Give each public feature mod its own Modrinth project id and upload metadata.
    - Publish the correct jar, Minecraft version, loader, dependencies, and
      changelog for each target.
-   - Current status: NOT STARTED. This moved after CI validation so Modrinth
-     automation only uploads jars and game-version lists that have passed tests.
+   - Current status: DONE for supported-profile automation. Gradle now prepares
+     and dry-runs Modrinth uploads for supported profiles only, with a guarded
+     real upload task and manual GitHub Actions workflow. Candidate profiles are
+     still ignored by publishing until promoted.
 
 ### Goes in Core (shared by 2+ features)
 
