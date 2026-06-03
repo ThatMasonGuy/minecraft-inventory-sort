@@ -149,19 +149,22 @@
       "profile_id": "26.1-26.1.2",
       "game_versions": {
         "26.1": {
-          "status": "pending",
-          "method": "pending automated smokeTestValidationClients launch matrix",
-          "notes": "Grouped 26.1.x candidate jar is planned for this exact runtime because Fabric API 0.150.0+26.1.2 declares 26.1, 26.1.1, and 26.1.2 compatibility."
+          "status": "pass",
+          "tested_at": "2026-06-03",
+          "method": "automated smokeTestSelectedClients launch matrix",
+          "notes": "Grouped 26.1.x candidate release jars launched successfully as Sort-only, Search-only, Catalogue-only, and all-three installs."
         },
         "26.1.1": {
-          "status": "pending",
-          "method": "pending automated smokeTestValidationClients launch matrix",
-          "notes": "Grouped 26.1.x candidate jar is planned for this exact runtime because Fabric API 0.150.0+26.1.2 declares 26.1, 26.1.1, and 26.1.2 compatibility."
+          "status": "pass",
+          "tested_at": "2026-06-03",
+          "method": "automated smokeTestSelectedClients launch matrix",
+          "notes": "Grouped 26.1.x candidate release jars launched successfully as Sort-only, Search-only, Catalogue-only, and all-three installs."
         },
         "26.1.2": {
-          "status": "pending",
-          "method": "pending automated smokeTestValidationClients launch matrix",
-          "notes": "Grouped 26.1.x candidate jar is planned for this exact runtime because Fabric API 0.150.0+26.1.2 declares 26.1, 26.1.1, and 26.1.2 compatibility."
+          "status": "pass",
+          "tested_at": "2026-06-03",
+          "method": "automated smokeTestSelectedClients launch matrix",
+          "notes": "Grouped 26.1.x candidate release jars launched successfully as Sort-only, Search-only, Catalogue-only, and all-three installs."
         }
       }
     },
@@ -169,9 +172,10 @@
       "profile_id": "26.2-pre-3",
       "game_versions": {
         "26.2-pre-3": {
-          "status": "pending",
-          "method": "pending automated smokeTestValidationClients launch matrix",
-          "notes": "Current 26.2 candidate remains exact because the 26.2 Fabric API pre-release files are published per pre-release, and 26.2 final has not landed yet."
+          "status": "pass",
+          "tested_at": "2026-06-03",
+          "method": "automated smokeTestSelectedClients launch matrix",
+          "notes": "Exact 26.2-pre-3 candidate release jars launched successfully as Sort-only, Search-only, Catalogue-only, and all-three installs after matching Fabric API's 26.2 prerelease dependency range."
         }
       }
     }

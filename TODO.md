@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: Minecraft 26.x candidate range plan ready for smoke testing
+Current checkpoint: Minecraft 26.x candidate smoke testing complete
 
 ## Project Workflow
 
@@ -36,6 +36,29 @@ Current checkpoint: Minecraft 26.x candidate range plan ready for smoke testing
 - Core no longer registers a public `/inventorysort` command root.
 
 ## Recently Fixed
+
+-39. Minecraft `26.x` automated smoke testing (unreleased):
+   - Ran the selected `26.x` candidate smoke matrix with packaged release jars.
+   - The grouped `26.1-26.1.2` candidate jar launched successfully on exact
+     runtimes `26.1`, `26.1.1`, and `26.1.2`.
+   - Each `26.1.x` runtime passed as Sort-only, Search-only, Catalogue-only,
+     and all-three public installs.
+   - The first `26.2-pre-3` launch failed before mod initialization because
+     Fabric Loader reports the runtime as `26.2-pre.3`, while the profile had
+     generated a `~26.2-pre-3` Minecraft dependency.
+   - Matched Fabric API's prerelease metadata by changing the `26.2-pre-3`
+     profile's `minecraft_dependency` to `~26.2-`, while keeping
+     `modrinth_game_versions=26.2-pre-3` for Modrinth upload metadata.
+   - Re-ran `26.2-pre-3`; it launched successfully as Sort-only, Search-only,
+     Catalogue-only, and all-three public installs.
+   - Updated the smoke-test matrix so `26.1`, `26.1.1`, `26.1.2`, and
+     `26.2-pre-3` are all recorded as passing candidate smoke tests.
+   - Did not rerun the old full `1.20.x`/`1.21.x` smoke matrix for this
+     checkpoint because only the `26.x` candidate lane changed; the guarded
+     promotion/publish workflow remains responsible for the full release gate.
+   - Step 8 is complete. Next step is publication promotion: decide whether to
+     promote the smoke-passed `26.x` profiles into the supported publish lane,
+     bump to `3.1.0`, and run the guarded Modrinth workflow when ready.
 
 -38. Minecraft `26.x` candidate range research and smoke plan (unreleased):
    - Checked current Modrinth/Fabric metadata before starting the `26.x` smoke
@@ -1037,18 +1060,23 @@ Forward tasks:
 8. `26.x` smoke testing:
    - Add pending/pass smoke records for exact `26.x` runtimes.
    - Extend the smoke launcher if `26.x` client launch semantics differ.
-   - Run selected smoke tests first, then full candidate `ciValidation`.
-   - Current status: READY. Candidate range research is complete. The planned
-     smoke matrix is one grouped `26.1-26.1.2` candidate jar launched on exact
-     runtimes `26.1`, `26.1.1`, and `26.1.2`, plus one exact
-     `26.2-pre-3` candidate jar launched on `26.2-pre-3`. All four records are
-     pending until automated smoke launches prove them.
+   - Run selected `26.x` smoke tests first; run the full release validation
+     matrix during promotion/publish once the supported publish lane changes.
+   - Current status: DONE. The grouped `26.1-26.1.2` candidate jar passed
+     automated smoke launches on exact runtimes `26.1`, `26.1.1`, and
+     `26.1.2`, and the exact `26.2-pre-3` candidate jar passed automated smoke
+     launches on `26.2-pre-3`. Each runtime passed Sort-only, Search-only,
+     Catalogue-only, and all-three public install sets.
 9. Publication promotion:
    - Keep `26.x` in `candidate_minecraft_version_profiles` until compile and
      smoke tests pass.
    - Once passing, promote it to `supported_minecraft_version_profiles`.
    - Add `gradle/release-notes/<version>.md`, run the Modrinth publish workflow,
      and list the smoke-passed `26.x` versions.
+   - Current status: NEXT. The compile and smoke gates now pass for the current
+     `26.x` candidate profiles; promotion should bump the release to `3.1.0`
+     and move only the smoke-passed profile files into the supported publish
+     lane.
 10. Branch fallback trigger:
    - Branch only if `26.x` forces duplicated feature logic rather than isolated
      build config, rendering adapters, and mixin surfaces.

@@ -89,7 +89,10 @@ Current 26.x candidate range plan:
   artifact so the grouped candidate jar can be launched on every listed runtime.
 - `26.2-pre-3.properties` stays exact and provisional. Current Fabric API
   `26.2` pre-release artifacts are scoped to individual pre-releases, and
-  Minecraft `26.2` final is not available yet.
+  Minecraft `26.2` final is not available yet. Its `minecraft_dependency` uses
+  Fabric API's `~26.2-` range because Fabric Loader reports the runtime version
+  as `26.2-pre.3`, while `modrinth_game_versions` keeps the public Modrinth
+  label `26.2-pre-3`.
 
 Only add a profile to `supported_minecraft_version_profiles` after it compiles
 and launches cleanly. Current supported groups for `1.20.x` and `1.21.x`
