@@ -1,7 +1,5 @@
 package tempeststudios.inventorysort;
 
-import net.minecraft.client.gui.GuiGraphics;
-
 final class InventorySortModalIconButtonRenderer {
     static final int UP = 0;
     static final int DOWN = 1;
@@ -12,7 +10,7 @@ final class InventorySortModalIconButtonRenderer {
     private InventorySortModalIconButtonRenderer() {
     }
 
-    static void render(GuiGraphics guiGraphics, int x, int y, int size, int icon, boolean hovered) {
+    static void render(InventorySortDrawContext guiGraphics, int x, int y, int size, int icon, boolean hovered) {
         InventorySortUIUtils.drawBeveledPanel(guiGraphics, x, y, size, size, hovered);
 
         int color = hovered ? 0xFF000000 : 0xFF1C1C1C;
@@ -26,7 +24,7 @@ final class InventorySortModalIconButtonRenderer {
         }
     }
 
-    private static void drawUpIcon(GuiGraphics guiGraphics, int x, int y, int size, int color) {
+    private static void drawUpIcon(InventorySortDrawContext guiGraphics, int x, int y, int size, int color) {
         int cx = x + size / 2;
         int cy = y + size / 2;
         guiGraphics.fill(cx, cy - 1, cx + 1, cy, color);
@@ -34,7 +32,7 @@ final class InventorySortModalIconButtonRenderer {
         guiGraphics.fill(cx - 2, cy + 1, cx + 3, cy + 2, color);
     }
 
-    private static void drawDownIcon(GuiGraphics guiGraphics, int x, int y, int size, int color) {
+    private static void drawDownIcon(InventorySortDrawContext guiGraphics, int x, int y, int size, int color) {
         int cx = x + size / 2;
         int cy = y + size / 2;
         guiGraphics.fill(cx - 2, cy - 1, cx + 3, cy, color);
@@ -42,7 +40,7 @@ final class InventorySortModalIconButtonRenderer {
         guiGraphics.fill(cx, cy + 1, cx + 1, cy + 2, color);
     }
 
-    private static void drawExpandIcon(GuiGraphics guiGraphics, int x, int y, int size, int color) {
+    private static void drawExpandIcon(InventorySortDrawContext guiGraphics, int x, int y, int size, int color) {
         int cx = x + size / 2;
         int cy = y + size / 2;
         guiGraphics.fill(cx - 1, cy - 2, cx, cy + 3, color);
@@ -50,11 +48,11 @@ final class InventorySortModalIconButtonRenderer {
         guiGraphics.fill(cx + 1, cy, cx + 2, cy + 1, color);
     }
 
-    private static void drawCollapseIcon(GuiGraphics guiGraphics, int x, int y, int size, int color) {
+    private static void drawCollapseIcon(InventorySortDrawContext guiGraphics, int x, int y, int size, int color) {
         drawDownIcon(guiGraphics, x, y, size, color);
     }
 
-    private static void drawCloseIcon(GuiGraphics guiGraphics, int x, int y, int size, int color) {
+    private static void drawCloseIcon(InventorySortDrawContext guiGraphics, int x, int y, int size, int color) {
         int cx = x + size / 2;
         int cy = y + size / 2;
         guiGraphics.fill(cx - 2, cy - 2, cx - 1, cy - 1, color);

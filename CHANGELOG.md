@@ -13,8 +13,13 @@ All notable project changes will be documented here.
 - Added Minecraft `26.x` Core helper compatibility overlays for Minecraft API
   helper calls and the Fabric command builder rename, and routed shared command
   builders/player feedback through version-selected adapters. The focused
-  `26.1.2` Core compile probe now gets past those helper breaks and stops at
-  the planned GUI/render extraction, HUD registry, and container input work.
+  Core compile probe now gets past those helper breaks.
+- Added the Minecraft `26.x` Core GUI/rendering abstraction: shared renderers now
+  draw through `InventorySortDrawContext`, version overlays wrap `GuiGraphics`
+  or `GuiGraphicsExtractor`, HUD registration is versioned, and 26.x profile
+  screens/buttons use the extraction lifecycle. Focused `26.1.2` and
+  `26.2-pre-3` Core compile probes now stop only at the planned
+  `ClickType`/`ContainerInput` invoker work.
 - Added profile-selected remap vs non-remap build plumbing for Minecraft
   `26.x`: `unobfuscated_minecraft=true` profiles now use
   `net.fabricmc.fabric-loom`, normal `implementation` dependencies, plain `jar`

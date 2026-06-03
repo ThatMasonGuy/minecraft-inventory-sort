@@ -11,6 +11,6 @@ public class InventorySortTextButton extends Button {
 
     @Override
     public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        InventorySortTextButtonRenderer.render(guiGraphics, getX(), getY(), getWidth(), getHeight(), getMessage(), active, isHoveredOrFocused());
+        InventorySortTextButtonRenderer.render(InventorySortDrawContexts.wrap(guiGraphics), getX(), getY(), getWidth(), getHeight(), getMessage(), active, isHoveredOrFocused());
     }
 }

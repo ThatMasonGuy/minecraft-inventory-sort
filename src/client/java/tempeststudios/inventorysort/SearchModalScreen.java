@@ -241,11 +241,12 @@ public class SearchModalScreen extends Screen {
 
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+        InventorySortDrawContext context = InventorySortDrawContexts.wrap(g);
         // Dim background
         g.fill(0, 0, this.width, this.height, 0x88000000);
 
         // Panel
-        InventorySortUIUtils.drawBeveledPanel(g, modalX, modalY, modalW, modalH, false);
+        InventorySortUIUtils.drawBeveledPanel(context, modalX, modalY, modalW, modalH, false);
 
         g.drawString(this.font, "Inventory Search", modalX + PAD, modalY + 8, 0xFF1C1C1C, false);
 
@@ -257,7 +258,7 @@ public class SearchModalScreen extends Screen {
         // Search Box recessed area
         int boxX = modalX + PAD;
         int boxW = (scrollColX - 6) - boxX;
-        InventorySortUIUtils.drawRecessedPanel(g, boxX, modalY + 22, boxW, 18);
+        InventorySortUIUtils.drawRecessedPanel(context, boxX, modalY + 22, boxW, 18);
 
         // List area: clip to the list ✅
         int clipLeft = listX - 2;

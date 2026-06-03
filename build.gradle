@@ -103,6 +103,11 @@ def smokeTestRequiredMinecraftVersionProfiles = profileListProperty(
 		'smoke_test_required_minecraft_version_profiles',
 		supportedMinecraftVersionProfiles.join(',')
 )
+def excludedSharedClientSources = profileProperty('excluded_shared_client_sources', '')
+		.split(',')
+		.collect { it.trim() }
+		.findAll { !it.isEmpty() }
+ext.excluded_shared_client_sources = excludedSharedClientSources
 def gradleWrapperExecutable = System.getProperty('os.name').toLowerCase(Locale.ROOT).contains('windows')
 		? 'gradlew.bat'
 		: './gradlew'
@@ -189,6 +194,23 @@ subprojects {
 
 	tasks.withType(JavaCompile).configureEach {
 		it.options.release = rootProject.target_java_version
+	}
+
+	afterEvaluate {
+		tasks.matching { it.name == 'compileClientJava' }.configureEach { task ->
+			if (!rootProject.excluded_shared_client_sources.isEmpty()) {
+				def sharedClientRoot = rootProject.file('src/client/java').absolutePath.replace('\\', '/') + '/'
+				def excludedSources = rootProject.excluded_shared_client_sources as Set
+				task.setSource(task.source.filter { sourceFile ->
+					def sourcePath = sourceFile.absolutePath.replace('\\', '/')
+					if (!sourcePath.startsWith(sharedClientRoot)) {
+						return true
+					}
+					def relativePath = sourcePath.substring(sharedClientRoot.length())
+					return !excludedSources.contains(relativePath)
+				})
+			}
+		}
 	}
 
 	java {
@@ -391,6 +413,7 @@ tasks.register('printVersionProfile') {
 		println "Compat group: ${compat_group}"
 		println "Fabric dependency configuration: ${fabric_dependency_configuration}"
 		println "Release jar task: ${release_jar_task_name}"
+		println "Excluded shared client sources: ${excluded_shared_client_sources.join(', ')}"
 		println "Release output: ${releaseOutputDirectory.get().asFile}"
 	}
 }

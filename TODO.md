@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: Minecraft 26.x Core helper compatibility overlay complete
+Current checkpoint: Minecraft 26.x Core GUI/rendering abstraction complete
 
 ## Project Workflow
 
@@ -36,6 +36,34 @@ Current checkpoint: Minecraft 26.x Core helper compatibility overlay complete
 - Core no longer registers a public `/inventorysort` command root.
 
 ## Recently Fixed
+
+-33. Minecraft `26.x` Core GUI/rendering abstraction (unreleased):
+   - Added a shared `InventorySortDrawContext` interface so Core drawing logic no
+     longer directly depends on `GuiGraphics`.
+   - Added version-selected draw-context wrappers for `1.20.x`/`1.21.x`
+     `GuiGraphics` and `26.x` `GuiGraphicsExtractor`.
+   - Routed shared panel drawing, icon/text/modal button renderers, the
+     world-profile HUD, and Search's shared panel helper calls through the draw
+     context.
+   - Added `26.1.2` and `26.2-pre-3` button overlays using the new
+     `extractContents` lifecycle.
+   - Wrapped HUD registration with `HudCompat`, keeping `HudRenderCallback` for
+     `1.20.x`/`1.21.x` and using the `26.x` HUD element registry for candidate
+     profiles.
+   - Added `26.x` profile-screen overlays using `extractRenderState`, with a
+     profile-driven shared-source exclusion so the current `GuiGraphics` screen
+     remains untouched for `1.20.x`/`1.21.x`.
+   - Added Core helpers for GUI hidden state, screen presence, screen switching,
+     and singleplayer detection after `26.2-pre-3` moved those APIs again.
+   - Verified default `.\gradlew.bat buildAllMods --no-daemon --console=plain`
+     still passes.
+   - Verified both `26.1.2` and `26.2-pre-3`
+     `:inventorysort-core:compileClientJava` now get past GUI/rendering, HUD,
+     screen, and helper API blockers. Both candidate Core probes now stop only
+     at the planned `ClickType` / `ContainerInput` invoker work.
+   - Search's full `26.x` screen lifecycle is still expected to be handled during
+     the Search feature compile pass.
+   - Next step is the `26.x` container/mixin input update.
 
 -32. Minecraft `26.x` Core helper compatibility overlay (unreleased):
    - Added `26.1.2` and `26.2-pre-3` Core compatibility overlays for
@@ -873,8 +901,8 @@ Forward tasks:
      `26.2-pre-3` now have Core compatibility overlays for Minecraft helper
      calls and the Fabric command builder rename, and shared player feedback
      now goes through `MinecraftApiCompat`. The `26.1.2` Core compile probe
-     now stops at the expected GUI/render extraction, HUD registry, and
-     container input blockers for the next roadmap steps.
+     then stopped at the expected GUI/render extraction, HUD registry, and
+     container input blockers. GUI/HUD/screen blockers were resolved by item 33.
 4. GUI/rendering abstraction:
    - Refactor shared drawing helpers so shared logic does not directly depend on
      `GuiGraphics`.
@@ -882,13 +910,17 @@ Forward tasks:
      `26.x` `GuiGraphicsExtractor`.
    - Port text buttons, icon buttons, modal buttons, HUD, and profile/search
      screens through those adapters.
+   - Current status: DONE for Core and shared drawing helpers. `InventorySortDrawContext`
+     now isolates shared renderers from Minecraft's render object, Core HUD
+     registration is versioned, and `26.x` profile-screen/button overlays use
+     the new extraction lifecycle. Search's full `26.x` modal-screen lifecycle
+     remains for the Search feature compile pass.
 5. Fabric API event/command updates:
    - Replace or wrap `HudRenderCallback` with the `26.x` HUD element registry.
    - Replace or wrap `ClientCommandManager` with `26.x` `ClientCommands`.
    - Keep command bodies/shared handlers version-independent.
-   - Current status: PARTIAL. Command builder calls are now wrapped with
-     `ClientCommandCompat`. HUD registration still needs the `26.x` HUD element
-     registry adapter during the GUI/rendering pass.
+   - Current status: DONE for Core. Command builder calls are wrapped with
+     `ClientCommandCompat`, and HUD registration is wrapped with `HudCompat`.
 6. Container/mixin input updates:
    - Port `ClickType` invokers and slot-click mixins to `26.x`
      `ContainerInput`.

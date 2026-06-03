@@ -1,7 +1,5 @@
 package tempeststudios.inventorysort;
 
-import net.minecraft.client.gui.GuiGraphics;
-
 public class InventorySortUIUtils {
 
     public static final int COLOR_BACKGROUND = 0xFFC6C6C6;
@@ -12,7 +10,7 @@ public class InventorySortUIUtils {
     
     public static final int COLOR_RECESSED_BACKGROUND = 0xFF121212;
 
-    public static void drawBeveledPanel(GuiGraphics g, int x, int y, int width, int height, boolean hovered) {
+    public static void drawBeveledPanel(InventorySortDrawContext g, int x, int y, int width, int height, boolean hovered) {
         int centerColor = hovered ? COLOR_BACKGROUND_HOVER : COLOR_BACKGROUND;
         
         // Border (Black), 2px cut on corners
@@ -39,7 +37,7 @@ public class InventorySortUIUtils {
         g.fill(x + width - 2, y + 2, x + width - 1, y + height - 2, COLOR_SHADOW); // Right
     }
 
-    public static void drawRecessedPanel(GuiGraphics g, int x, int y, int width, int height) {
+    public static void drawRecessedPanel(InventorySortDrawContext g, int x, int y, int width, int height) {
         // Outer border (Black)
         g.fill(x, y, x + width, y + height, COLOR_BORDER);
         

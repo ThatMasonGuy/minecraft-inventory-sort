@@ -39,6 +39,6 @@ public class InventorySortModalIconButton extends Button {
 
     @Override
     public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        InventorySortModalIconButtonRenderer.render(guiGraphics, getX(), getY(), size, icon, isHoveredOrFocused());
+        InventorySortModalIconButtonRenderer.render(InventorySortDrawContexts.wrap(guiGraphics), getX(), getY(), size, icon, isHoveredOrFocused());
     }
 }

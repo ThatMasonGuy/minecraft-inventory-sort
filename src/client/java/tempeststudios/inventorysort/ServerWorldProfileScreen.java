@@ -95,30 +95,31 @@ public class ServerWorldProfileScreen extends Screen {
 
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+        InventorySortDrawContext context = InventorySortDrawContexts.wrap(g);
         int panelW = Math.min(300, this.width - 24);
         int panelH = Math.min(220, this.height - 24);
         int panelX = (this.width - panelW) / 2;
         int panelY = (this.height - panelH) / 2;
 
-        g.fill(0, 0, this.width, this.height, 0x88000000);
+        context.fill(0, 0, this.width, this.height, 0x88000000);
         
         // Main panel
-        InventorySortUIUtils.drawBeveledPanel(g, panelX, panelY, panelW, panelH, false);
+        InventorySortUIUtils.drawBeveledPanel(context, panelX, panelY, panelW, panelH, false);
 
-        g.drawString(this.font, "Tracked World", panelX + 14, panelY + 10, 0xFF1C1C1C, false);
+        context.drawString(this.font, "Tracked World", panelX + 14, panelY + 10, 0xFF1C1C1C, false);
         
         // Recessed edit box area
-        InventorySortUIUtils.drawRecessedPanel(g, panelX + 14, panelY + 48, panelW - 92, 18);
+        InventorySortUIUtils.drawRecessedPanel(context, panelX + 14, panelY + 48, panelW - 92, 18);
 
         if (serverKey == null) {
-            g.drawString(this.font, "Multiplayer only", panelX + 14, panelY + 30, 0xFFFF5555, false);
+            context.drawString(this.font, "Multiplayer only", panelX + 14, panelY + 30, 0xFFFF5555, false);
         } else {
             String active = ServerWorldProfileManager.getInstance().getActiveProfile(serverKey);
-            g.drawString(this.font, serverKey, panelX + 14, panelY + 28, 0xFF555555, false);
+            context.drawString(this.font, serverKey, panelX + 14, panelY + 28, 0xFF555555, false);
             if (requiresConfirmation) {
-                g.drawString(this.font, "Confirm before tracking starts", panelX + 14, panelY + 39, 0xFF775500, false);
+                context.drawString(this.font, "Confirm before tracking starts", panelX + 14, panelY + 39, 0xFF775500, false);
             }
-            g.drawString(this.font, "Active: " + active, panelX + 14, panelY + panelH - 42, 0xFF007700, false);
+            context.drawString(this.font, "Active: " + active, panelX + 14, panelY + panelH - 42, 0xFF007700, false);
         }
 
         super.render(g, mouseX, mouseY, partialTick);
@@ -150,7 +151,7 @@ public class ServerWorldProfileScreen extends Screen {
     }
 
     private void closeToParent() {
-        Minecraft.getInstance().setScreen(parent);
+        MinecraftApiCompat.setScreen(Minecraft.getInstance(), parent);
     }
 
     @Override

@@ -1,7 +1,5 @@
 package tempeststudios.inventorysort;
 
-import net.minecraft.client.gui.GuiGraphics;
-
 final class InventorySortIconButtonRenderer {
     static final int SORT = 0;
     static final int MATCHING = 1;
@@ -16,7 +14,7 @@ final class InventorySortIconButtonRenderer {
     private InventorySortIconButtonRenderer() {
     }
 
-    static void render(GuiGraphics guiGraphics, int x, int y, int icon, boolean hovered) {
+    static void render(InventorySortDrawContext guiGraphics, int x, int y, int icon, boolean hovered) {
         drawBeveledBackground(guiGraphics, x, y, SIZE, SIZE, hovered);
 
         int color = hovered ? ICON_HOVER_COLOR : ICON_COLOR;
@@ -30,7 +28,7 @@ final class InventorySortIconButtonRenderer {
         }
     }
 
-    private static void drawBeveledBackground(GuiGraphics guiGraphics, int x, int y, int width, int height, boolean hovered) {
+    private static void drawBeveledBackground(InventorySortDrawContext guiGraphics, int x, int y, int width, int height, boolean hovered) {
         fill(guiGraphics, x + 2, y, x + width - 2, y + 1, 0xFF000000);
         fill(guiGraphics, x + 2, y + height - 1, x + width - 2, y + height, 0xFF000000);
         fill(guiGraphics, x, y + 2, x + 1, y + height - 2, 0xFF000000);
@@ -50,19 +48,19 @@ final class InventorySortIconButtonRenderer {
         fill(guiGraphics, x + width - 2, y + 2, x + width - 1, y + height - 2, 0xFF555555);
     }
 
-    private static void drawSortIcon(GuiGraphics guiGraphics, int x, int y, int color) {
+    private static void drawSortIcon(InventorySortDrawContext guiGraphics, int x, int y, int color) {
         fill(guiGraphics, x + 3, y + 3, x + 9, y + 4, color);
         fill(guiGraphics, x + 3, y + 5, x + 7, y + 6, color);
         fill(guiGraphics, x + 3, y + 7, x + 5, y + 8, color);
     }
 
-    private static void drawMatchingIcon(GuiGraphics guiGraphics, int x, int y, int color) {
+    private static void drawMatchingIcon(InventorySortDrawContext guiGraphics, int x, int y, int color) {
         fill(guiGraphics, x + 3, y + 3, x + 9, y + 4, color);
         fill(guiGraphics, x + 4, y + 5, x + 8, y + 6, color);
         fill(guiGraphics, x + 5, y + 7, x + 7, y + 8, color);
     }
 
-    private static void drawAllIcon(GuiGraphics guiGraphics, int x, int y, int color) {
+    private static void drawAllIcon(InventorySortDrawContext guiGraphics, int x, int y, int color) {
         fill(guiGraphics, x + 4, y + 3, x + 5, y + 4, color);
         fill(guiGraphics, x + 3, y + 4, x + 6, y + 5, color);
         fill(guiGraphics, x + 4, y + 5, x + 5, y + 9, color);
@@ -72,7 +70,7 @@ final class InventorySortIconButtonRenderer {
         fill(guiGraphics, x + 7, y + 8, x + 8, y + 9, color);
     }
 
-    private static void drawSearchIcon(GuiGraphics guiGraphics, int x, int y, int color) {
+    private static void drawSearchIcon(InventorySortDrawContext guiGraphics, int x, int y, int color) {
         x += 1;
         y += 1;
 
@@ -85,7 +83,7 @@ final class InventorySortIconButtonRenderer {
         fill(guiGraphics, x + 7, y + 7, x + 8, y + 8, color);
     }
 
-    private static void fill(GuiGraphics guiGraphics, int left, int top, int right, int bottom, int color) {
+    private static void fill(InventorySortDrawContext guiGraphics, int left, int top, int right, int bottom, int color) {
         guiGraphics.fill(left, top, right, bottom, color);
     }
 }

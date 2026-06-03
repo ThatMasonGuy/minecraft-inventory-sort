@@ -2,6 +2,7 @@ package tempeststudios.inventorysort.compat.core;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
@@ -43,6 +44,22 @@ public final class MinecraftApiCompat {
     public static Path singleplayerServerDirectory(Minecraft client) {
         File serverDirectory = client.getSingleplayerServer().getServerDirectory();
         return serverDirectory != null ? serverDirectory.toPath() : null;
+    }
+
+    public static boolean isGuiHidden(Minecraft client) {
+        return client.options.hideGui;
+    }
+
+    public static boolean isScreenOpen(Minecraft client) {
+        return client.screen != null;
+    }
+
+    public static void setScreen(Minecraft client, Screen screen) {
+        client.setScreen(screen);
+    }
+
+    public static boolean isSingleplayer(Minecraft client) {
+        return client.isSingleplayer();
     }
 
     public static void sendSystemMessage(Minecraft client, Component message) {

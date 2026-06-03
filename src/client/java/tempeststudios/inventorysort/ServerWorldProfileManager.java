@@ -92,7 +92,7 @@ public final class ServerWorldProfileManager {
     }
 
     public void handleConfirmationInput(Minecraft client) {
-        if (client == null || client.player == null || client.level == null || client.screen != null) {
+        if (client == null || client.player == null || client.level == null || MinecraftApiCompat.isScreenOpen(client)) {
             confirmKeyWasDown = false;
             menuKeyWasDown = false;
             return;
@@ -113,7 +113,7 @@ public final class ServerWorldProfileManager {
             MinecraftApiCompat.sendSystemMessage(client, Component.literal("Tracking world confirmed: "
                     + getActiveProfile(serverKey)).withStyle(ChatFormatting.GREEN));
         } else if (menuKeyDown && !menuKeyWasDown) {
-            client.setScreen(new ServerWorldProfileScreen(null, true));
+            MinecraftApiCompat.setScreen(client, new ServerWorldProfileScreen(null, true));
         }
 
         confirmKeyWasDown = confirmKeyDown;
