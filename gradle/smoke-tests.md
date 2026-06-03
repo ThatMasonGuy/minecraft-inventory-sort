@@ -17,8 +17,10 @@ must be present in the matrix, but may stay `pending` or `fail` while they are
 not publishable.
 
 `smokeTestValidationClients` launches exact Minecraft runtimes with the packaged
-release jars for every supported and candidate profile. Each profile/game version
-is launched as:
+release jars for every supported and candidate profile. `smokeTestSupportedClients`
+launches the same install combinations for supported/publishable profiles only,
+which is the fast gate used before publishing. Each profile/game version is
+launched as:
 
 - Inventory Sort only
 - Inventory Search only
@@ -35,10 +37,23 @@ Useful commands:
 
 ```powershell
 .\gradlew.bat verifySmokeTestMatrix
+.\gradlew.bat smokeTestSupportedClients
+.\gradlew.bat publishValidation
 .\gradlew.bat buildValidationVersions
 .\gradlew.bat smokeTestValidationClients
 .\gradlew.bat ciValidation
 ```
+
+For local spot checks, use `smokeTestSelectedClients` with one or more filters:
+
+```powershell
+.\gradlew.bat smokeTestSelectedClients "-Pinventorysort_smoke_profiles=1.21.9-1.21.10" "-Pinventorysort_smoke_game_versions=1.21.10" "-Pinventorysort_smoke_install_sets=all-public"
+```
+
+Accepted install set ids are `inventorysort-only`, `inventorysearch-only`,
+`inventorycatalogue-only`, and `all-public`. Nested smoke Gradle launches still
+use `--no-daemon` by default; for local timing experiments, pass
+`-Pinventorysort_smoke_nested_no_daemon=false`.
 
 After a candidate profile passes client smoke testing on every version in
 `modrinth_game_versions`, update its records to `pass`. To make that profile

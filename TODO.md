@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: Step 7 broad Minecraft 1.20.x/1.21.x compatibility shims
+Current checkpoint: Step 8 fast supported-only publish validation gate
 
 ## Project Workflow
 
@@ -36,6 +36,21 @@ Current checkpoint: Step 7 broad Minecraft 1.20.x/1.21.x compatibility shims
 - Core no longer registers a public `/inventorysort` command root.
 
 ## Recently Fixed
+
+-22. Fast supported-only publish validation gate (unreleased):
+   - Added `smokeTestSupportedClients`, which launches the same Sort-only,
+     Search-only, Catalogue-only, and all-public install combinations as the
+     full smoke matrix, but only for supported/publishable profiles.
+   - Added `publishValidation`, the fast pre-publish gate that builds supported
+     profiles, checks smoke records, and smoke-launches supported profiles only.
+   - Added `smokeTestSelectedClients` for local spot checks using
+     `inventorysort_smoke_profiles`, `inventorysort_smoke_game_versions`, and
+     `inventorysort_smoke_install_sets` filters.
+   - Added `inventorysort_smoke_nested_no_daemon=false` as an optional local
+     timing experiment for nested smoke Gradle launches. The default remains
+     `--no-daemon` for predictable CI behavior.
+   - `ciValidation` remains the exhaustive supported + candidate compatibility
+     matrix and should still run before broad Modrinth compatibility promotion.
 
 -21. Broad `1.20.x` and `1.21.x` compatibility groups (unreleased):
    - Added candidate release compatibility groups for:
@@ -575,8 +590,9 @@ depend on Core; Catalogue and Search both need Core's identity/namespace/event l
      builds supported and candidate profiles, verifies release jar metadata and
      nested Core jars, checks smoke-test records, and launches exact Minecraft
      runtimes with the packaged release jars as standalone and all-three
-     installs. Candidate profiles are still tracked separately from publishable
-     supported profiles.
+     installs. `publishValidation` is now available as the fast supported-only
+     gate before Modrinth publishing. Candidate profiles are still tracked
+     separately from publishable supported profiles.
 9. Configure Modrinth publishing:
    - Give each public feature mod its own Modrinth project id and upload metadata.
    - Publish the correct jar, Minecraft version, loader, dependencies, and

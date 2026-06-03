@@ -81,13 +81,15 @@ profiles:
 ./gradlew printVersionProfile
 ./gradlew buildAllMods -Pminecraft_version_profile=1.21.11
 ./gradlew buildAllVersions
+./gradlew publishValidation
 ./gradlew ciValidation
 ```
 
 `buildAllVersions` builds only supported/publishable profiles. `ciValidation`
 also builds candidate profiles, verifies release metadata, checks
 `gradle/smoke-tests.json`, and launches packaged release jars through the
-automated smoke matrix.
+automated smoke matrix. `publishValidation` is the faster supported-only gate
+for release publishing.
 
 Module-local build artifacts are also generated in:
 
