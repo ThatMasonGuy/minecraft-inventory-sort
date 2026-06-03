@@ -1,44 +1,34 @@
-name: modrinth publish
+name: compatibility validation
 
 on:
   workflow_dispatch:
     inputs:
-      dry_run:
-        description: 'Validate and print upload plan without publishing'
+      minecraft_version_profile:
+        description: 'Minecraft version profile to validate'
         required: true
-        type: boolean
-        default: true
-      version_type:
-        description: 'Modrinth release channel'
-        required: true
-        type: choice
-        default: release
-        options:
-          - release
-          - beta
-          - alpha
-      requested_status:
-        description: 'Requested Modrinth version status'
+        type: string
+        default: '26.1.2'
+      validation_task:
+        description: 'Gradle task to run for the selected profile'
         required: true
         type: choice
-        default: listed
+        default: buildAllMods
         options:
-          - listed
-          - unlisted
-          - draft
+          - printVersionProfile
+          - buildAllMods
       gradle_java_version:
         description: 'Java version used to run Gradle'
         required: true
         type: choice
-        default: '21'
+        default: '25'
         options:
-          - '21'
           - '25'
+          - '21'
 
 jobs:
-  modrinth:
+  compatibility:
     runs-on: ubuntu-24.04
-    timeout-minutes: 120
+    timeout-minutes: 90
     steps:
       - name: checkout repository
         uses: actions/checkout@v4
@@ -70,33 +60,24 @@ jobs:
         run: chmod +x ./gradlew
       - name: print java runtime
         run: java -version
-      - name: install virtual display
-        run: sudo apt-get update && sudo apt-get install -y xvfb
-      - name: modrinth dry run
-        if: ${{ inputs.dry_run }}
+      - name: print selected profile
         run: >
-          ./gradlew publishModrinthDryRun
-          -Pinventorysort_smoke_xvfb=true
-          -Pmodrinth_version_type=${{ inputs.version_type }}
-          -Pmodrinth_requested_status=${{ inputs.requested_status }}
+          ./gradlew printVersionProfile
+          -Pminecraft_version_profile=${{ inputs.minecraft_version_profile }}
           --no-daemon
           --console=plain
-      - name: modrinth publish
-        if: ${{ !inputs.dry_run }}
-        env:
-          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+      - name: validate selected profile
         run: >
-          ./gradlew publishModrinth
-          -Pinventorysort_smoke_xvfb=true
-          -Pmodrinth_version_type=${{ inputs.version_type }}
-          -Pmodrinth_requested_status=${{ inputs.requested_status }}
-          -Pmodrinth_confirm_publish=true
+          ./gradlew ${{ inputs.validation_task }}
+          -Pminecraft_version_profile=${{ inputs.minecraft_version_profile }}
           --no-daemon
           --console=plain
-      - name: capture upload plan and release jars
+      - name: capture validation artifacts
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: Modrinth Upload Plan
+          name: Compatibility Validation
           path: |
-            build/modrinth/upload-plan.json
             build/release/
+            build/reports/
+            modules/*/build/reports/

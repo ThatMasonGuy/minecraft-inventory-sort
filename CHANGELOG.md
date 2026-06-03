@@ -6,6 +6,10 @@ All notable project changes will be documented here.
 
 ### Changed
 
+- Added Java toolchain handling and manual CI support for Minecraft `26.x`
+  migration work: compile/client-run tasks now request the active profile's
+  `java_version`, GitHub Actions has a focused Java 25 compatibility-validation
+  workflow, and the Modrinth publish workflow can select Java 21 or Java 25.
 - Added profile-selected remap vs non-remap build plumbing for Minecraft
   `26.x`: `unobfuscated_minecraft=true` profiles now use
   `net.fabricmc.fabric-loom`, normal `implementation` dependencies, plain `jar`

@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: Minecraft 26.x build-system foundation complete
+Current checkpoint: Minecraft 26.x Java 25 toolchain and CI lane complete
 
 ## Project Workflow
 
@@ -36,6 +36,27 @@ Current checkpoint: Minecraft 26.x build-system foundation complete
 - Core no longer registers a public `/inventorysort` command root.
 
 ## Recently Fixed
+
+-31. Minecraft `26.x` Java 25 toolchain and CI lane (unreleased):
+   - Gradle now requests the active profile's `java_version` as the Java
+     toolchain for Java compile and client-run tasks.
+   - Added Java toolchain discovery hints for `JAVA_HOME`, `JAVA_HOME_21_X64`,
+     and `JAVA_HOME_25_X64`.
+   - Added a manual GitHub Actions `compatibility validation` workflow that
+     installs Java 21 and Java 25, defaults to running candidate profiles on
+     Java 25, and can run focused `printVersionProfile` or `buildAllMods`
+     checks for profiles such as `26.1.2`.
+   - Updated the manual Modrinth publish workflow to install both Java 21 and
+     Java 25 and expose a `gradle_java_version` input. It still defaults to Java
+     21 for the current `1.20.x`/`1.21.x` release lane.
+   - Verified default `.\gradlew.bat buildAllMods --no-daemon --console=plain`
+     still passes on local Java 21.
+   - Verified `.\gradlew.bat printVersionProfile "-Pminecraft_version_profile=26.1.2"`
+     still configures and clearly reports Java 25 as the profile target.
+   - Local `26.1.2` compile now stops at the expected Java 25 toolchain gate on
+     this machine because no JDK 25 is installed locally; GitHub's manual
+     compatibility workflow supplies that toolchain for future source/API work.
+   - Next step is the `26.x` Core compatibility overlay.
 
 -30. Minecraft `26.x` build-system foundation (unreleased):
    - Added `unobfuscated_minecraft=true` profile support for `26.x` profiles.
@@ -817,6 +838,11 @@ Forward tasks:
      without breaking `1.20`/`1.21` release builds.
    - Keep normal push/PR builds fast; use full `26.x` validation only in
      candidate validation/publish workflows.
+   - Current status: DONE. Compile/run tasks now request the active profile's
+     Java toolchain. Normal push/PR builds remain on Java 21/default profile,
+     the manual compatibility-validation workflow defaults to Java 25 for
+     focused `26.x` candidate builds, and Modrinth publishing can be switched to
+     Java 25 when a `26.x` profile is promoted.
 3. `26.x` Core compatibility overlay:
    - Add `src/compat/26.1.2/.../MinecraftApiCompat.java`.
    - Port dimension id, chest neighbor lookup, window handle, single-player

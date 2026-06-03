@@ -94,6 +94,12 @@ builds candidate profiles, verifies release metadata, checks
 automated smoke matrix. The manual Modrinth publish workflow runs the expensive
 publish gate before upload, so local development can stay on faster builds.
 
+Minecraft `26.x` development requires Java 25. The normal push/PR workflow stays
+on the fast Java 21 default-profile build, while the manual GitHub Actions
+`compatibility validation` workflow can run candidate profiles such as `26.1.2`
+with a Java 25 Gradle runtime. Local `26.x` compile work also needs a Java 25
+JDK installed or exposed through Gradle toolchain detection.
+
 Modrinth publishing is configured through supported profiles only:
 
 ```bash

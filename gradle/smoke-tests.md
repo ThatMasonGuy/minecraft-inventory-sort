@@ -37,6 +37,9 @@ take close to an hour on a local machine.
 Normal push/PR builds intentionally run only `buildAllMods` for the default
 profile. Use local full smoke testing only when you specifically need it; the
 manual Modrinth publish workflow is the normal expensive release gate.
+For focused migration work, the manual GitHub Actions `compatibility validation`
+workflow can run one candidate profile, such as `26.1.2`, with Java 25 before it
+is promoted into the full smoke matrix.
 
 Useful commands:
 

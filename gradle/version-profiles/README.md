@@ -27,6 +27,13 @@ Useful commands:
 .\gradlew.bat ciValidation
 ```
 
+Gradle uses the active profile's `java_version` as a Java toolchain request for
+compile and client-run tasks. The default `1.20.x`/`1.21.x` lane uses Java 21.
+Minecraft `26.x` profiles request Java 25, so local compile/run work needs a
+Java 25 JDK installed or exposed through one of `JAVA_HOME`, `JAVA_HOME_21_X64`,
+or `JAVA_HOME_25_X64`. GitHub Actions installs the needed toolchains for manual
+compatibility validation.
+
 Release jars are collected under `build/release/<profile_id>/`.
 
 Compatibility-group profiles support these fields:
@@ -79,6 +86,8 @@ when their smoke records are `pass`. Candidate 26.x profiles may be added later
 so migration work can start without making the default release build depend on
 Java 25.
 
-The 26.x profiles now configure through the non-remapping build lane. Compile
-and smoke-test migration work still requires a Java 25 toolchain plus the
-version-specific source/API shims.
+The 26.x profiles now configure through the non-remapping build lane. The manual
+GitHub Actions `compatibility validation` workflow defaults to Java 25 and can
+run focused candidate builds without changing the fast push/PR workflow.
+Compile and smoke-test migration work still requires the version-specific
+source/API shims.

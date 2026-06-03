@@ -103,7 +103,9 @@ Override with `-Pmodrinth_profile_version_suffix=always` or
 
 GitHub Actions has a manual `modrinth publish` workflow. Its dry-run mode does
 not require `MODRINTH_TOKEN`; real publishing requires the repository secret
-`MODRINTH_TOKEN`.
+`MODRINTH_TOKEN`. The workflow installs Java 21 and Java 25 toolchains and has a
+`gradle_java_version` input. Keep it on Java 21 for the current `1.20.x`/`1.21.x`
+release lane; use Java 25 when publishing a supported `26.x` release.
 
 For normal development, run local fast builds such as `buildAllMods`, commit,
 push, and then use the manual `modrinth publish` workflow when ready to release.

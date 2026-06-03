@@ -192,9 +192,18 @@ subprojects {
 	}
 
 	java {
+		toolchain {
+			languageVersion = JavaLanguageVersion.of(rootProject.target_java_version)
+		}
 		withSourcesJar()
 		sourceCompatibility = JavaVersion.toVersion(rootProject.target_java_version)
 		targetCompatibility = JavaVersion.toVersion(rootProject.target_java_version)
+	}
+
+	tasks.withType(JavaExec).configureEach {
+		javaLauncher = javaToolchains.launcherFor {
+			languageVersion = JavaLanguageVersion.of(rootProject.target_java_version)
+		}
 	}
 
 	jar {
@@ -378,6 +387,7 @@ tasks.register('printVersionProfile') {
 		println "Loom plugin: ${loom_plugin_id}"
 		println "Unobfuscated Minecraft: ${unobfuscated_minecraft}"
 		println "Java release: ${target_java_version}"
+		println "Gradle JVM: ${System.getProperty('java.version')} (${System.getProperty('java.home')})"
 		println "Compat group: ${compat_group}"
 		println "Fabric dependency configuration: ${fabric_dependency_configuration}"
 		println "Release jar task: ${release_jar_task_name}"
