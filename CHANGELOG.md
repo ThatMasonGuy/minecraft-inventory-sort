@@ -30,6 +30,10 @@ All notable project changes will be documented here.
   `ContainerInput`. The 26.x Sort button mixin now hooks `extractRenderState`,
   and feature modules compile against Core's client jar in the non-remap lane.
   Focused `26.1.2` and `26.2-pre-3` Core plus Sort compile probes now pass.
+- Added Minecraft `26.x` Search overlays for the modal screen and screen-button
+  mixin. Search rendering now compiles against the `GuiGraphicsExtractor`
+  `extractRenderState` lifecycle on `26.1.2` and `26.2-pre-3`, while the shared
+  `GuiGraphics` implementation remains in place for `1.20.x`/`1.21.x`.
 - Added profile-selected remap vs non-remap build plumbing for Minecraft
   `26.x`: `unobfuscated_minecraft=true` profiles now use
   `net.fabricmc.fabric-loom`, normal `implementation` dependencies, plain `jar`

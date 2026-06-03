@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: Minecraft 26.x container/mixin input update complete
+Current checkpoint: Minecraft 26.x Search feature compile pass complete
 
 ## Project Workflow
 
@@ -36,6 +36,22 @@ Current checkpoint: Minecraft 26.x container/mixin input update complete
 - Core no longer registers a public `/inventorysort` command root.
 
 ## Recently Fixed
+
+-36. Minecraft `26.x` Search feature compile pass (unreleased):
+   - Added `26.1.2` and `26.2-pre-3` Search overlays for
+     `SearchModalScreen` and `SearchButtonMixin`.
+   - Ported Search rendering to the `26.x` `GuiGraphicsExtractor`
+     `extractRenderState` lifecycle while preserving the shared
+     `1.20.x`/`1.21.x` `GuiGraphics` screen.
+   - Routed Search's screen transitions through `MinecraftApiCompat` in the
+     `26.x` overlays so both checked `26.x` API shapes compile.
+   - Updated `26.x` profile exclusions so old shared Search render classes do
+     not collide with the candidate overlays.
+   - Verified default `.\gradlew.bat buildAllMods --no-daemon --console=plain`
+     still passes.
+   - Verified both `26.1.2` and `26.2-pre-3`
+     `:inventorysearch:compileClientJava` pass.
+   - Next step is the `26.x` Catalogue feature compile pass.
 
 -35. Minecraft `26.x` container/mixin input update (unreleased):
    - Added a shared `ContainerClickCompat` adapter so Sort behavior asks for
@@ -981,9 +997,9 @@ Forward tasks:
    - Then compile Search.
    - Then compile Catalogue.
    - Treat each feature pass as its own checkpoint with TODO/CHANGELOG/commit.
-   - Current status: PARTIAL. Sort now compiles on both checked `26.x`
-     candidate profiles as part of the container/mixin input pass. Search and
-     Catalogue remain the next feature compile checkpoints.
+   - Current status: PARTIAL. Sort and Search now compile on both checked
+     `26.x` candidate profiles. Catalogue remains the next feature compile
+     checkpoint.
 8. `26.x` smoke testing:
    - Add pending/pass smoke records for exact `26.x` runtimes.
    - Extend the smoke launcher if `26.x` client launch semantics differ.
