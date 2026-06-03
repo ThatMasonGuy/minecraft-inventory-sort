@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: `2.6.3` + `1.21.10` compile/build candidate profile
+Current checkpoint: `2.6.3` + `1.21.9-1.21.10` compile/build candidate group
 
 ## Project Workflow
 
@@ -34,6 +34,30 @@ Current checkpoint: `2.6.3` + `1.21.10` compile/build candidate profile
 
 ## Recently Fixed
 
+-17. `1.21.9-1.21.10` compatibility candidate group (unreleased):
+   - Re-probed `1.21.9` with the current adapter shape and confirmed the focused
+     compile passes.
+   - Replaced the exact `1.21.10` candidate profile with
+     `gradle/version-profiles/1.21.9-1.21.10.properties`.
+   - The grouped candidate is anchored on `minecraft_version=1.21.9`, uses
+     `compat_group=1.21.9-1.21.10`, and declares
+     `minecraft_dependency=>=1.21.9 <=1.21.10`.
+   - Renamed the shared API-shape overlay from `src/compat/1.21.10` to
+     `src/compat/1.21.9-1.21.10`.
+   - Verified `.\gradlew.bat printVersionProfile
+     "-Pminecraft_version_profile=1.21.9-1.21.10"` and
+     `.\gradlew.bat clean buildAllMods
+     "-Pminecraft_version_profile=1.21.9-1.21.10"`.
+   - Verified grouped release jars collect under
+     `build/release/1.21.9-1.21.10/` and declare
+     `minecraft >=1.21.9 <=1.21.10`, `java >=21`, and
+     `fabricloader >=0.18.4`.
+   - Important: this grouped profile is still not supported/publishable until
+     the exact grouped jars pass launcher smoke testing on both `1.21.9` and
+     `1.21.10`.
+   - Next Step 7 slice: launcher smoke-test the grouped jars on `1.21.9` and
+     `1.21.10`, then probe `1.21.8` to find the next API boundary.
+
 -16. `1.21.10` compatibility candidate (unreleased):
    - Added `gradle/version-profiles/1.21.10.properties` as a candidate
      compatibility-group profile.
@@ -53,8 +77,8 @@ Current checkpoint: `2.6.3` + `1.21.10` compile/build candidate profile
      `fabricloader >=0.18.4`.
    - Important: `1.21.10` is still not a supported Modrinth listing until the
      release jars pass normal launcher smoke testing.
-   - Next Step 7 slice: launcher smoke-test the `1.21.10` jars, then probe
-     whether the same adapter shape can cover `1.21.9` or needs another group.
+   - Superseded by item 17 after `1.21.9` compiled with the same adapter shape,
+     allowing a grouped `1.21.9-1.21.10` candidate.
 
 -15. Compatibility-group build profile foundation (unreleased):
    - Extended Gradle profiles with `profile_id`, `minecraft_dependency`,
@@ -447,13 +471,13 @@ depend on Core; Catalogue and Search both need Core's identity/namespace/event l
    - Current status: IN PROGRESS. Gradle now supports compatibility-group profile
      metadata, profile-id release folders, generated Fabric dependency ranges,
      profile metadata verification, and `src/compat/<compat_group>/` source
-     overlays. The first non-`1.21.11` candidate profile, `1.21.10`, now
-     compiles and builds release jars after small compat adapters, but it is not
-     supported/publishable until launcher smoke testing passes. Older `1.21.x`,
-     `1.20.x`, and `1.19.x` releases still need source/API porting before
-     Modrinth listings. Next blocker for the v26 lane is still
-     installing/running a Java 25 toolchain, then compiling a 26.x profile and
-     fixing source/API breaks.
+     overlays. The first grouped non-`1.21.11` candidate profile,
+     `1.21.9-1.21.10`, now compiles and builds release jars after small compat
+     adapters, but it is not supported/publishable until launcher smoke testing
+     passes on every listed game version. Older `1.21.x`, `1.20.x`, and
+     `1.19.x` releases still need source/API porting before Modrinth listings.
+     Next blocker for the v26 lane is still installing/running a Java 25
+     toolchain, then compiling a 26.x profile and fixing source/API breaks.
 8. Add CI validation before publishing:
    - Add automated build verification for every supported compatibility-group
      profile.

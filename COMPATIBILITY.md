@@ -8,8 +8,8 @@ Publish the current split release jars for **Minecraft 1.21.11 only**.
 
 Do not mark the current `2.6.3` jars as compatible with older `1.21.x`,
 `1.20.x`, or `1.19.x` releases on Modrinth until those exact release jars pass
-launcher smoke testing. A `1.21.10` candidate profile now compiles and builds,
-but it is not yet launch-validated.
+launcher smoke testing. A `1.21.9-1.21.10` candidate profile now compiles and
+builds, but it is not yet launch-validated.
 
 For future support, build a dedicated jar for each target Minecraft version,
 launch-test that exact jar, then list that Minecraft version on the Modrinth
@@ -82,17 +82,17 @@ install combinations.
 
 ## Candidate Artifacts
 
-The `1.21.10` profile now compiles and builds release jars in
-`build/release/1.21.10/`. Generated metadata declares:
+The `1.21.9-1.21.10` profile now compiles and builds release jars in
+`build/release/1.21.9-1.21.10/`. Generated metadata declares:
 
 | Jar | Mod id | Minecraft dependency | Java dependency |
 | --- | --- | --- | --- |
-| `inventory-sort-2.6.3.jar` | `inventorysort` | `~1.21.10` | `>=21` |
-| `inventory-search-2.6.3.jar` | `inventorysearch` | `~1.21.10` | `>=21` |
-| `inventory-catalogue-2.6.3.jar` | `inventorycatalogue` | `~1.21.10` | `>=21` |
+| `inventory-sort-2.6.3.jar` | `inventorysort` | `>=1.21.9 <=1.21.10` | `>=21` |
+| `inventory-search-2.6.3.jar` | `inventorysearch` | `>=1.21.9 <=1.21.10` | `>=21` |
+| `inventory-catalogue-2.6.3.jar` | `inventorycatalogue` | `>=1.21.9 <=1.21.10` | `>=21` |
 
-These jars still need normal launcher smoke testing before `1.21.10` is listed
-on Modrinth.
+These jars still need normal launcher smoke testing on both `1.21.9` and
+`1.21.10` before either version is listed on Modrinth.
 
 ## Compile Probe Method
 
@@ -115,8 +115,8 @@ Probe command:
 | Minecraft | Java | Compile result | Notes |
 | --- | ---: | --- | --- |
 | 1.21.11 | 21 | PASS | Current release target. |
-| 1.21.10 | 21 | PASS (candidate) | Fixed with minecart entity id lookup, dimension id compat adapter, and version-specific button render wrappers. Needs launcher smoke test. |
-| 1.21.9 | 21 | FAIL (original probe) | Not re-probed after the `1.21.10` adapters; likely next closest target. |
+| 1.21.10 | 21 | PASS (candidate) | Covered by grouped `1.21.9-1.21.10` profile. Needs launcher smoke test. |
+| 1.21.9 | 21 | PASS (candidate) | Focused compile and grouped release build pass with the `1.21.9-1.21.10` profile. Needs launcher smoke test. |
 | 1.21.8 | 21 | FAIL | Adds chest helper/window handle drift. |
 | 1.21.7 | 21 | FAIL | Same drift class as 1.21.8. |
 | 1.21.6 | 21 | FAIL | Same drift class as 1.21.8. |
@@ -141,10 +141,10 @@ Probe command:
 
 ## Porting Implications
 
-- `1.21.10` is the first compile/build candidate and needs launcher smoke
-  testing before publishing.
-- `1.21.9` is the next closest probe. It likely shares some `1.21.10` drift, but
-  it still needs a fresh compile probe after the new adapters.
+- `1.21.9-1.21.10` is the first grouped compile/build candidate and needs
+  launcher smoke testing on both game versions before publishing.
+- `1.21.8` is the next closest probe and is expected to expose the next API
+  boundary around chest/window handling.
 - `1.21.8` through `1.21.2` need more compatibility work around chest
   identity, window/profile handling, HUD matrix calls, and screen APIs.
 - `1.21.1` and `1.21` need recipe book/screen compatibility work.
