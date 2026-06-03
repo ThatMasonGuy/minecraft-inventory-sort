@@ -14,5 +14,6 @@ public class InventorySortCoreClient implements ClientModInitializer {
         LOGGER.info("Initializing Inventory Sort Core");
         ClientTickEvents.END_CLIENT_TICK.register(client -> ServerWorldProfileManager.getInstance().handleConfirmationInput(client));
         HudRenderCallback.EVENT.register((graphics, tickCounter) -> ServerWorldProfileHud.render(graphics));
+        InventorySortSmokeTest.registerIfEnabled();
     }
 }

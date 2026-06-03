@@ -45,7 +45,7 @@ A lightweight **client-side** Minecraft mod that adds robust sorting capabilitie
 
 - **Client-Side Only:** This mod operates entirely on the client. It adds no new blocks, items, or server-side mechanics, making it usable on vanilla servers where client-side utility mods are allowed.
 - **Framework:** Requires **Fabric Loader** and **Fabric API** for Minecraft `1.21.11`.
-- **Current Release Target:** The split release jars are validated for Minecraft `1.21.11` only. A `1.21.9-1.21.10` candidate profile compiles and builds, but still needs launcher smoke testing before Modrinth listing. See `COMPATIBILITY.md` for the version probe matrix before listing additional game versions.
+- **Current Release Target:** The split release jars are supported/publishable for Minecraft `1.21.11`. A `1.21.9-1.21.10` candidate profile compiles, builds, and passes automated client smoke launches on both exact runtimes, but still needs promotion from candidate to supported before Modrinth listing. See `COMPATIBILITY.md` for the version probe matrix before listing additional game versions.
 - **"Known Current Locations":** The tracking features rely on what your client has *seen*. It provides "known current locations," not guaranteed live server truth. If another player empties a chest while you are away, your client will still remember the old contents until you reopen and rescan that container.
 
 ## Future Plans
@@ -85,8 +85,9 @@ profiles:
 ```
 
 `buildAllVersions` builds only supported/publishable profiles. `ciValidation`
-also builds candidate profiles and checks the smoke-test matrix in
-`gradle/smoke-tests.json`.
+also builds candidate profiles, verifies release metadata, checks
+`gradle/smoke-tests.json`, and launches packaged release jars through the
+automated smoke matrix.
 
 Module-local build artifacts are also generated in:
 

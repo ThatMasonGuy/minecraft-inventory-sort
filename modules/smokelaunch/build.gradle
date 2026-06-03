@@ -1,0 +1,21 @@
+base {
+	archivesName = 'inventory-smoke-launcher'
+}
+
+sourceSets {
+	main {
+		java.setSrcDirs([])
+		resources.setSrcDirs([])
+	}
+	client {
+		java.setSrcDirs([])
+		resources.setSrcDirs([])
+	}
+}
+
+tasks.matching { it.name == 'runClient' }.configureEach {
+	def smokeMods = rootProject.findProperty('inventorysort_smoke_mods')
+	if (smokeMods != null && !smokeMods.toString().isBlank()) {
+		jvmArgs("-Dfabric.addMods=${smokeMods}")
+	}
+}

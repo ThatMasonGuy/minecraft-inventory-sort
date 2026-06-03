@@ -29,9 +29,12 @@ All notable project changes will be documented here.
   icon.
 - Added CI validation tasks for supported and candidate Minecraft profiles,
   including a smoke-test matrix gate for publishable profiles.
+- Added automated client smoke launches through a dedicated `smokelaunch`
+  project. CI now launches packaged release jars as Sort-only, Search-only,
+  Catalogue-only, and all-three installs across the validation runtimes.
 - Added a `1.21.9-1.21.10` candidate compatibility profile that compiles and
-  builds release jars with range metadata, pending launcher smoke testing before
-  Modrinth listing.
+  builds release jars with range metadata, and now passes automated client
+  smoke launches on both `1.21.9` and `1.21.10`.
 - Moved target-specific custom button render hooks into `1.21.9-1.21.10` and
   `1.21.11` compat overlays while keeping the shared drawing logic in Core.
 - Added `COMPATIBILITY.md` with the Minecraft version probe matrix and Modrinth listing recommendation.

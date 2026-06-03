@@ -33,8 +33,10 @@ include 'inventorysort-core'
 include 'inventorysort'
 include 'inventorysearch'
 include 'inventorycatalogue'
+include 'smokelaunch'
 
 project(':inventorysort-core').projectDir = file('modules/inventorysort-core')
 project(':inventorysort').projectDir = file('modules/inventorysort')
 project(':inventorysearch').projectDir = file('modules/inventorysearch')
 project(':inventorycatalogue').projectDir = file('modules/inventorycatalogue')
+project(':smokelaunch').projectDir = file('modules/smokelaunch')

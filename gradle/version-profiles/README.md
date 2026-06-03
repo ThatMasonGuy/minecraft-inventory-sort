@@ -57,14 +57,20 @@ src/compat/<compat_group>/client/resources/
 Only list versions in `modrinth_game_versions` after that exact jar passes launch
 smoke testing on those versions.
 
+Exact runtime-only profiles may also exist for smoke testing. For example,
+`1.21.9.properties` and `1.21.10.properties` select the exact Minecraft/Fabric
+runtime used by `smokeTestValidationClients`, but they are not release profiles
+and should not be added to `supported_minecraft_version_profiles` or
+`candidate_minecraft_version_profiles`.
+
 Only add a profile to `supported_minecraft_version_profiles` after it compiles
-and launches cleanly. The `1.21.9-1.21.10` profile currently compiles and builds
-release jars, but stays in `candidate_minecraft_version_profiles` until launcher
-smoke testing passes on every listed game version. `ciValidation` builds both
-supported and candidate profiles, but `verifySmokeTestMatrix` only allows
-supported profiles to publish when their smoke records are `pass`. Candidate 26.x
-profiles are present so migration work can start without making the default
-release build depend on Java 25.
+and launches cleanly. The `1.21.9-1.21.10` profile currently compiles, builds
+release jars, and passes automated smoke launches on every listed game version,
+but stays in `candidate_minecraft_version_profiles` until we choose to promote
+it. `ciValidation` builds both supported and candidate profiles, runs automated
+client smoke launches, and only allows supported profiles to publish when their
+smoke records are `pass`. Candidate 26.x profiles are present so migration work
+can start without making the default release build depend on Java 25.
 
 The 26.x profiles currently fail during configuration on Java 21 with Minecraft's
 Java 25 requirement. Install or select a Java 25 toolchain before using them for

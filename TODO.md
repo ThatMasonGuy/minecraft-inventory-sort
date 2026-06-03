@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: Step 8 CI validation and smoke-test matrix foundation
+Current checkpoint: Step 8 automated CI smoke validation
 
 ## Project Workflow
 
@@ -22,6 +22,9 @@ Current checkpoint: Step 8 CI validation and smoke-test matrix foundation
   Sort-only, Search-only, Catalogue-only, Sort+Search, and all three together.
   Search+Catalogue was not separately tested, but is expected to work after the
   standalone and all-three validation passed.
+- Automated client smoke validation launches the packaged release jars as
+  Sort-only, Search-only, Catalogue-only, and all-three installs on Minecraft
+  `1.21.11`, `1.21.9`, and `1.21.10`.
 
 ## Current Command Roots
 
@@ -33,6 +36,28 @@ Current checkpoint: Step 8 CI validation and smoke-test matrix foundation
 - Core no longer registers a public `/inventorysort` command root.
 
 ## Recently Fixed
+
+-20. Automated client smoke validation (unreleased):
+   - Added a no-mod `smokelaunch` Loom project that launches exact Minecraft
+     runtimes with packaged release jars injected through Fabric Loader.
+   - Added `InventorySortSmokeTest`, which arms only when
+     `-Dinventorysort.smokeTest=true`, waits for the client tick loop, logs
+     `INVENTORYSORT_SMOKE_TEST_PASS`, and closes the client cleanly.
+   - `smokeTestValidationClients` now launches every validation profile/game
+     version as Sort-only, Search-only, Catalogue-only, and all-three installs.
+   - Added smoke runtime profiles for exact `1.21.9` and `1.21.10` launches so
+     the grouped `1.21.9-1.21.10` release jars can be tested against both game
+     versions without producing separate release jars.
+   - Updated GitHub Actions to install `xvfb` and run
+     `./gradlew ciValidation -Pinventorysort_smoke_xvfb=true` for headless
+     client smoke launches.
+   - Updated `gradle/smoke-tests.json` with passing automated smoke records for
+     `1.21.11`, `1.21.9`, and `1.21.10`.
+   - Verified `.\gradlew.bat smokeTestValidationClients`; all twelve automated
+     client launches passed locally.
+   - Next: loop back to Step 7 to decide whether to promote
+     `1.21.9-1.21.10` from candidate to supported/publishable and then probe
+     the next compatibility boundary.
 
 -19. CI validation and smoke-test matrix foundation (unreleased):
    - Added `candidate_minecraft_version_profiles` so CI can build candidate
@@ -56,7 +81,8 @@ Current checkpoint: Step 8 CI validation and smoke-test matrix foundation
    - Verified `.\gradlew.bat ciValidation`; it builds both `1.21.11` and
      `1.21.9-1.21.10` release folders and reports the grouped candidate as
      pending/non-publishable.
-   - Next: loop back to Step 7 and launcher smoke-test `1.21.9-1.21.10`.
+   - Superseded by item 20, which turns this foundation into automated client
+     smoke launches.
 
 -18. Split module icon assets (unreleased):
    - Moved the dropped public mod icon images into
@@ -509,10 +535,11 @@ depend on Core; Catalogue and Search both need Core's identity/namespace/event l
      metadata, profile-id release folders, generated Fabric dependency ranges,
      profile metadata verification, and `src/compat/<compat_group>/` source
      overlays. The first grouped non-`1.21.11` candidate profile,
-     `1.21.9-1.21.10`, now compiles and builds release jars after small compat
-     adapters, but it is not supported/publishable until launcher smoke testing
-     passes on every listed game version. Older `1.21.x`, `1.20.x`, and
-     `1.19.x` releases still need source/API porting before Modrinth listings.
+     `1.21.9-1.21.10`, now compiles, builds release jars, and passes automated
+     client smoke launches on `1.21.9` and `1.21.10`, but remains in
+     `candidate_minecraft_version_profiles` until we choose to promote it.
+     Older `1.21.x`, `1.20.x`, and `1.19.x` releases still need source/API
+     porting before Modrinth listings.
      Next blocker for the v26 lane is still installing/running a Java 25
      toolchain, then compiling a 26.x profile and fixing source/API breaks.
 8. Add CI validation before publishing:
@@ -523,12 +550,12 @@ depend on Core; Catalogue and Search both need Core's identity/namespace/event l
      `modrinth_game_versions`; only those passing versions may be published.
    - CI should produce build artifacts grouped by profile/range so manual testing
      and Modrinth upload metadata stay aligned.
-   - Current status: IN PROGRESS. `ciValidation` now builds supported and
-     candidate profiles, release jar verification checks Core nesting,
-     Minecraft/Java metadata, and icons, and `verifySmokeTestMatrix` prevents
-     supported/publishable profiles from missing smoke-test pass records.
-     Candidate profiles are tracked separately and may remain pending while
-     Step 7 continues.
+   - Current status: DONE for the current validation matrix. `ciValidation` now
+     builds supported and candidate profiles, verifies release jar metadata and
+     nested Core jars, checks smoke-test records, and launches exact Minecraft
+     runtimes with the packaged release jars as standalone and all-three
+     installs. Candidate profiles are still tracked separately from publishable
+     supported profiles.
 9. Configure Modrinth publishing:
    - Give each public feature mod its own Modrinth project id and upload metadata.
    - Publish the correct jar, Minecraft version, loader, dependencies, and

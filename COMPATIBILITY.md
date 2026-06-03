@@ -4,12 +4,16 @@ Research date: 2026-06-03
 
 ## Recommendation
 
-Publish the current split release jars for **Minecraft 1.21.11 only**.
+Publish the current supported split release jars for **Minecraft 1.21.11 only**
+until the `1.21.9-1.21.10` candidate is deliberately promoted to the supported
+profile list.
 
 Do not mark the current `2.6.3` jars as compatible with older `1.21.x`,
 `1.20.x`, or `1.19.x` releases on Modrinth until those exact release jars pass
-launcher smoke testing. A `1.21.9-1.21.10` candidate profile now compiles and
-builds, but it is not yet launch-validated.
+launcher smoke testing. A `1.21.9-1.21.10` candidate profile now compiles,
+builds, and passes automated client smoke launches on both exact game versions,
+but remains non-publishable until moved from
+`candidate_minecraft_version_profiles` to `supported_minecraft_version_profiles`.
 
 For future support, build a dedicated jar for each target Minecraft version,
 launch-test that exact jar, then list that Minecraft version on the Modrinth
@@ -51,7 +55,8 @@ java_version=21
 
 The compile anchor only proves the jar builds against that version's APIs. Before
 listing a range on Modrinth, CI or manual validation must launch-test that exact
-jar on every Minecraft version listed in `modrinth_game_versions`.
+jar on every Minecraft version listed in `modrinth_game_versions`. The current
+CI path launches each public jar standalone plus all public jars together.
 
 If an in-between version fails, split the range into smaller compatibility groups
 instead of publishing an untested or partially compatible range.
@@ -91,13 +96,15 @@ The `1.21.9-1.21.10` profile now compiles and builds release jars in
 | `inventory-search-2.6.3.jar` | `inventorysearch` | `>=1.21.9 <=1.21.10` | `>=21` |
 | `inventory-catalogue-2.6.3.jar` | `inventorycatalogue` | `>=1.21.9 <=1.21.10` | `>=21` |
 
-These jars still need normal launcher smoke testing on both `1.21.9` and
-`1.21.10` before either version is listed on Modrinth.
+These jars passed automated client smoke launches on both `1.21.9` and
+`1.21.10` as Sort-only, Search-only, Catalogue-only, and all-three installs.
+They still need the profile promotion decision before either version is listed
+on Modrinth.
 
 Smoke-test records live in `gradle/smoke-tests.json`. CI runs
-`verifySmokeTestMatrix`, which requires passing records for supported profiles
-and tracks candidate profiles as pending/fail/pass without making them
-publishable.
+`verifySmokeTestMatrix` and `smokeTestValidationClients`: supported profiles
+must have passing records and exact-runtime launches, while candidate profiles
+can be tracked and tested without making them publishable.
 
 ## Compile Probe Method
 
@@ -120,8 +127,8 @@ Probe command:
 | Minecraft | Java | Compile result | Notes |
 | --- | ---: | --- | --- |
 | 1.21.11 | 21 | PASS | Current release target. |
-| 1.21.10 | 21 | PASS (candidate) | Covered by grouped `1.21.9-1.21.10` profile. Needs launcher smoke test. |
-| 1.21.9 | 21 | PASS (candidate) | Focused compile and grouped release build pass with the `1.21.9-1.21.10` profile. Needs launcher smoke test. |
+| 1.21.10 | 21 | PASS (candidate) | Covered by grouped `1.21.9-1.21.10` profile. Automated client smoke launch passed. |
+| 1.21.9 | 21 | PASS (candidate) | Covered by grouped `1.21.9-1.21.10` profile. Automated client smoke launch passed. |
 | 1.21.8 | 21 | FAIL | Adds chest helper/window handle drift. |
 | 1.21.7 | 21 | FAIL | Same drift class as 1.21.8. |
 | 1.21.6 | 21 | FAIL | Same drift class as 1.21.8. |
@@ -146,8 +153,9 @@ Probe command:
 
 ## Porting Implications
 
-- `1.21.9-1.21.10` is the first grouped compile/build candidate and needs
-  launcher smoke testing on both game versions before publishing.
+- `1.21.9-1.21.10` is the first grouped compile/build candidate and now has
+  automated smoke evidence on both game versions. The next step is deciding
+  whether to promote it to supported/publishable.
 - `1.21.8` is the next closest probe and is expected to expose the next API
   boundary around chest/window handling.
 - `1.21.8` through `1.21.2` need more compatibility work around chest
