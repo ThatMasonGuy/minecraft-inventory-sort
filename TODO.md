@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: Step 9 Modrinth publishing automation
+Current checkpoint: Step 9 focused Modrinth pipeline validation for 2.6.4
 
 ## Project Workflow
 
@@ -36,6 +36,22 @@ Current checkpoint: Step 9 Modrinth publishing automation
 - Core no longer registers a public `/inventorysort` command root.
 
 ## Recently Fixed
+
+-24. Focused `2.6.4` Modrinth pipeline validation (unreleased):
+   - Bumped `mod_version` from `2.6.3` to `2.6.4` for a focused validation
+     upload on the currently supported `1.21.11` profile only.
+   - Corrected the InvSearch Modrinth project id to `wIOLlhbN` from the latest
+     project-id list.
+   - Plan: run `publishModrinthDryRun`, commit and push the metadata change,
+     then trigger the manual GitHub Actions Modrinth workflow using the
+     repository `MODRINTH_TOKEN` secret.
+   - Verified `.\gradlew.bat publishModrinthDryRun
+     "-Pmodrinth_requested_status=unlisted" --no-daemon --console=plain`; it
+     built `2.6.4`, smoke-launched the supported `1.21.11` profile, and
+     prepared dry-run upload entries for the three public Modrinth projects.
+   - Keep `supported_minecraft_version_profiles=1.21.11` for this validation
+     run. The broad `1.20.x`/`1.21.x` candidate groups should stay candidates
+     until the later `3.0.0` promotion.
 
 -23. Modrinth publishing automation (unreleased):
    - Added Modrinth project IDs for InvSort, InvSearch, and InvCatalogue in
