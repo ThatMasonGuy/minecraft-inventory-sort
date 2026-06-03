@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: Fast push/PR build workflow; full validation remains in Modrinth publish workflow
+Current checkpoint: Minecraft 26.x forward-compatibility roadmap recorded
 
 ## Project Workflow
 
@@ -36,6 +36,17 @@ Current checkpoint: Fast push/PR build workflow; full validation remains in Modr
 - Core no longer registers a public `/inventorysort` command root.
 
 ## Recently Fixed
+
+-28. Minecraft 26.x forward-development roadmap (unreleased):
+   - Decided to keep shared source anchored to the proven `1.20.x`/`1.21.x`
+     compatibility baseline and build `26.x` support forward as candidate
+     profiles.
+   - Recorded the `26.x` roadmap: Java 25/build-system support, non-remap Loom,
+     Core API compatibility, GUI/render extraction compatibility, Fabric command
+     and HUD API changes, container/mixin input changes, feature compile passes,
+     automated smoke testing, and the promotion/publish gate.
+   - Branching remains the fallback only if `26.x` forces duplicated feature
+     logic instead of isolated build config, adapters, and mixin surfaces.
 
 -27. Fast push/PR build workflow (unreleased):
    - Changed the automatic GitHub `build` workflow from full `ciValidation` to
@@ -697,8 +708,8 @@ depend on Core; Catalogue and Search both need Core's identity/namespace/event l
      `1.20.5-1.20.6`, and `1.20-1.20.4`. They were promoted into
      `supported_minecraft_version_profiles` for the `3.0.0` release.
      `1.19.x` and older are intentionally out of scope for now.
-     Next blocker for the v26 lane is still installing/running a Java 25
-     toolchain, then compiling a 26.x profile and fixing source/API breaks.
+     The next compatibility lane is `26.x`; use the dedicated forward roadmap
+     below rather than moving the shared baseline to `26.x`.
 8. Add CI validation before publishing:
    - Add automated build verification for every supported compatibility-group
      profile.
@@ -718,10 +729,104 @@ depend on Core; Catalogue and Search both need Core's identity/namespace/event l
    - Give each public feature mod its own Modrinth project id and upload metadata.
    - Publish the correct jar, Minecraft version, loader, dependencies, and
      changelog for each target.
-   - Current status: IN PROGRESS for the final `3.0.0` public release. Gradle
-     prepares and dry-runs Modrinth uploads for supported profiles only, with a
-     guarded real upload task and manual GitHub Actions workflow. Candidate
-     profiles are still ignored by publishing until promoted.
+   - Current status: DONE for the `3.0.0` public release. Gradle prepares and
+     dry-runs Modrinth uploads for supported profiles only, with a guarded real
+     upload task and manual GitHub Actions workflow. Candidate profiles are
+     ignored by publishing until promoted into
+     `supported_minecraft_version_profiles`.
+
+## Minecraft 26.x Forward Compatibility Roadmap
+
+Goal: keep one repository and one shared Core/feature codebase. The current
+shared source remains anchored to the smoke-tested `1.20.x`/`1.21.x` baseline;
+`26.x` is added as forward candidate compatibility profiles. Do not move the
+shared baseline to `26.x` unless forward overlays prove too fragile.
+
+Known `26.x` constraints:
+
+- Minecraft `26.x` requires Java 25.
+- Mojang removed the obfuscation/mapping layer for `26.x`, so `26.x` profiles
+  need non-remapping Fabric Loom (`net.fabricmc.fabric-loom`) while `1.20`/`1.21`
+  profiles still use `net.fabricmc.fabric-loom-remap`.
+- `26.x` profiles should use normal `implementation` dependencies and `jar`
+  release artifacts instead of remapped `modImplementation` and `remapJar`
+  artifacts.
+- The current compile probe reached source/API errors after a temporary
+  non-remap build-path change, which means one-repo forward support still looks
+  plausible.
+- Representative `26.x` API shifts observed in the probe:
+  - `GuiGraphics` render methods become `GuiGraphicsExtractor` / render-state
+    extraction methods.
+  - `HudRenderCallback` moves to the Fabric HUD element registry API.
+  - `ClientCommandManager` becomes `ClientCommands`.
+  - `ClickType` becomes `ContainerInput`.
+  - Player chat feedback uses `sendSystemMessage` / `sendOverlayMessage` instead
+    of `displayClientMessage`.
+
+Forward tasks:
+
+1. Build-system foundation:
+   - Add a profile flag such as `unobfuscated_minecraft=true` for `26.x`
+     profiles.
+   - Load both Loom plugin ids in `settings.gradle`, then select remap vs
+     non-remap in root/subprojects by profile.
+   - Skip `loom.officialMojangMappings()` for `26.x` profiles.
+   - Select `modImplementation`/`remapJar` for remapped profiles and
+     `implementation`/`jar` for unobfuscated profiles.
+   - Replace `namedElements` project dependencies with normal/client output
+     dependencies when running `26.x` profiles.
+   - Verify default `1.21.11` `buildAllMods` still passes and a `26.x`
+     `printVersionProfile` configures under Java 25.
+2. Java 25 toolchain and CI:
+   - Decide whether Gradle should always run on Java 25 or whether workflows
+     should select Java by profile/job.
+   - Update GitHub Actions/manual validation so `26.x` candidate builds can run
+     without breaking `1.20`/`1.21` release builds.
+   - Keep normal push/PR builds fast; use full `26.x` validation only in
+     candidate validation/publish workflows.
+3. `26.x` Core compatibility overlay:
+   - Add `src/compat/26.1.2/.../MinecraftApiCompat.java`.
+   - Port dimension id, chest neighbor lookup, window handle, single-player
+     directory, HUD pose, and player feedback helpers to `26.x` names.
+   - Add Core compile probing as the first validation target.
+4. GUI/rendering abstraction:
+   - Refactor shared drawing helpers so shared logic does not directly depend on
+     `GuiGraphics`.
+   - Add version-specific wrappers/adapters for `1.20`/`1.21` `GuiGraphics` and
+     `26.x` `GuiGraphicsExtractor`.
+   - Port text buttons, icon buttons, modal buttons, HUD, and profile/search
+     screens through those adapters.
+5. Fabric API event/command updates:
+   - Replace or wrap `HudRenderCallback` with the `26.x` HUD element registry.
+   - Replace or wrap `ClientCommandManager` with `26.x` `ClientCommands`.
+   - Keep command bodies/shared handlers version-independent.
+6. Container/mixin input updates:
+   - Port `ClickType` invokers and slot-click mixins to `26.x`
+     `ContainerInput`.
+   - Re-check `AbstractContainerScreen` render/extract method names and
+     recipe-book integration.
+   - Keep sort/search/catalogue behavior code out of version-specific mixins.
+7. Feature compile passes:
+   - After Core compiles, compile Sort.
+   - Then compile Search.
+   - Then compile Catalogue.
+   - Treat each feature pass as its own checkpoint with TODO/CHANGELOG/commit.
+8. `26.x` smoke testing:
+   - Add pending/pass smoke records for exact `26.x` runtimes.
+   - Extend the smoke launcher if `26.x` client launch semantics differ.
+   - Run selected smoke tests first, then full candidate `ciValidation`.
+9. Publication promotion:
+   - Keep `26.x` in `candidate_minecraft_version_profiles` until compile and
+     smoke tests pass.
+   - Once passing, promote it to `supported_minecraft_version_profiles`.
+   - Add `gradle/release-notes/<version>.md`, run the Modrinth publish workflow,
+     and list the smoke-passed `26.x` versions.
+10. Branch fallback trigger:
+   - Branch only if `26.x` forces duplicated feature logic rather than isolated
+     build config, rendering adapters, and mixin surfaces.
+   - If branching becomes necessary, keep `main` as the current `1.20`/`1.21`
+     release lane and create an explicit `26.x` development branch with a
+     patch-forward process.
 
 ### Goes in Core (shared by 2+ features)
 

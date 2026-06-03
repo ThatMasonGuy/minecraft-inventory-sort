@@ -6,6 +6,11 @@ All notable project changes will be documented here.
 
 ### Changed
 
+- Recorded the Minecraft `26.x` forward-compatibility roadmap in `TODO.md`,
+  keeping shared source anchored to the proven `1.20.x`/`1.21.x` baseline while
+  adding `26.x` as forward candidate profiles with Java 25, non-remap Loom,
+  Core API, GUI/rendering, command/HUD, container/mixin, smoke-test, and
+  promotion tasks.
 - Changed the repo and Fabric metadata license to LGPL-3.0-only to match the Modrinth projects.
 - Added `AGENTS.md` with the project workflow for updating `TODO.md`, updating this changelog, verifying, and committing after each major change.
 - Recorded the split and multi-version migration roadmap in `TODO.md` so it survives future context compaction.
