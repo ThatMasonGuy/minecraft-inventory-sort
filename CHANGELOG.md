@@ -17,6 +17,8 @@ All notable project changes will be documented here.
 - Added Gradle subprojects for Core, Sort, Search, and Catalogue. The three public feature jars now build separately and each nests the shared Core jar.
 - Added `collectReleaseJars` and updated `buildAllMods` so publish-ready Sort, Search, and Catalogue jars are collected under `build/release/<minecraft_version>/`.
 - Added Minecraft version profiles and upgraded the Gradle wrapper to 9.4.0 so 26.x migration profiles can be configured separately from the current release target.
+- Added `COMPATIBILITY.md` with the Minecraft version probe matrix and Modrinth listing recommendation.
+- Confirmed the current split release jars should be published for Minecraft `1.21.11` only until version-specific builds pass compile and launch testing.
 - Confirmed the rebuilt split release jars launch in normal launcher installs individually and together.
 
 ### Fixed

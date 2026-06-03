@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: `2.6.3` + multi-version build profile foundation
+Current checkpoint: `2.6.3` + compatibility matrix for Modrinth listings
 
 ## Project Workflow
 
@@ -33,6 +33,16 @@ Current checkpoint: `2.6.3` + multi-version build profile foundation
 - Core no longer registers a public `/inventorysort` command root.
 
 ## Recently Fixed
+
+-13. Compatibility matrix research (unreleased):
+   - Added `COMPATIBILITY.md` with the current Minecraft compatibility probe
+     matrix and source links.
+   - Confirmed the current split `2.6.3` release jars should be listed on
+     Modrinth for Minecraft `1.21.11` only.
+   - Compile probes against every `1.21.x`, `1.20.x`, and `1.19.x` release show
+     the current source only compiles as-is on `1.21.11`.
+   - Next compatibility work should produce dedicated version-profile builds and
+     launcher smoke tests before marking additional Modrinth game versions.
 
 -12. Multi-version build profile foundation (unreleased):
    - Added Gradle Minecraft version profiles under `gradle/version-profiles/`.
@@ -378,8 +388,11 @@ depend on Core; Catalogue and Search both need Core's identity/namespace/event l
    - Once the split is stable on the current target, compile the same modules
      against newer Minecraft/Fabric/Loom targets for the v26 migration.
    - Current status: STARTED. Gradle profile support is in place for the current
-     release and candidate 26.x targets. Next blocker is installing/running a Java
-     25 toolchain, then compiling a 26.x profile and fixing source/API breaks.
+     release and candidate 26.x targets. Compatibility research confirms the
+     current source only compiles as-is on `1.21.11`; older `1.21.x`, `1.20.x`,
+     and `1.19.x` releases need source/API porting before Modrinth listings.
+     Next blocker for the v26 lane is installing/running a Java 25 toolchain,
+     then compiling a 26.x profile and fixing source/API breaks.
 8. Configure Modrinth publishing:
    - Give each public feature mod its own Modrinth project id and upload metadata.
    - Publish the correct jar, Minecraft version, loader, dependencies, and
