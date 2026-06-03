@@ -94,6 +94,11 @@ The `1.21.9-1.21.10` profile now compiles and builds release jars in
 These jars still need normal launcher smoke testing on both `1.21.9` and
 `1.21.10` before either version is listed on Modrinth.
 
+Smoke-test records live in `gradle/smoke-tests.json`. CI runs
+`verifySmokeTestMatrix`, which requires passing records for supported profiles
+and tracks candidate profiles as pending/fail/pass without making them
+publishable.
+
 ## Compile Probe Method
 
 The matrix below was tested in a detached temporary worktree from the current

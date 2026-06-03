@@ -1,5 +1,3 @@
-import org.gradle.api.tasks.GradleBuild
-
 plugins {
 	id 'base'
 	id 'net.fabricmc.fabric-loom-remap' apply false
@@ -63,11 +61,47 @@ def publicFeatureProjects = [
 		project(':inventorycatalogue')
 ]
 def releaseOutputDirectory = layout.buildDirectory.dir("release/${minecraft_version_profile_id}")
-def supportedMinecraftVersionProfiles = (findProperty('supported_minecraft_version_profiles') ?: minecraft_version_profile)
-		.toString()
-		.split(',')
-		.collect { it.trim() }
-		.findAll { !it.isEmpty() }
+def profileListProperty = { String key, String defaultValue ->
+	(findProperty(key) ?: defaultValue)
+			.toString()
+			.split(',')
+			.collect { it.trim() }
+			.findAll { !it.isEmpty() }
+}
+def supportedMinecraftVersionProfiles = profileListProperty('supported_minecraft_version_profiles', minecraft_version_profile)
+def candidateMinecraftVersionProfiles = profileListProperty('candidate_minecraft_version_profiles', '')
+def validationMinecraftVersionProfiles = (supportedMinecraftVersionProfiles + candidateMinecraftVersionProfiles).unique()
+def smokeTestRequiredMinecraftVersionProfiles = profileListProperty(
+		'smoke_test_required_minecraft_version_profiles',
+		supportedMinecraftVersionProfiles.join(',')
+)
+def gradleWrapperExecutable = System.getProperty('os.name').toLowerCase(Locale.ROOT).contains('windows')
+		? 'gradlew.bat'
+		: './gradlew'
+
+def loadVersionProfile = { String profileName ->
+	def profileFile = file("gradle/version-profiles/${profileName}.properties")
+	if (!profileFile.isFile()) {
+		throw new GradleException("Unknown Minecraft version profile '${profileName}'. Add ${profileFile}.")
+	}
+	def profile = new Properties()
+	profileFile.withInputStream { profile.load(it) }
+	return profile
+}
+
+def profileIdFor = { String profileName, Properties profile ->
+	def value = profile.getProperty('profile_id')
+	return value != null && !value.isBlank() ? value.trim() : profileName
+}
+
+def profileGameVersionsFor = { Properties profile ->
+	def selectedVersion = profile.getProperty('minecraft_version')
+	def value = profile.getProperty('modrinth_game_versions') ?: selectedVersion
+	return value.toString()
+			.split(',')
+			.collect { it.trim() }
+			.findAll { !it.isEmpty() }
+}
 
 subprojects {
 	apply plugin: 'net.fabricmc.fabric-loom-remap'
@@ -161,7 +195,7 @@ tasks.register('collectReleaseJars', Copy) {
 
 tasks.register('verifyReleaseJars') {
 	group = 'verification'
-	description = 'Verifies public release jars embed the remapped Core jar.'
+	description = 'Verifies public release jars embed the remapped Core jar and expected metadata/assets.'
 	dependsOn tasks.named('collectReleaseJars')
 
 	doLast {
@@ -212,6 +246,72 @@ tasks.register('verifyReleaseJars') {
 	}
 }
 
+tasks.register('verifySmokeTestMatrix') {
+	group = 'verification'
+	description = 'Verifies supported profiles have passing smoke-test records and candidate profiles are tracked.'
+
+	doLast {
+		def smokeFile = file('gradle/smoke-tests.json')
+		if (!smokeFile.isFile()) {
+			throw new GradleException("Missing smoke-test matrix: ${smokeFile}")
+		}
+
+		def smokeMatrix = new groovy.json.JsonSlurper().parse(smokeFile)
+		def profilesNode = smokeMatrix.profiles ?: [:]
+		def validStatuses = ['pass', 'pending', 'fail'] as Set
+
+		smokeTestRequiredMinecraftVersionProfiles.each { profileName ->
+			def profile = loadVersionProfile(profileName)
+			def profileId = profileIdFor(profileName, profile)
+			def smokeProfile = profilesNode[profileId]
+			if (!smokeProfile) {
+				throw new GradleException("Smoke-test matrix is missing required profile '${profileId}'.")
+			}
+
+			profileGameVersionsFor(profile).each { gameVersion ->
+				def result = smokeProfile.game_versions ? smokeProfile.game_versions[gameVersion] : null
+				if (!result) {
+					throw new GradleException("Smoke-test matrix is missing required ${profileId} / ${gameVersion}.")
+				}
+				if (!validStatuses.contains(result.status)) {
+					throw new GradleException("Smoke-test matrix has invalid status '${result.status}' for ${profileId} / ${gameVersion}.")
+				}
+				if (result.status != 'pass') {
+					throw new GradleException("Supported profile '${profileId}' cannot publish ${gameVersion}; smoke status is '${result.status}'.")
+				}
+				if (!result.tested_at || !result.method) {
+					throw new GradleException("Passing smoke record for ${profileId} / ${gameVersion} must include tested_at and method.")
+				}
+			}
+		}
+
+		candidateMinecraftVersionProfiles.each { profileName ->
+			def profile = loadVersionProfile(profileName)
+			def profileId = profileIdFor(profileName, profile)
+			def smokeProfile = profilesNode[profileId]
+			if (!smokeProfile) {
+				throw new GradleException("Smoke-test matrix is missing candidate profile '${profileId}'. Add pending records before CI validation.")
+			}
+
+			profileGameVersionsFor(profile).each { gameVersion ->
+				def result = smokeProfile.game_versions ? smokeProfile.game_versions[gameVersion] : null
+				if (!result) {
+					throw new GradleException("Smoke-test matrix is missing candidate ${profileId} / ${gameVersion}. Add a pending/pass/fail record.")
+				}
+				if (!validStatuses.contains(result.status)) {
+					throw new GradleException("Smoke-test matrix has invalid status '${result.status}' for ${profileId} / ${gameVersion}.")
+				}
+				if (result.status == 'pass' && (!result.tested_at || !result.method)) {
+					throw new GradleException("Passing smoke record for ${profileId} / ${gameVersion} must include tested_at and method.")
+				}
+				if (result.status != 'pass') {
+					println "Candidate profile '${profileId}' for Minecraft ${gameVersion} is tracked as '${result.status}' and remains non-publishable."
+				}
+			}
+		}
+	}
+}
+
 tasks.register('printVersionProfile') {
 	group = 'help'
 	description = 'Prints the active Minecraft/Fabric build profile.'
@@ -239,15 +339,55 @@ tasks.register('buildAllMods') {
 	dependsOn tasks.named('verifyReleaseJars')
 }
 
-def versionBuildTasks = supportedMinecraftVersionProfiles.collect { profile ->
-	def taskName = "buildMinecraft${profile.replaceAll(/[^A-Za-z0-9]/, '_')}"
-	tasks.register(taskName, GradleBuild) {
-		group = 'build'
-		description = "Builds all mod jars for Minecraft version profile ${profile}."
-		tasks = ['buildAllMods']
-		startParameter.projectProperties = new LinkedHashMap<>(gradle.startParameter.projectProperties)
-		startParameter.projectProperties.put('minecraft_version_profile', profile)
+def registerProfileBuildTasks = { List<String> profiles, String taskPrefix, String taskGroup, String descriptionPrefix ->
+	def previousTask = null
+	profiles.collect { profile ->
+		def taskName = "${taskPrefix}${profile.replaceAll(/[^A-Za-z0-9]/, '_')}"
+		def taskProvider = tasks.register(taskName, Exec) {
+			group = taskGroup
+			description = "${descriptionPrefix} ${profile}."
+			commandLine gradleWrapperExecutable,
+					'buildAllMods',
+					"-Pminecraft_version_profile=${profile}",
+					'--no-daemon',
+					'--console=plain'
+		}
+		if (previousTask != null) {
+			def predecessor = previousTask
+			taskProvider.configure {
+				mustRunAfter predecessor
+			}
+		}
+		previousTask = taskProvider
+		return taskProvider
 	}
+}
+
+def versionBuildTasks = registerProfileBuildTasks(
+		supportedMinecraftVersionProfiles,
+		'buildMinecraft',
+		'build',
+		'Builds all mod jars for supported Minecraft version profile'
+)
+
+def validationBuildTasks = registerProfileBuildTasks(
+		validationMinecraftVersionProfiles,
+		'validateMinecraft',
+		'verification',
+		'Builds all mod jars for CI validation Minecraft version profile'
+)
+
+tasks.register('buildValidationVersions') {
+	group = 'verification'
+	description = 'Builds every supported and candidate Minecraft version profile used by CI validation.'
+	dependsOn validationBuildTasks
+}
+
+tasks.register('ciValidation') {
+	group = 'verification'
+	description = 'Runs CI validation across supported and candidate version profiles.'
+	dependsOn tasks.named('buildValidationVersions')
+	dependsOn tasks.named('verifySmokeTestMatrix')
 }
 
 tasks.register('buildAllVersions') {
@@ -262,4 +402,5 @@ tasks.named('build') {
 
 tasks.named('check') {
 	dependsOn tasks.named('verifyReleaseJars')
+	dependsOn tasks.named('verifySmokeTestMatrix')
 }

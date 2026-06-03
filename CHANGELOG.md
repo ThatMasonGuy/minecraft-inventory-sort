@@ -27,6 +27,8 @@ All notable project changes will be documented here.
 - Added separate public mod icon assets for Inventory Sort, Inventory Search,
   and Inventory Catalogue, and wired each module's Fabric metadata to its own
   icon.
+- Added CI validation tasks for supported and candidate Minecraft profiles,
+  including a smoke-test matrix gate for publishable profiles.
 - Added a `1.21.9-1.21.10` candidate compatibility profile that compiles and
   builds release jars with range metadata, pending launcher smoke testing before
   Modrinth listing.
@@ -47,6 +49,8 @@ All notable project changes will be documented here.
 - Corrected the Fabric metadata icon path to use the checked-in `assets/inventory-sort/icon.png` asset.
 - `verifyReleaseJars` now checks that each public jar's declared icon path is
   present in the packaged jar.
+- GitHub Actions now runs `ciValidation`, building both supported and candidate
+  profile artifacts while keeping pending smoke tests out of the publishable set.
 - Fixed the first `1.21.9-1.21.10` compile blockers by adapting dimension id
   access and avoiding version-specific minecart entity class imports in shared
   identity code.

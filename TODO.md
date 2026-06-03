@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: split module icons wired for public feature jars
+Current checkpoint: Step 8 CI validation and smoke-test matrix foundation
 
 ## Project Workflow
 
@@ -33,6 +33,30 @@ Current checkpoint: split module icons wired for public feature jars
 - Core no longer registers a public `/inventorysort` command root.
 
 ## Recently Fixed
+
+-19. CI validation and smoke-test matrix foundation (unreleased):
+   - Added `candidate_minecraft_version_profiles` so CI can build candidate
+     profiles without marking them publishable.
+   - Added `buildValidationVersions`, which builds every supported and candidate
+     profile sequentially to avoid Loom cache/output races.
+   - Added `ciValidation`, the GitHub Actions entrypoint for Step 8 validation.
+   - Added `verifySmokeTestMatrix`, which blocks supported/publishable profiles
+     unless every listed `modrinth_game_versions` entry has a passing smoke
+     record.
+   - Added `gradle/smoke-tests.json` with the tested `1.21.11` release target
+     recorded as `pass`, and the `1.21.9-1.21.10` candidate versions recorded
+     as `pending`.
+   - Added `gradle/smoke-tests.md` documenting how smoke statuses promote a
+     candidate profile into a supported profile.
+   - Updated `.github/workflows/build.yml` to run `./gradlew ciValidation`
+     instead of the single-profile `build` task.
+   - This gives Step 9 a gate: Modrinth automation should only read/publish
+     profiles from `supported_minecraft_version_profiles`, which must pass the
+     smoke matrix check.
+   - Verified `.\gradlew.bat ciValidation`; it builds both `1.21.11` and
+     `1.21.9-1.21.10` release folders and reports the grouped candidate as
+     pending/non-publishable.
+   - Next: loop back to Step 7 and launcher smoke-test `1.21.9-1.21.10`.
 
 -18. Split module icon assets (unreleased):
    - Moved the dropped public mod icon images into
@@ -499,8 +523,12 @@ depend on Core; Catalogue and Search both need Core's identity/namespace/event l
      `modrinth_game_versions`; only those passing versions may be published.
    - CI should produce build artifacts grouped by profile/range so manual testing
      and Modrinth upload metadata stay aligned.
-   - Current status: NOT STARTED. This should be implemented before automated
-     Modrinth upload so publishing cannot get ahead of validation.
+   - Current status: IN PROGRESS. `ciValidation` now builds supported and
+     candidate profiles, release jar verification checks Core nesting,
+     Minecraft/Java metadata, and icons, and `verifySmokeTestMatrix` prevents
+     supported/publishable profiles from missing smoke-test pass records.
+     Candidate profiles are tracked separately and may remain pending while
+     Step 7 continues.
 9. Configure Modrinth publishing:
    - Give each public feature mod its own Modrinth project id and upload metadata.
    - Publish the correct jar, Minecraft version, loader, dependencies, and

@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "profiles": {
+    "1.21.11": {
+      "profile_id": "1.21.11",
+      "game_versions": {
+        "1.21.11": {
+          "status": "pass",
+          "tested_at": "2026-06-03",
+          "method": "manual normal-launcher smoke test",
+          "notes": "Public release jars launched successfully as Sort-only, Search-only, Catalogue-only, Sort+Search, and all-three installs. Search+Catalogue was not separately tested."
+        }
+      }
+    },
+    "1.21.9-1.21.10": {
+      "profile_id": "1.21.9-1.21.10",
+      "game_versions": {
+        "1.21.9": {
+          "status": "pending",
+          "method": "not yet launch-tested",
+          "notes": "Candidate profile compiles and builds release jars, but this Minecraft version still needs normal launcher smoke testing."
+        },
+        "1.21.10": {
+          "status": "pending",
+          "method": "not yet launch-tested",
+          "notes": "Candidate profile compiles and builds release jars, but this Minecraft version still needs normal launcher smoke testing."
+        }
+      }
+    }
+  }
+}
