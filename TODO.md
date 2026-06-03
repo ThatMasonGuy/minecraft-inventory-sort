@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: Minecraft 26.x Core GUI/rendering abstraction complete
+Current checkpoint: Minecraft 26.x Fabric API event/command update complete
 
 ## Project Workflow
 
@@ -36,6 +36,24 @@ Current checkpoint: Minecraft 26.x Core GUI/rendering abstraction complete
 - Core no longer registers a public `/inventorysort` command root.
 
 ## Recently Fixed
+
+-34. Minecraft `26.x` Fabric API event/command update verification (unreleased):
+   - Audited direct Fabric command/HUD API usage after the Core helper and
+     rendering passes.
+   - Confirmed `ClientCommandManager` is now isolated to `1.20.x`/`1.21.x`
+     `ClientCommandCompat` overlays, while `26.x` overlays use
+     `ClientCommands`.
+   - Confirmed `HudRenderCallback` is now isolated to `1.20.x`/`1.21.x`
+     `HudCompat` overlays, while `26.x` overlays use the HUD element registry.
+   - Confirmed shared `ClientCommandRegistrationCallback` and
+     `ClientTickEvents` registrations remain available in the checked `26.x`
+     Fabric API jars, so no additional wrapper is required for this step.
+   - Verified default `.\gradlew.bat buildAllMods --no-daemon --console=plain`
+     still passes.
+   - Verified the `26.x` Core compile boundary remains the planned
+     `ClickType` / `ContainerInput` invoker work rather than command, HUD, or
+     lifecycle event API drift.
+   - Next step is the `26.x` container/mixin input update.
 
 -33. Minecraft `26.x` Core GUI/rendering abstraction (unreleased):
    - Added a shared `InventorySortDrawContext` interface so Core drawing logic no
@@ -919,8 +937,10 @@ Forward tasks:
    - Replace or wrap `HudRenderCallback` with the `26.x` HUD element registry.
    - Replace or wrap `ClientCommandManager` with `26.x` `ClientCommands`.
    - Keep command bodies/shared handlers version-independent.
-   - Current status: DONE for Core. Command builder calls are wrapped with
-     `ClientCommandCompat`, and HUD registration is wrapped with `HudCompat`.
+   - Current status: DONE. Command builder calls are wrapped with
+     `ClientCommandCompat`, HUD registration is wrapped with `HudCompat`, and
+     shared command-registration/tick-event callbacks still exist in the checked
+     `26.x` Fabric API jars.
 6. Container/mixin input updates:
    - Port `ClickType` invokers and slot-click mixins to `26.x`
      `ContainerInput`.

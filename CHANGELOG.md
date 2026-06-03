@@ -20,6 +20,10 @@ All notable project changes will be documented here.
   screens/buttons use the extraction lifecycle. Focused `26.1.2` and
   `26.2-pre-3` Core compile probes now stop only at the planned
   `ClickType`/`ContainerInput` invoker work.
+- Verified the Minecraft `26.x` Fabric API event/command update step:
+  command-builder calls are behind `ClientCommandCompat`, HUD registration is
+  behind `HudCompat`, and shared command-registration/tick-event callbacks still
+  exist in the checked `26.x` Fabric API jars.
 - Added profile-selected remap vs non-remap build plumbing for Minecraft
   `26.x`: `unobfuscated_minecraft=true` profiles now use
   `net.fabricmc.fabric-loom`, normal `implementation` dependencies, plain `jar`
