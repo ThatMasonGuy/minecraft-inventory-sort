@@ -25,6 +25,9 @@ All notable project changes will be documented here.
   rebuilt the local release artifacts for all eight groups, and verified the
   Modrinth dry-run plan contains 24 uploads across InvSort, InvSearch, and
   InvCatalogue.
+- Published the unified `3.1.1` release through the guarded GitHub Actions
+  Modrinth workflow, uploading all 24 listed versions after the full smoke
+  matrix passed.
 - Added Java 17 toolchain discovery and GitHub Actions setup alongside Java 21
   and Java 25 so the full `3.1.1` publish matrix can build locally and in the
   guarded Modrinth workflow.

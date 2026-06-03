@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: Unified Minecraft 1.20.x/1.21.x/26.x 3.1.1 release locally verified; publish retry pending
+Current checkpoint: Unified Minecraft 1.20.x/1.21.x/26.x 3.1.1 release published
 
 ## Project Workflow
 
@@ -73,9 +73,11 @@ Current checkpoint: Unified Minecraft 1.20.x/1.21.x/26.x 3.1.1 release locally v
    - Inspected representative packaged release jars and confirmed Mixin configs
      now emit `JAVA_17` for `1.20-1.20.4`, `JAVA_21` for the later
      `1.20.x`/`1.21.x` lanes, and `JAVA_25` for the `26.x` lanes.
-   - Next step: push to GitHub and trigger the guarded Modrinth publish
-     workflow with `dry_run=false`, `version_type=release`,
+   - Pushed commit `74ebd4a` and reran the guarded GitHub Actions Modrinth
+     publish workflow with `dry_run=false`, `version_type=release`,
      `requested_status=listed`, and `gradle_java_version=25`.
+   - Workflow run `26896650032` passed in GitHub Actions after the full smoke
+     matrix and uploaded all 24 listed `3.1.1` Modrinth versions.
 
 -41. Minecraft `26.x` launch-crash hotfix (unreleased):
    - Investigated a real Minecraft `26.1.2` launch crash from the published
