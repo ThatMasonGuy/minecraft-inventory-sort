@@ -41,6 +41,10 @@ Examples of major boundaries for this project:
   one profile per exact patch version. A profile should compile one jar from one
   anchor Minecraft version, list every Minecraft version that exact jar has passed
   smoke testing on, and publish only those tested game versions to Modrinth.
+- For the Minecraft 26.x lane, keep `26.1.2.properties` as the compile anchor
+  for the grouped `26.1-26.1.2` candidate jar, with `26.1.properties` and
+  `26.1.1.properties` used only as exact smoke runtimes. Keep `26.2-pre-3` exact
+  until newer 26.2 release metadata proves a broader range.
 - Add automated CI validation before Modrinth automation: compile/build checks,
   release jar metadata checks, and launcher smoke tests for every Minecraft version
   claimed by a compatibility-group profile.

@@ -6,6 +6,11 @@ All notable project changes will be documented here.
 
 ### Changed
 
+- Researched and configured the Minecraft `26.x` candidate range plan before
+  smoke testing: `26.1.2` now builds one grouped `26.1-26.1.2` candidate jar
+  with exact `26.1`, `26.1.1`, and `26.1.2` smoke runtime profiles, while
+  `26.2-pre-3` remains an exact provisional candidate until later 26.2 metadata
+  supports a wider range.
 - Added Java toolchain handling and manual CI support for Minecraft `26.x`
   migration work: compile/client-run tasks now request the active profile's
   `java_version`, GitHub Actions has a focused Java 25 compatibility-validation

@@ -12,7 +12,7 @@ The default profile is configured in `gradle.properties`:
 ```properties
 minecraft_version_profile=1.21.11
 supported_minecraft_version_profiles=1.21.11,1.21.9-1.21.10,1.21.6-1.21.8,1.21-1.21.5,1.20.5-1.20.6,1.20-1.20.4
-candidate_minecraft_version_profiles=
+candidate_minecraft_version_profiles=26.1.2,26.2-pre-3
 ```
 
 Useful commands:
@@ -23,6 +23,7 @@ Useful commands:
 .\gradlew.bat buildAllMods "-Pminecraft_version_profile=1.21.9-1.21.10"
 .\gradlew.bat buildAllMods "-Pminecraft_version_profile=1.20-1.20.4"
 .\gradlew.bat buildAllMods "-Pminecraft_version_profile=26.1.2"
+.\gradlew.bat smokeTestSelectedClients "-Pinventorysort_smoke_profiles=26.1-26.1.2"
 .\gradlew.bat buildAllVersions
 .\gradlew.bat ciValidation
 ```
@@ -76,6 +77,19 @@ Exact runtime-only profiles may also exist for smoke testing. For example,
 `smokeTestValidationClients`, but they are not release profiles and should not
 be added to `supported_minecraft_version_profiles` or
 `candidate_minecraft_version_profiles`.
+
+Current 26.x candidate range plan:
+
+- `26.1.2.properties` is the compile-anchor profile for the grouped
+  `26.1-26.1.2` candidate jar. Fabric API `0.150.0+26.1.2` declares
+  compatibility with Minecraft `26.1`, `26.1.1`, and `26.1.2`, so this is the
+  broad candidate range to smoke-test before promotion.
+- `26.1.properties` and `26.1.1.properties` are exact runtime-only smoke
+  profiles. They use the `26.1.2` compatibility overlay and the same Fabric API
+  artifact so the grouped candidate jar can be launched on every listed runtime.
+- `26.2-pre-3.properties` stays exact and provisional. Current Fabric API
+  `26.2` pre-release artifacts are scoped to individual pre-releases, and
+  Minecraft `26.2` final is not available yet.
 
 Only add a profile to `supported_minecraft_version_profiles` after it compiles
 and launches cleanly. Current supported groups for `1.20.x` and `1.21.x`

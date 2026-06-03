@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: Minecraft 26.x feature compile passes complete
+Current checkpoint: Minecraft 26.x candidate range plan ready for smoke testing
 
 ## Project Workflow
 
@@ -36,6 +36,23 @@ Current checkpoint: Minecraft 26.x feature compile passes complete
 - Core no longer registers a public `/inventorysort` command root.
 
 ## Recently Fixed
+
+-38. Minecraft `26.x` candidate range research and smoke plan (unreleased):
+   - Checked current Modrinth/Fabric metadata before starting the `26.x` smoke
+     step.
+   - Found that Fabric API `0.150.0+26.1.2` declares Minecraft `26.1`,
+     `26.1.1`, and `26.1.2` support, so the `26.1.2` compile-anchor profile
+     now builds one grouped `26.1-26.1.2` candidate jar.
+   - Added exact runtime-only smoke profiles for `26.1` and `26.1.1`, both
+     using the `26.1.2` compat group and Fabric API artifact, so the grouped
+     candidate jar can be launch-tested on every listed runtime.
+   - Kept `26.2-pre-3` as an exact provisional candidate because current
+     Fabric API `26.2` pre-release artifacts are scoped to individual
+     pre-releases and Minecraft `26.2` final is not available yet.
+   - Added pending smoke records for `26.1`, `26.1.1`, `26.1.2`, and
+     `26.2-pre-3`, and added `26.1.2` plus `26.2-pre-3` to
+     `candidate_minecraft_version_profiles`.
+   - Next step is running and repairing the automated `26.x` smoke-test matrix.
 
 -37. Minecraft `26.x` Catalogue feature compile and candidate jar build pass (unreleased):
    - Verified Inventory Catalogue compiles without additional source shims on
@@ -1021,7 +1038,11 @@ Forward tasks:
    - Add pending/pass smoke records for exact `26.x` runtimes.
    - Extend the smoke launcher if `26.x` client launch semantics differ.
    - Run selected smoke tests first, then full candidate `ciValidation`.
-   - Current status: NEXT.
+   - Current status: READY. Candidate range research is complete. The planned
+     smoke matrix is one grouped `26.1-26.1.2` candidate jar launched on exact
+     runtimes `26.1`, `26.1.1`, and `26.1.2`, plus one exact
+     `26.2-pre-3` candidate jar launched on `26.2-pre-3`. All four records are
+     pending until automated smoke launches prove them.
 9. Publication promotion:
    - Keep `26.x` in `candidate_minecraft_version_profiles` until compile and
      smoke tests pass.
