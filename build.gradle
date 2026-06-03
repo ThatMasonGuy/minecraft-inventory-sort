@@ -205,6 +205,9 @@ tasks.register('verifyReleaseJars') {
 			if (fabricMetadata.depends.java != expectedJavaDependency) {
 				throw new GradleException("${releaseJar.name} declares Java dependency ${fabricMetadata.depends.java}, expected ${expectedJavaDependency}")
 			}
+			if (!fabricMetadata.icon || !entries.contains(fabricMetadata.icon.toString())) {
+				throw new GradleException("${releaseJar.name} declares missing icon ${fabricMetadata.icon}")
+			}
 		}
 	}
 }

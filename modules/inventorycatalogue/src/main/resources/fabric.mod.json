@@ -7,7 +7,7 @@
   "authors": ["Tempest Studios"],
   "contact": {},
   "license": "LGPL-3.0-only",
-  "icon": "assets/inventory-sort/icon.png",
+  "icon": "assets/inventory-sort/invcatalogue.jpg",
   "environment": "client",
   "entrypoints": {
     "client": ["tempeststudios.inventorysort.InventoryCatalogueClient"]

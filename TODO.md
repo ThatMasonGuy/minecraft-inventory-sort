@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: `2.6.3` + `1.21.9-1.21.10` compile/build candidate group
+Current checkpoint: split module icons wired for public feature jars
 
 ## Project Workflow
 
@@ -33,6 +33,19 @@ Current checkpoint: `2.6.3` + `1.21.9-1.21.10` compile/build candidate group
 - Core no longer registers a public `/inventorysort` command root.
 
 ## Recently Fixed
+
+-18. Split module icon assets (unreleased):
+   - Moved the dropped public mod icon images into
+     `src/main/resources/assets/inventory-sort/`.
+   - Inventory Sort now uses `assets/inventory-sort/invsort.jpg`.
+   - Inventory Search now uses `assets/inventory-sort/invsearch.jpg`.
+   - Inventory Catalogue now uses `assets/inventory-sort/invcatalogue.jpg`.
+   - The legacy root metadata follows the Sort icon; Core keeps the generic
+     shared icon because it is not a public standalone download.
+   - `verifyReleaseJars` now fails if a public jar declares an icon path that is
+     not packaged in the jar.
+   - Verified `.\gradlew.bat clean build` and inspected the `1.21.11` release
+     jars to confirm all public jars carry their own icon paths.
 
 -17. `1.21.9-1.21.10` compatibility candidate group (unreleased):
    - Re-probed `1.21.9` with the current adapter shape and confirmed the focused

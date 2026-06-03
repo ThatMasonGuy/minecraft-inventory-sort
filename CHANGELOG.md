@@ -24,6 +24,9 @@ All notable project changes will be documented here.
   `verifyReleaseJars` checks generated Fabric metadata against the active profile.
 - Added `src/compat/<compat_group>/` overlay wiring for version-specific API
   adapter sources.
+- Added separate public mod icon assets for Inventory Sort, Inventory Search,
+  and Inventory Catalogue, and wired each module's Fabric metadata to its own
+  icon.
 - Added a `1.21.9-1.21.10` candidate compatibility profile that compiles and
   builds release jars with range metadata, pending launcher smoke testing before
   Modrinth listing.
@@ -42,6 +45,8 @@ All notable project changes will be documented here.
 
 - Fixed split release jars embedding the development-namespaced Core jar, which could crash client entrypoints in normal launcher installs. Public jars now embed the remapped Core jar and `clean build` verifies this.
 - Corrected the Fabric metadata icon path to use the checked-in `assets/inventory-sort/icon.png` asset.
+- `verifyReleaseJars` now checks that each public jar's declared icon path is
+  present in the packaged jar.
 - Fixed the first `1.21.9-1.21.10` compile blockers by adapting dimension id
   access and avoiding version-specific minecart entity class imports in shared
   identity code.
