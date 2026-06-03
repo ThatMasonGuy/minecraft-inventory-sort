@@ -16,6 +16,43 @@ version entry for that file. Modrinth guidance also treats separate files for
 separate game versions as separate project versions rather than extra files on
 one upload.
 
+## Compatibility-Group Build Strategy
+
+Future multi-version support should use **release compatibility groups** rather
+than one build profile for every Minecraft patch version.
+
+A compatibility-group profile means:
+
+- compile one jar against a selected anchor Minecraft version
+- use a single compat source group for that API shape
+- declare the Fabric `minecraft` dependency range that the jar is intended to
+  support
+- list the exact Modrinth game versions that the same jar has passed smoke
+  testing on
+- collect release jars under a profile/range output folder instead of assuming
+  the output folder is just the anchor Minecraft version
+
+Example:
+
+```properties
+profile_id=1.21.6-1.21.11
+minecraft_version=1.21.11
+minecraft_dependency=>=1.21.6 <=1.21.11
+modrinth_game_versions=1.21.6,1.21.7,1.21.8,1.21.9,1.21.10,1.21.11
+compat_group=1.21_late
+loader_version=0.18.4
+loom_version=1.14-SNAPSHOT
+fabric_api_version=0.141.4+1.21.11
+java_version=21
+```
+
+The compile anchor only proves the jar builds against that version's APIs. Before
+listing a range on Modrinth, CI or manual validation must launch-test that exact
+jar on every Minecraft version listed in `modrinth_game_versions`.
+
+If an in-between version fails, split the range into smaller compatibility groups
+instead of publishing an untested or partially compatible range.
+
 ## Current Release Artifacts
 
 The current publish-ready artifacts in `build/release/1.21.11/` are:

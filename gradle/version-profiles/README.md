@@ -3,6 +3,10 @@
 Build profiles keep one source tree while letting Gradle swap the Minecraft,
 Fabric Loader, Fabric API, Loom, and Java target versions.
 
+Profiles should evolve into **release compatibility groups**. A profile is not
+necessarily one exact Minecraft patch version; it can represent one compiled jar
+that is tested and published for several compatible Minecraft versions.
+
 The default profile is configured in `gradle.properties`:
 
 ```properties
@@ -20,6 +24,28 @@ Useful commands:
 ```
 
 Release jars are collected under `build/release/<minecraft_version>/`.
+
+Future compatibility-group profiles should add these fields:
+
+```properties
+profile_id=1.21.6-1.21.11
+minecraft_version=1.21.11
+minecraft_dependency=>=1.21.6 <=1.21.11
+modrinth_game_versions=1.21.6,1.21.7,1.21.8,1.21.9,1.21.10,1.21.11
+compat_group=1.21_late
+```
+
+- `minecraft_version` is the compile anchor used by Loom and Mojang mappings.
+- `minecraft_dependency` is the Fabric Loader dependency range written into
+  `fabric.mod.json`.
+- `modrinth_game_versions` is the exact set of versions to publish for that jar.
+- `compat_group` selects any version-specific source overlay needed for that API
+  shape.
+- `profile_id` should be used for release output folders when it differs from
+  the compile anchor.
+
+Only list versions in `modrinth_game_versions` after that exact jar passes launch
+smoke testing on those versions.
 
 Only add a profile to `supported_minecraft_version_profiles` after it compiles
 and launches cleanly. Candidate 26.x profiles are present so migration work can

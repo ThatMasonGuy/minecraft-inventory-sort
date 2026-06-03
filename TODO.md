@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: `2.6.3` + compatibility matrix for Modrinth listings
+Current checkpoint: `2.6.3` + compatibility-group version strategy
 
 ## Project Workflow
 
@@ -33,6 +33,19 @@ Current checkpoint: `2.6.3` + compatibility matrix for Modrinth listings
 - Core no longer registers a public `/inventorysort` command root.
 
 ## Recently Fixed
+
+-14. Compatibility-group version strategy (unreleased):
+   - Documented that version profiles should become release compatibility groups,
+     not necessarily one profile per Minecraft patch version.
+   - A profile should compile one jar against an anchor Minecraft version, select
+     the appropriate compat source group, declare a Fabric Minecraft dependency
+     range, and list only the exact Modrinth game versions that jar has passed
+     smoke testing on.
+   - Planned release outputs should move toward profile/range folders such as
+     `build/release/1.21.6-1.21.11/` instead of assuming the output folder is
+     always the compile anchor version.
+   - Inserted CI validation as roadmap step 8 and moved Modrinth publishing
+     automation to step 9.
 
 -13. Compatibility matrix research (unreleased):
    - Added `COMPATIBILITY.md` with the current Minecraft compatibility probe
@@ -386,17 +399,37 @@ depend on Core; Catalogue and Search both need Core's identity/namespace/event l
    - Current status: DONE for the `1.21.11` split release jars.
 7. Add multi-version support:
    - Once the split is stable on the current target, compile the same modules
-     against newer Minecraft/Fabric/Loom targets for the v26 migration.
+     against compatibility-group profiles.
+   - Profiles should build one jar for a tested Minecraft version range, not
+     automatically one jar per patch version.
+   - Planned profile fields:
+     - `profile_id`: release/profile folder id such as `1.21.6-1.21.11`.
+     - `minecraft_version`: compile anchor used by Loom/mappings.
+     - `minecraft_dependency`: Fabric Loader dependency range for metadata.
+     - `modrinth_game_versions`: exact game versions to publish after smoke tests.
+     - `compat_group`: source overlay group for version-specific APIs.
    - Current status: STARTED. Gradle profile support is in place for the current
      release and candidate 26.x targets. Compatibility research confirms the
      current source only compiles as-is on `1.21.11`; older `1.21.x`, `1.20.x`,
      and `1.19.x` releases need source/API porting before Modrinth listings.
      Next blocker for the v26 lane is installing/running a Java 25 toolchain,
      then compiling a 26.x profile and fixing source/API breaks.
-8. Configure Modrinth publishing:
+8. Add CI validation before publishing:
+   - Add automated build verification for every supported compatibility-group
+     profile.
+   - Run unit tests where possible and keep `verifyReleaseJars` in the CI path.
+   - Add launcher smoke tests for every Minecraft version listed by a profile's
+     `modrinth_game_versions`; only those passing versions may be published.
+   - CI should produce build artifacts grouped by profile/range so manual testing
+     and Modrinth upload metadata stay aligned.
+   - Current status: NOT STARTED. This should be implemented before automated
+     Modrinth upload so publishing cannot get ahead of validation.
+9. Configure Modrinth publishing:
    - Give each public feature mod its own Modrinth project id and upload metadata.
    - Publish the correct jar, Minecraft version, loader, dependencies, and
      changelog for each target.
+   - Current status: NOT STARTED. This moved after CI validation so Modrinth
+     automation only uploads jars and game-version lists that have passed tests.
 
 ### Goes in Core (shared by 2+ features)
 

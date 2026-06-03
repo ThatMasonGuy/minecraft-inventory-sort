@@ -29,3 +29,10 @@ Examples of major boundaries for this project:
 - Keep user installation simple: each public feature mod should be installable on its own.
 - Shared Core code should be packaged so users do not need to download a separate Core mod manually.
 - Split the current single mod on the existing Minecraft target first, then port the split modules to newer Minecraft versions.
+- Treat Minecraft version profiles as release compatibility groups, not necessarily
+  one profile per exact patch version. A profile should compile one jar from one
+  anchor Minecraft version, list every Minecraft version that exact jar has passed
+  smoke testing on, and publish only those tested game versions to Modrinth.
+- Add automated CI validation before Modrinth automation: compile/build checks,
+  release jar metadata checks, and launcher smoke tests for every Minecraft version
+  claimed by a compatibility-group profile.
