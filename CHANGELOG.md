@@ -66,6 +66,9 @@ All notable project changes will be documented here.
   six compatibility groups and automated standalone/all-public smoke launches.
 - Published all 18 `3.0.0` compatibility-group versions through the guarded
   GitHub Actions Modrinth workflow with `requested_status=listed`.
+- Changed the automatic GitHub push/PR build to run the fast default-profile
+  `buildAllMods` task, leaving the expensive smoke matrix in the manual
+  Modrinth publish workflow before upload.
 - Moved target-specific custom button render hooks into `1.21.9-1.21.10` and
   `1.21.11` compat overlays while keeping the shared drawing logic in Core.
 - Added `COMPATIBILITY.md` with the Minecraft version probe matrix and Modrinth listing recommendation.
@@ -83,8 +86,8 @@ All notable project changes will be documented here.
 - Corrected the Fabric metadata icon path to use the checked-in `assets/inventory-sort/icon.png` asset.
 - `verifyReleaseJars` now checks that each public jar's declared icon path is
   present in the packaged jar.
-- GitHub Actions now runs `ciValidation`, building both supported and candidate
-  profile artifacts while keeping pending smoke tests out of the publishable set.
+- GitHub Actions publish validation still gates Modrinth uploads with supported
+  profile builds and smoke launches while normal push/PR builds stay fast.
 - Fixed the first `1.21.9-1.21.10` compile blockers by adapting dimension id
   access and avoiding version-specific minecart entity class imports in shared
   identity code.

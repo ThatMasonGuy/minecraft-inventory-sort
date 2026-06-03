@@ -1,7 +1,6 @@
-# Automatically build the project and run any configured tests for every push
-# and submitted pull request. This can help catch issues that only occur on
-# certain platforms or Java versions, and provides a first line of defence
-# against bad commits.
+# Automatically run a fast default-profile build for every push and submitted
+# pull request. The expensive multi-version smoke matrix runs in the manual
+# Modrinth publish workflow before upload.
 
 name: build
 on: [pull_request, push]
@@ -9,7 +8,7 @@ on: [pull_request, push]
 jobs:
   build:
     runs-on: ubuntu-24.04
-    timeout-minutes: 120
+    timeout-minutes: 30
     steps:
       - name: checkout repository
         uses: actions/checkout@v4
@@ -22,10 +21,8 @@ jobs:
           distribution: 'microsoft'
       - name: make gradle wrapper executable
         run: chmod +x ./gradlew
-      - name: install virtual display
-        run: sudo apt-get update && sudo apt-get install -y xvfb
-      - name: ci validation
-        run: ./gradlew ciValidation -Pinventorysort_smoke_xvfb=true --no-daemon --console=plain
+      - name: fast default-profile build
+        run: ./gradlew buildAllMods --no-daemon --console=plain
       - name: capture build artifacts
         uses: actions/upload-artifact@v4
         with:

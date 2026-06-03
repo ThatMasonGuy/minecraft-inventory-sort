@@ -19,8 +19,8 @@ not publishable.
 `smokeTestValidationClients` launches exact Minecraft runtimes with the packaged
 release jars for every supported and candidate profile. `smokeTestSupportedClients`
 launches the same install combinations for supported/publishable profiles only,
-which is the fast gate used before publishing. Each profile/game version is
-launched as:
+which is the gate used before publishing. Each profile/game version is launched
+as:
 
 - Inventory Sort only
 - Inventory Search only
@@ -29,9 +29,14 @@ launched as:
 
 The smoke launcher arms `InventorySortSmokeTest`, waits until the Minecraft
 client reaches the tick loop, logs `INVENTORYSORT_SMOKE_TEST_PASS`, and closes
-the client. On GitHub Actions, `ciValidation` runs these launches under `xvfb`.
-The full `1.20.x`/`1.21.x` candidate matrix is intentionally broad, so
-`ciValidation` can take close to an hour on a local machine.
+the client. On GitHub Actions, the manual Modrinth publish workflow runs these
+launches under `xvfb` before upload. The full `1.20.x`/`1.21.x` supported
+matrix is intentionally broad, so `ciValidation` or `publishValidation` can
+take close to an hour on a local machine.
+
+Normal push/PR builds intentionally run only `buildAllMods` for the default
+profile. Use local full smoke testing only when you specifically need it; the
+manual Modrinth publish workflow is the normal expensive release gate.
 
 Useful commands:
 
@@ -58,7 +63,8 @@ use `--no-daemon` by default; for local timing experiments, pass
 After a candidate profile passes client smoke testing on every version in
 `modrinth_game_versions`, update its records to `pass`. To make that profile
 publishable, move it from `candidate_minecraft_version_profiles` to
-`supported_minecraft_version_profiles`, then run `.\gradlew.bat ciValidation`.
+`supported_minecraft_version_profiles`, then run the manual Modrinth publish
+workflow or `.\gradlew.bat ciValidation` if you explicitly want local proof.
 
 For Linux/headless CI:
 

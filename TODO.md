@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: Step 9 3.0.0 listed Modrinth uploads complete; awaiting public review visibility
+Current checkpoint: Fast push/PR build workflow; full validation remains in Modrinth publish workflow
 
 ## Project Workflow
 
@@ -36,6 +36,18 @@ Current checkpoint: Step 9 3.0.0 listed Modrinth uploads complete; awaiting publ
 - Core no longer registers a public `/inventorysort` command root.
 
 ## Recently Fixed
+
+-27. Fast push/PR build workflow (unreleased):
+   - Changed the automatic GitHub `build` workflow from full `ciValidation` to
+     the faster default-profile `buildAllMods` task.
+   - Removed the push/PR workflow's `xvfb` install because the fast build does
+     not launch Minecraft clients.
+   - Kept the manual `modrinth publish` workflow as the expensive release gate:
+     it still runs `publishModrinth`/`publishValidation`, builds supported
+     profiles, smoke-launches the supported matrix, and only uploads after that
+     passes.
+   - Updated README and Gradle docs so the intended workflow is local fast
+     build -> commit/push -> manual Modrinth workflow validates and publishes.
 
 -26. Final `3.0.0` broad Modrinth release sweep (unreleased):
    - Bumped `mod_version` to `3.0.0`.

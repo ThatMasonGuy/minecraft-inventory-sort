@@ -86,11 +86,13 @@ profiles:
 ./gradlew ciValidation
 ```
 
-`buildAllVersions` builds only supported/publishable profiles. `ciValidation`
-also builds candidate profiles, verifies release metadata, checks
+`buildAllMods` is the normal local and push/PR sanity check. It builds the
+default profile, collects the public jars, and verifies release jar metadata.
+`buildAllVersions` builds supported/publishable profiles. `ciValidation` also
+builds candidate profiles, verifies release metadata, checks
 `gradle/smoke-tests.json`, and launches packaged release jars through the
-automated smoke matrix. `publishValidation` is the faster supported-only gate
-for release publishing.
+automated smoke matrix. The manual Modrinth publish workflow runs the expensive
+publish gate before upload, so local development can stay on faster builds.
 
 Modrinth publishing is configured through supported profiles only:
 

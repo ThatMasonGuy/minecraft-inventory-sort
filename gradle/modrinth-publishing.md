@@ -105,6 +105,11 @@ GitHub Actions has a manual `modrinth publish` workflow. Its dry-run mode does
 not require `MODRINTH_TOKEN`; real publishing requires the repository secret
 `MODRINTH_TOKEN`.
 
+For normal development, run local fast builds such as `buildAllMods`, commit,
+push, and then use the manual `modrinth publish` workflow when ready to release.
+The regular push/PR workflow is intentionally quick; the Modrinth workflow runs
+the expensive supported-profile build and smoke gate before upload.
+
 ## API References
 
 - Modrinth API overview: `https://docs.modrinth.com/api/`
