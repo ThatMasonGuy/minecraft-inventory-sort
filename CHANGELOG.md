@@ -64,6 +64,8 @@ All notable project changes will be documented here.
   matrix to cover Minecraft `1.20.x` and `1.21.x` compatibility groups.
 - Verified the full `3.0.0` supported matrix with `ciValidation`, including all
   six compatibility groups and automated standalone/all-public smoke launches.
+- Published all 18 `3.0.0` compatibility-group versions through the guarded
+  GitHub Actions Modrinth workflow with `requested_status=listed`.
 - Moved target-specific custom button render hooks into `1.21.9-1.21.10` and
   `1.21.11` compat overlays while keeping the shared drawing logic in Core.
 - Added `COMPATIBILITY.md` with the Minecraft version probe matrix and Modrinth listing recommendation.

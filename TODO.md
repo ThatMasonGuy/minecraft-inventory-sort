@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: Step 9 final 3.0.0 broad Modrinth release sweep
+Current checkpoint: Step 9 3.0.0 listed Modrinth uploads complete; awaiting public review visibility
 
 ## Project Workflow
 
@@ -51,8 +51,38 @@ Current checkpoint: Step 9 final 3.0.0 broad Modrinth release sweep
    - Verified `.\gradlew.bat ciValidation --no-daemon --console=plain`; the
      full supported matrix passed in 43m 17s across all six compatibility
      groups and all automated standalone/all-public smoke launches.
-   - Next: commit and push the release sweep, then publish all 3.0.0
-     compatibility-group versions as listed Modrinth releases.
+   - Committed and pushed the release sweep as `933925b`.
+   - Triggered GitHub Actions run `26875020709` (`modrinth publish`) with
+     `dry_run=false`, `version_type=release`, and `requested_status=listed`.
+     The workflow passed in 49m52s and uploaded all 18 compatibility-group
+     versions:
+     - InvSort:
+       - `3.0.0+mc1.21.11`: `v5sFbix1`
+       - `3.0.0+mc1.21.9-1.21.10`: `jXDZPzIX`
+       - `3.0.0+mc1.21.6-1.21.8`: `og828QKS`
+       - `3.0.0+mc1.21-1.21.5`: `JJsp2SDN`
+       - `3.0.0+mc1.20.5-1.20.6`: `6QWi2YRO`
+       - `3.0.0+mc1.20-1.20.4`: `JtpNe6aB`
+     - InvSearch:
+       - `3.0.0+mc1.21.11`: `3a2ShEXs`
+       - `3.0.0+mc1.21.9-1.21.10`: `wl0CFxZw`
+       - `3.0.0+mc1.21.6-1.21.8`: `CJq6pDbY`
+       - `3.0.0+mc1.21-1.21.5`: `8ylLOamo`
+       - `3.0.0+mc1.20.5-1.20.6`: `ZK09KjA9`
+       - `3.0.0+mc1.20-1.20.4`: `So21qEo1`
+     - InvCatalogue:
+       - `3.0.0+mc1.21.11`: `oWpB46Ap`
+       - `3.0.0+mc1.21.9-1.21.10`: `DMUYgcx2`
+       - `3.0.0+mc1.21.6-1.21.8`: `vG5mdvQA`
+       - `3.0.0+mc1.21-1.21.5`: `i8J2pIat`
+       - `3.0.0+mc1.20.5-1.20.6`: `XhGUQKCH`
+       - `3.0.0+mc1.20-1.20.4`: `w8j4OR6w`
+   - Public unauthenticated Modrinth API lookups for the uploaded project/version
+     ids returned 404 immediately after upload, consistent with projects still
+     awaiting Modrinth review/public visibility rather than a workflow upload
+     failure.
+   - Next: watch Modrinth review/public visibility, then begin the v26 migration
+     lane when ready.
 
 -25. Per-release Modrinth notes (unreleased):
    - Changed Modrinth publish automation to read release notes from
