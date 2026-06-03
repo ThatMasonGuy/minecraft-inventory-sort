@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: Minecraft 26.x Fabric API event/command update complete
+Current checkpoint: Minecraft 26.x container/mixin input update complete
 
 ## Project Workflow
 
@@ -36,6 +36,30 @@ Current checkpoint: Minecraft 26.x Fabric API event/command update complete
 - Core no longer registers a public `/inventorysort` command root.
 
 ## Recently Fixed
+
+-35. Minecraft `26.x` container/mixin input update (unreleased):
+   - Added a shared `ContainerClickCompat` adapter so Sort behavior asks for
+     pickup/quick-move actions without importing Minecraft's click enum directly.
+   - Kept `1.20.x`/`1.21.x` on `ClickType` while adding `26.1.2` and
+     `26.2-pre-3` overlays that translate the same Sort actions to
+     `ContainerInput.PICKUP` and `ContainerInput.QUICK_MOVE`.
+   - Added `26.x` `AbstractContainerScreenInvoker` and
+     `AbstractContainerMenuInvoker` overlays so Core no longer compiles the old
+     `ClickType` invoker signatures for candidate profiles.
+   - Added `26.x` Sort `HandledScreenMixin` overlays for the
+     `extractRenderState` lifecycle after `render(GuiGraphics, ...)` moved out
+     of the container-screen API.
+   - Added `26.x` Sort item-stack compatibility overlays and fixed the
+     non-remap Core dependency shape so feature modules compile against Core's
+     actual client jar instead of its empty main classes directory.
+   - Verified default `.\gradlew.bat buildAllMods --no-daemon --console=plain`
+     still passes.
+   - Verified both `26.1.2` and `26.2-pre-3`
+     `:inventorysort-core:compileClientJava` pass.
+   - Verified both `26.1.2` and `26.2-pre-3`
+     `:inventorysort:compileClientJava` pass.
+   - Next step is the `26.x` feature compile pass, starting with Search and then
+     Catalogue.
 
 -34. Minecraft `26.x` Fabric API event/command update verification (unreleased):
    - Audited direct Fabric command/HUD API usage after the Core helper and
@@ -947,11 +971,19 @@ Forward tasks:
    - Re-check `AbstractContainerScreen` render/extract method names and
      recipe-book integration.
    - Keep sort/search/catalogue behavior code out of version-specific mixins.
+   - Current status: DONE for Core and Sort compile. Sort click behavior now
+     calls a version-selected `ContainerClickCompat`, `26.x` invokers use
+     `ContainerInput`, and `26.x` Sort button mixins hook
+     `extractRenderState`. Default `buildAllMods` still passes, and
+     `26.1.2`/`26.2-pre-3` Core plus Sort compile probes pass.
 7. Feature compile passes:
    - After Core compiles, compile Sort.
    - Then compile Search.
    - Then compile Catalogue.
    - Treat each feature pass as its own checkpoint with TODO/CHANGELOG/commit.
+   - Current status: PARTIAL. Sort now compiles on both checked `26.x`
+     candidate profiles as part of the container/mixin input pass. Search and
+     Catalogue remain the next feature compile checkpoints.
 8. `26.x` smoke testing:
    - Add pending/pass smoke records for exact `26.x` runtimes.
    - Extend the smoke launcher if `26.x` client launch semantics differ.

@@ -5,10 +5,10 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.BundleItem;
 import net.minecraft.world.item.ItemStack;
+import tempeststudios.inventorysort.compat.sort.ContainerClickCompat;
 import tempeststudios.inventorysort.compat.sort.ItemStackCompat;
 import tempeststudios.inventorysort.mixin.AbstractContainerScreenInvoker;
 
@@ -237,7 +237,7 @@ public class InventorySorter {
 	}
 
 	private static void quickMove(AbstractContainerScreenInvoker invoker, Slot slot) {
-		invoker.invokeSlotClicked(slot, slot.index, 0, ClickType.QUICK_MOVE);
+		ContainerClickCompat.quickMove(invoker, slot);
 	}
 
 	private static List<Slot> getContainerSlots(AbstractContainerMenu menu, AbstractContainerScreen<?> screen) {
@@ -773,7 +773,7 @@ public class InventorySorter {
 	}
 
 	private static void click(AbstractContainerScreenInvoker invoker, Slot slot) {
-		invoker.invokeSlotClicked(slot, slot.index, 0, ClickType.PICKUP);
+		ContainerClickCompat.pickup(invoker, slot);
 	}
 
 	private static void swap(AbstractContainerScreenInvoker invoker, Slot a, Slot b) {

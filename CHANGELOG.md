@@ -24,6 +24,12 @@ All notable project changes will be documented here.
   command-builder calls are behind `ClientCommandCompat`, HUD registration is
   behind `HudCompat`, and shared command-registration/tick-event callbacks still
   exist in the checked `26.x` Fabric API jars.
+- Added Minecraft `26.x` container/mixin input adapters: shared Sort logic now
+  calls a version-selected `ContainerClickCompat`, existing `1.20.x`/`1.21.x`
+  builds keep `ClickType`, and `26.1.2`/`26.2-pre-3` overlays use
+  `ContainerInput`. The 26.x Sort button mixin now hooks `extractRenderState`,
+  and feature modules compile against Core's client jar in the non-remap lane.
+  Focused `26.1.2` and `26.2-pre-3` Core plus Sort compile probes now pass.
 - Added profile-selected remap vs non-remap build plumbing for Minecraft
   `26.x`: `unobfuscated_minecraft=true` profiles now use
   `net.fabricmc.fabric-loom`, normal `implementation` dependencies, plain `jar`

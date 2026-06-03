@@ -52,7 +52,7 @@ ext.fabric_dependency_configuration = unobfuscated_minecraft ? 'implementation' 
 ext.release_jar_task_name = unobfuscated_minecraft ? 'jar' : 'remapJar'
 ext.coreProjectDependency = {
 	if (rootProject.unobfuscated_minecraft) {
-		return rootProject.dependencies.project(path: ':inventorysort-core')
+		return rootProject.dependencies.project(path: ':inventorysort-core', configuration: 'archives')
 	}
 	return rootProject.dependencies.project(path: ':inventorysort-core', configuration: 'namedElements')
 }
