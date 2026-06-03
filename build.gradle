@@ -211,6 +211,23 @@ subprojects {
 				})
 			}
 		}
+
+		tasks.withType(Jar).matching { it.name.endsWith('sourcesJar') }.configureEach { task ->
+			if (!rootProject.excluded_shared_client_sources.isEmpty()) {
+				def sharedClientRoot = rootProject.file('src/client/java').absolutePath.replace('\\', '/') + '/'
+				def excludedSources = rootProject.excluded_shared_client_sources as Set
+				task.eachFile { details ->
+					def sourcePath = details.file.absolutePath.replace('\\', '/')
+					if (!sourcePath.startsWith(sharedClientRoot)) {
+						return
+					}
+					def relativePath = sourcePath.substring(sharedClientRoot.length())
+					if (excludedSources.contains(relativePath)) {
+						details.exclude()
+					}
+				}
+			}
+		}
 	}
 
 	java {

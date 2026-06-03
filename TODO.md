@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: Minecraft 26.x Search feature compile pass complete
+Current checkpoint: Minecraft 26.x feature compile passes complete
 
 ## Project Workflow
 
@@ -36,6 +36,23 @@ Current checkpoint: Minecraft 26.x Search feature compile pass complete
 - Core no longer registers a public `/inventorysort` command root.
 
 ## Recently Fixed
+
+-37. Minecraft `26.x` Catalogue feature compile and candidate jar build pass (unreleased):
+   - Verified Inventory Catalogue compiles without additional source shims on
+     both checked `26.x` candidate profiles.
+   - Extended profile-driven shared-source exclusions to source jar tasks so
+     26.x overlays such as `SearchModalScreen`, `SearchButtonMixin`, and
+     `ContainerClickCompat` do not create duplicate source-jar entries during
+     full candidate builds.
+   - Verified `.\gradlew.bat buildAllMods "-Pminecraft_version_profile=26.1.2" --no-daemon --console=plain`
+     now builds all public candidate jars and verifies their metadata.
+   - Verified `.\gradlew.bat buildAllMods "-Pminecraft_version_profile=26.2-pre-3" --no-daemon --console=plain`
+     now builds all public candidate jars and verifies their metadata.
+   - Verified default `.\gradlew.bat buildAllMods --no-daemon --console=plain`
+     still passes.
+   - Step 7 feature compile passes are complete for Core, Sort, Search, and
+     Catalogue on the checked `26.x` profiles.
+   - Next step is `26.x` smoke testing.
 
 -36. Minecraft `26.x` Search feature compile pass (unreleased):
    - Added `26.1.2` and `26.2-pre-3` Search overlays for
@@ -997,13 +1014,14 @@ Forward tasks:
    - Then compile Search.
    - Then compile Catalogue.
    - Treat each feature pass as its own checkpoint with TODO/CHANGELOG/commit.
-   - Current status: PARTIAL. Sort and Search now compile on both checked
-     `26.x` candidate profiles. Catalogue remains the next feature compile
-     checkpoint.
+   - Current status: DONE. Core, Sort, Search, and Catalogue compile on both
+     checked `26.x` candidate profiles. Both `26.1.2` and `26.2-pre-3`
+     candidate profiles also pass full `buildAllMods` jar/metadata verification.
 8. `26.x` smoke testing:
    - Add pending/pass smoke records for exact `26.x` runtimes.
    - Extend the smoke launcher if `26.x` client launch semantics differ.
    - Run selected smoke tests first, then full candidate `ciValidation`.
+   - Current status: NEXT.
 9. Publication promotion:
    - Keep `26.x` in `candidate_minecraft_version_profiles` until compile and
      smoke tests pass.

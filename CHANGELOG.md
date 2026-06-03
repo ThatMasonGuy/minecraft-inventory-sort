@@ -34,6 +34,11 @@ All notable project changes will be documented here.
   mixin. Search rendering now compiles against the `GuiGraphicsExtractor`
   `extractRenderState` lifecycle on `26.1.2` and `26.2-pre-3`, while the shared
   `GuiGraphics` implementation remains in place for `1.20.x`/`1.21.x`.
+- Completed the Minecraft `26.x` feature compile pass across Core, Sort, Search,
+  and Catalogue. Candidate `26.1.2` and `26.2-pre-3` profiles now pass
+  `buildAllMods`, including public jar collection and metadata verification; the
+  source-jar task now applies the same profile-driven shared-source exclusions as
+  client compilation.
 - Added profile-selected remap vs non-remap build plumbing for Minecraft
   `26.x`: `unobfuscated_minecraft=true` profiles now use
   `net.fabricmc.fabric-loom`, normal `implementation` dependencies, plain `jar`
