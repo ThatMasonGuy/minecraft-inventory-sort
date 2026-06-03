@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: Minecraft 26.x forward-compatibility roadmap recorded
+Current checkpoint: Minecraft 26.x `3.1.0` release-notes lane set up
 
 ## Project Workflow
 
@@ -36,6 +36,15 @@ Current checkpoint: Minecraft 26.x forward-compatibility roadmap recorded
 - Core no longer registers a public `/inventorysort` command root.
 
 ## Recently Fixed
+
+-29. `3.1.0` release-notes lane for Minecraft `26.x` (unreleased):
+   - Added `gradle/release-notes/3.1.0.md` as the running Modrinth-facing,
+     user-focused changelog for the planned official `26.x` support release.
+   - Clarified in `AGENTS.md` that `CHANGELOG.md` remains the repo-facing
+     engineering history, while `gradle/release-notes/3.1.0.md` should only
+     collect user-visible `3.1.0` release notes.
+   - Do not bump `mod_version` to `3.1.0` until the `26.x` compile, smoke, and
+     supported-profile promotion gates pass.
 
 -28. Minecraft 26.x forward-development roadmap (unreleased):
    - Decided to keep shared source anchored to the proven `1.20.x`/`1.21.x`

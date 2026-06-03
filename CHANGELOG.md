@@ -6,6 +6,9 @@ All notable project changes will be documented here.
 
 ### Changed
 
+- Added `gradle/release-notes/3.1.0.md` as the running user-facing Modrinth
+  changelog for the planned Minecraft `26.x` support release, and clarified in
+  `AGENTS.md` that `CHANGELOG.md` remains the repo-facing engineering history.
 - Recorded the Minecraft `26.x` forward-compatibility roadmap in `TODO.md`,
   keeping shared source anchored to the proven `1.20.x`/`1.21.x` baseline while
   adding `26.x` as forward candidate profiles with Java 25, non-remap Loom,
