@@ -4,22 +4,21 @@ Research date: 2026-06-03
 
 ## Recommendation
 
-Publish the current supported split release jars for **Minecraft 1.21.11 only**
-until the `1.21.9-1.21.10` candidate is deliberately promoted to the supported
-profile list.
+The only currently supported/publishable profile is **Minecraft 1.21.11**.
 
-Do not mark the current `2.6.3` jars as compatible with older `1.21.x`,
-`1.20.x`, or `1.19.x` releases on Modrinth until those exact release jars pass
-launcher smoke testing. A `1.21.9-1.21.10` candidate profile now compiles,
-builds, and passes automated client smoke launches on both exact game versions,
-but remains non-publishable until moved from
-`candidate_minecraft_version_profiles` to `supported_minecraft_version_profiles`.
+Candidate grouped jars now compile, build, and pass automated client launch
+smoke testing across **Minecraft 1.20.x and 1.21.x**. They are intentionally
+kept in `candidate_minecraft_version_profiles` until we deliberately promote
+them to `supported_minecraft_version_profiles` for Modrinth listing.
 
-For future support, build a dedicated jar for each target Minecraft version,
-launch-test that exact jar, then list that Minecraft version on the Modrinth
-version entry for that file. Modrinth guidance also treats separate files for
-separate game versions as separate project versions rather than extra files on
-one upload.
+Do not mark `1.19.x` or older as compatible. Those versions remain out of scope
+because the current UI and rendering code depends on newer Minecraft APIs.
+
+For publishing, build a dedicated compatibility-group jar, launch-test that
+exact jar on every Minecraft version listed by the profile, then list those game
+versions on the Modrinth version entry for that file. Modrinth guidance also
+treats separate files for separate game versions as separate project versions
+rather than extra files on one upload.
 
 ## Compatibility-Group Build Strategy
 
@@ -87,19 +86,27 @@ install combinations.
 
 ## Candidate Artifacts
 
-The `1.21.9-1.21.10` profile now compiles and builds release jars in
-`build/release/1.21.9-1.21.10/`. Generated metadata declares:
+The candidate profiles build public release jars under
+`build/release/<profile_id>/`. Each profile contains the three public feature
+jars:
 
-| Jar | Mod id | Minecraft dependency | Java dependency |
+- `inventory-sort-2.6.3.jar`
+- `inventory-search-2.6.3.jar`
+- `inventory-catalogue-2.6.3.jar`
+
+Current candidate profile metadata:
+
+| Profile | Minecraft dependency | Java dependency | Smoke-tested game versions |
 | --- | --- | --- | --- |
-| `inventory-sort-2.6.3.jar` | `inventorysort` | `>=1.21.9 <=1.21.10` | `>=21` |
-| `inventory-search-2.6.3.jar` | `inventorysearch` | `>=1.21.9 <=1.21.10` | `>=21` |
-| `inventory-catalogue-2.6.3.jar` | `inventorycatalogue` | `>=1.21.9 <=1.21.10` | `>=21` |
+| `1.21.9-1.21.10` | `>=1.21.9 <=1.21.10` | `>=21` | `1.21.9`, `1.21.10` |
+| `1.21.6-1.21.8` | `>=1.21.6 <=1.21.8` | `>=21` | `1.21.6`, `1.21.7`, `1.21.8` |
+| `1.21-1.21.5` | `>=1.21 <=1.21.5` | `>=21` | `1.21`, `1.21.1`, `1.21.2`, `1.21.3`, `1.21.4`, `1.21.5` |
+| `1.20.5-1.20.6` | `>=1.20.5 <=1.20.6` | `>=21` | `1.20.5`, `1.20.6` |
+| `1.20-1.20.4` | `>=1.20 <=1.20.4` | `>=17` | `1.20`, `1.20.1`, `1.20.2`, `1.20.3`, `1.20.4` |
 
-These jars passed automated client smoke launches on both `1.21.9` and
-`1.21.10` as Sort-only, Search-only, Catalogue-only, and all-three installs.
-They still need the profile promotion decision before either version is listed
-on Modrinth.
+All candidate groups passed automated client smoke launches as Sort-only,
+Search-only, Catalogue-only, and all-three installs. They still need the profile
+promotion decision before any of these versions are listed on Modrinth.
 
 Smoke-test records live in `gradle/smoke-tests.json`. CI runs
 `verifySmokeTestMatrix` and `smokeTestValidationClients`: supported profiles
@@ -108,8 +115,8 @@ can be tracked and tested without making them publishable.
 
 ## Compile Probe Method
 
-The matrix below was tested in a detached temporary worktree from the current
-split-mod source. Each target used:
+The matrix below combines the original compile probes with the final
+compatibility-group validation. Each target used:
 
 - Fabric Loader `0.18.4`
 - Loom `1.14-SNAPSHOT`
@@ -122,6 +129,13 @@ Probe command:
 .\gradlew.bat :inventorysort-core:compileClientJava :inventorysort:compileClientJava :inventorysearch:compileClientJava :inventorycatalogue:compileClientJava "-Pminecraft_version_profile=<version>" --no-daemon --console=plain
 ```
 
+Final validation commands:
+
+```powershell
+.\gradlew.bat buildValidationVersions --no-daemon --console=plain
+.\gradlew.bat ciValidation --no-daemon --console=plain
+```
+
 ## Results
 
 | Minecraft | Java | Compile result | Notes |
@@ -129,22 +143,22 @@ Probe command:
 | 1.21.11 | 21 | PASS | Current release target. |
 | 1.21.10 | 21 | PASS (candidate) | Covered by grouped `1.21.9-1.21.10` profile. Automated client smoke launch passed. |
 | 1.21.9 | 21 | PASS (candidate) | Covered by grouped `1.21.9-1.21.10` profile. Automated client smoke launch passed. |
-| 1.21.8 | 21 | FAIL | Adds chest helper/window handle drift. |
-| 1.21.7 | 21 | FAIL | Same drift class as 1.21.8. |
-| 1.21.6 | 21 | FAIL | Same drift class as 1.21.8. |
-| 1.21.5 | 21 | FAIL | Adds HUD pose stack and single-player directory API drift. |
-| 1.21.4 | 21 | FAIL | Same drift class as 1.21.5. |
-| 1.21.3 | 21 | FAIL | Same drift class as 1.21.5. |
-| 1.21.2 | 21 | FAIL | Same drift class as 1.21.5. |
-| 1.21.1 | 21 | FAIL | Adds recipe book screen and older GUI API drift. |
-| 1.21 | 21 | FAIL | Same drift class as 1.21.1. |
-| 1.20.6 | 21 | FAIL | Older 1.21-era API names plus GUI/screen drift. |
-| 1.20.5 | 21 | FAIL | Same drift class as 1.20.6. |
-| 1.20.4 | 17 | FAIL | Same drift class plus Java 17 target. |
-| 1.20.3 | 17 | FAIL | Same drift class as 1.20.4. |
-| 1.20.2 | 17 | FAIL | Same drift class as 1.20.4. |
-| 1.20.1 | 17 | FAIL | Same drift class as 1.20.4. |
-| 1.20 | 17 | FAIL | Same drift class as 1.20.4. |
+| 1.21.8 | 21 | PASS (candidate) | Covered by grouped `1.21.6-1.21.8` profile. Automated client smoke launch passed. |
+| 1.21.7 | 21 | PASS (candidate) | Covered by grouped `1.21.6-1.21.8` profile. Automated client smoke launch passed. |
+| 1.21.6 | 21 | PASS (candidate) | Covered by grouped `1.21.6-1.21.8` profile. Automated client smoke launch passed. |
+| 1.21.5 | 21 | PASS (candidate) | Covered by grouped `1.21-1.21.5` profile. Automated client smoke launch passed. |
+| 1.21.4 | 21 | PASS (candidate) | Covered by grouped `1.21-1.21.5` profile. Automated client smoke launch passed. |
+| 1.21.3 | 21 | PASS (candidate) | Covered by grouped `1.21-1.21.5` profile. Automated client smoke launch passed. |
+| 1.21.2 | 21 | PASS (candidate) | Covered by grouped `1.21-1.21.5` profile. Automated client smoke launch passed. |
+| 1.21.1 | 21 | PASS (candidate) | Covered by grouped `1.21-1.21.5` profile. Automated client smoke launch passed. |
+| 1.21 | 21 | PASS (candidate) | Covered by grouped `1.21-1.21.5` profile. Automated client smoke launch passed. |
+| 1.20.6 | 21 | PASS (candidate) | Covered by grouped `1.20.5-1.20.6` profile. Automated client smoke launch passed. |
+| 1.20.5 | 21 | PASS (candidate) | Covered by grouped `1.20.5-1.20.6` profile. Automated client smoke launch passed. |
+| 1.20.4 | 17 | PASS (candidate) | Covered by grouped `1.20-1.20.4` profile. Automated client smoke launch passed. |
+| 1.20.3 | 17 | PASS (candidate) | Covered by grouped `1.20-1.20.4` profile. Automated client smoke launch passed. |
+| 1.20.2 | 17 | PASS (candidate) | Covered by grouped `1.20-1.20.4` profile. Automated client smoke launch passed. |
+| 1.20.1 | 17 | PASS (candidate) | Covered by grouped `1.20-1.20.4` profile. Automated client smoke launch passed. |
+| 1.20 | 17 | PASS (candidate) | Covered by grouped `1.20-1.20.4` profile. Automated client smoke launch passed. |
 | 1.19.4 | 17 | FAIL | Missing `GuiGraphics` and newer widget/rendering APIs. |
 | 1.19.3 | 17 | FAIL | Same drift class as 1.19.4. |
 | 1.19.2 | 17 | FAIL | Same drift class as 1.19.4, with additional older widget API differences. |
@@ -153,18 +167,14 @@ Probe command:
 
 ## Porting Implications
 
-- `1.21.9-1.21.10` is the first grouped compile/build candidate and now has
-  automated smoke evidence on both game versions. The next step is deciding
-  whether to promote it to supported/publishable.
-- `1.21.8` is the next closest probe and is expected to expose the next API
-  boundary around chest/window handling.
-- `1.21.8` through `1.21.2` need more compatibility work around chest
-  identity, window/profile handling, HUD matrix calls, and screen APIs.
-- `1.21.1` and `1.21` need recipe book/screen compatibility work.
-- `1.20.x` is a real backport lane. `1.20.5` and `1.20.6` stay on Java 21,
-  while `1.20.4` and older need Java 17-compatible builds.
-- `1.19.x` is a larger backport because the current UI code depends heavily on
-  `GuiGraphics` and newer widget APIs that are not present there.
+- `1.20.x` and `1.21.x` are now covered by smoke-passed candidate
+  compatibility groups.
+- Publishing any candidate group is now a promotion decision: move the profile
+  from `candidate_minecraft_version_profiles` to
+  `supported_minecraft_version_profiles`, then rerun `ciValidation`.
+- `1.20.5` and newer use Java 21. `1.20` through `1.20.4` use Java 17.
+- `1.19.x` remains a larger backport because the current UI code depends
+  heavily on newer rendering and widget APIs.
 
 ## Sources
 

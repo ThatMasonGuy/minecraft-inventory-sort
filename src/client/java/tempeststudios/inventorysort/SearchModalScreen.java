@@ -368,13 +368,20 @@ public class SearchModalScreen extends Screen {
                 modalX + PAD, modalY + modalH - 14, 0xFF555555, false);
     }
 
-    @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+        return handleMouseScrolled(mouseX, mouseY, verticalAmount);
+    }
+
+    public boolean mouseScrolled(double mouseX, double mouseY, double verticalAmount) {
+        return handleMouseScrolled(mouseX, mouseY, verticalAmount);
+    }
+
+    private boolean handleMouseScrolled(double mouseX, double mouseY, double verticalAmount) {
         if (isMouseOverList(mouseX, mouseY)) {
             scrollBy((int) Math.signum(-verticalAmount));
             return true;
         }
-        return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
+        return false;
     }
 
     private void updateLayout() {

@@ -2,6 +2,7 @@ package tempeststudios.inventorysort;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ServerData;
+import tempeststudios.inventorysort.compat.core.MinecraftApiCompat;
 
 import java.nio.file.Path;
 import java.util.Locale;
@@ -20,7 +21,7 @@ public final class TrackingNamespace {
         if (client.isSingleplayer() && client.getSingleplayerServer() != null) {
             String worldId = UNKNOWN;
             try {
-                Path serverDir = client.getSingleplayerServer().getServerDirectory();
+                Path serverDir = MinecraftApiCompat.singleplayerServerDirectory(client);
                 if (serverDir != null && serverDir.getFileName() != null) {
                     worldId = serverDir.getFileName().toString();
                 }

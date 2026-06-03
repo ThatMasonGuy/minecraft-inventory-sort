@@ -81,7 +81,7 @@ public final class ContainerIdentity {
         if (state.getBlock() instanceof ChestBlock && state.hasProperty(ChestBlock.TYPE)) {
             ChestType chestType = state.getValue(ChestBlock.TYPE);
             if (chestType != ChestType.SINGLE) {
-                BlockPos connected = ChestBlock.getConnectedBlockPos(pos, state);
+                BlockPos connected = MinecraftApiCompat.connectedChestPos(pos, state);
                 BlockState connectedState = level.getBlockState(connected);
                 if (connectedState.getBlock() == state.getBlock()
                         && connectedState.hasProperty(ChestBlock.TYPE)

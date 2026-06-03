@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import net.minecraft.client.Minecraft;
 import org.lwjgl.glfw.GLFW;
+import tempeststudios.inventorysort.compat.core.MinecraftApiCompat;
 import tempeststudios.inventorysort.core.InventorySortEvents;
 
 import java.io.IOException;
@@ -100,7 +101,7 @@ public final class ServerWorldProfileManager {
             return;
         }
 
-        long window = client.getWindow().handle();
+        long window = MinecraftApiCompat.windowHandle(client);
         boolean confirmKeyDown = GLFW.glfwGetKey(window, GLFW.GLFW_KEY_ENTER) == GLFW.GLFW_PRESS;
         boolean menuKeyDown = GLFW.glfwGetKey(window, GLFW.GLFW_KEY_BACKSPACE) == GLFW.GLFW_PRESS;
 

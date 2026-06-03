@@ -35,6 +35,16 @@ All notable project changes will be documented here.
 - Added a `1.21.9-1.21.10` candidate compatibility profile that compiles and
   builds release jars with range metadata, and now passes automated client
   smoke launches on both `1.21.9` and `1.21.10`.
+- Added broad candidate compatibility groups for `1.21.6-1.21.8`,
+  `1.21-1.21.5`, `1.20.5-1.20.6`, and `1.20-1.20.4`, with exact runtime smoke
+  profiles for every covered `1.20.x` and `1.21.x` version.
+- Added compatibility shims for older Minecraft API shapes, including chest
+  neighbor lookup, window handle access, HUD pose/matrix calls, single-player
+  server directory paths, item stack components vs tags, recipe book screen
+  presence, mouse wheel method signatures, and older button render overrides.
+- Recorded passing automated smoke results for the full `1.20.x` and `1.21.x`
+  candidate matrix. These profiles remain non-publishable until deliberately
+  promoted from candidate to supported.
 - Moved target-specific custom button render hooks into `1.21.9-1.21.10` and
   `1.21.11` compat overlays while keeping the shared drawing logic in Core.
 - Added `COMPATIBILITY.md` with the Minecraft version probe matrix and Modrinth listing recommendation.
@@ -57,6 +67,8 @@ All notable project changes will be documented here.
 - Fixed the first `1.21.9-1.21.10` compile blockers by adapting dimension id
   access and avoiding version-specific minecart entity class imports in shared
   identity code.
+- Fixed broad `1.20.x` and earlier `1.21.x` compile/runtime launch blockers by
+  moving API-sensitive calls behind version-selected compat overlays.
 
 ### Removed
 

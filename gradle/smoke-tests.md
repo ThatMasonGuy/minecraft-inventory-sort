@@ -28,6 +28,8 @@ is launched as:
 The smoke launcher arms `InventorySortSmokeTest`, waits until the Minecraft
 client reaches the tick loop, logs `INVENTORYSORT_SMOKE_TEST_PASS`, and closes
 the client. On GitHub Actions, `ciValidation` runs these launches under `xvfb`.
+The full `1.20.x`/`1.21.x` candidate matrix is intentionally broad, so
+`ciValidation` can take close to an hour on a local machine.
 
 Useful commands:
 
@@ -39,9 +41,9 @@ Useful commands:
 ```
 
 After a candidate profile passes client smoke testing on every version in
-`modrinth_game_versions`, update its records to `pass`, move the profile from
-`candidate_minecraft_version_profiles` to `supported_minecraft_version_profiles`,
-then run `.\gradlew.bat ciValidation`.
+`modrinth_game_versions`, update its records to `pass`. To make that profile
+publishable, move it from `candidate_minecraft_version_profiles` to
+`supported_minecraft_version_profiles`, then run `.\gradlew.bat ciValidation`.
 
 For Linux/headless CI:
 

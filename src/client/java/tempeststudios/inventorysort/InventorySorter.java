@@ -9,6 +9,7 @@ import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.BundleItem;
 import net.minecraft.world.item.ItemStack;
+import tempeststudios.inventorysort.compat.sort.ItemStackCompat;
 import tempeststudios.inventorysort.mixin.AbstractContainerScreenInvoker;
 
 import java.util.*;
@@ -284,7 +285,7 @@ public class InventorySorter {
 		}
 
 		static StackKey of(ItemStack stack) {
-			return new StackKey(stack.getItem(), stack.getComponents());
+			return new StackKey(stack.getItem(), ItemStackCompat.identityData(stack));
 		}
 
 		@Override
@@ -381,7 +382,7 @@ public class InventorySorter {
 			.comparingInt((ItemStack s) -> -s.getMaxStackSize())
 			.thenComparing(InventorySorter::categoryKey)
 			.thenComparing(s -> BuiltInRegistries.ITEM.getKey(s.getItem()).toString())
-			.thenComparingInt(s -> s.getComponents().hashCode())
+			.thenComparingInt(ItemStackCompat::identityHash)
 			.thenComparingInt(s -> -s.getCount());
 
 	private static String categoryKey(ItemStack stack) {
@@ -788,7 +789,7 @@ public class InventorySorter {
 	private static boolean sameItemAndComponents(ItemStack a, ItemStack b) {
 		if (a.isEmpty() || b.isEmpty())
 			return false;
-		return ItemStack.isSameItemSameComponents(a, b);
+		return ItemStackCompat.sameItemAndComponents(a, b);
 	}
 
 	private static boolean sameTypeIgnoringCount(ItemStack a, ItemStack b) {

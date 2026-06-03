@@ -2,6 +2,7 @@ package tempeststudios.inventorysort;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import tempeststudios.inventorysort.compat.core.MinecraftApiCompat;
 
 public final class ServerWorldProfileHud {
     private ServerWorldProfileHud() {
@@ -23,8 +24,8 @@ public final class ServerWorldProfileHud {
         int x = Math.round((screenWidth - client.font.width(text) * scale) / 2.0F);
         int y = screenHeight - 82;
 
-        graphics.pose().pushMatrix();
-        graphics.pose().scale(scale, scale);
+        MinecraftApiCompat.pushHudPose(graphics);
+        MinecraftApiCompat.scaleHudPose(graphics, scale);
         int scaledX = Math.round(x / scale);
         int scaledY = Math.round(y / scale);
         graphics.drawString(client.font, text, scaledX + 1, scaledY + 1, 0xFF000000, false);
@@ -43,6 +44,6 @@ public final class ServerWorldProfileHud {
             String before = text.substring(0, keyStart);
             graphics.drawString(client.font, backspace, scaledX + client.font.width(before), scaledY, 0xFFFFFF55, false);
         }
-        graphics.pose().popMatrix();
+        MinecraftApiCompat.popHudPose(graphics);
     }
 }

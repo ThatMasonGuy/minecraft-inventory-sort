@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: Step 8 automated CI smoke validation
+Current checkpoint: Step 7 broad Minecraft 1.20.x/1.21.x compatibility shims
 
 ## Project Workflow
 
@@ -24,7 +24,7 @@ Current checkpoint: Step 8 automated CI smoke validation
   standalone and all-three validation passed.
 - Automated client smoke validation launches the packaged release jars as
   Sort-only, Search-only, Catalogue-only, and all-three installs on Minecraft
-  `1.21.11`, `1.21.9`, and `1.21.10`.
+  `1.21.11` plus candidate runtimes from `1.20` through `1.21.10`.
 
 ## Current Command Roots
 
@@ -36,6 +36,28 @@ Current checkpoint: Step 8 automated CI smoke validation
 - Core no longer registers a public `/inventorysort` command root.
 
 ## Recently Fixed
+
+-21. Broad `1.20.x` and `1.21.x` compatibility groups (unreleased):
+   - Added candidate release compatibility groups for:
+     `1.21.6-1.21.8`, `1.21-1.21.5`, `1.20.5-1.20.6`, and
+     `1.20-1.20.4`.
+   - Added exact runtime-only smoke profiles for every `1.20.x` and `1.21.x`
+     version covered by those grouped jars.
+   - Added version shims for chest neighbor lookup, window handle access, HUD
+     pose/matrix calls, single-player server directory return type, item stack
+     identity/components vs tags, recipe book screen presence, mouse wheel
+     method signatures, and older public `renderWidget` button overrides.
+   - Updated automated smoke records after `ciValidation` launched Sort-only,
+     Search-only, Catalogue-only, and all-three installs across the full
+     candidate matrix.
+   - Verified `.\gradlew.bat buildValidationVersions --no-daemon
+     --console=plain`; all supported and candidate release profiles built.
+   - Verified `.\gradlew.bat ciValidation --no-daemon --console=plain`; the
+     full launch matrix passed across `1.21.11`, `1.21.9-1.21.10`,
+     `1.21.6-1.21.8`, `1.21-1.21.5`, `1.20.5-1.20.6`, and `1.20-1.20.4`.
+   - Important: these new broad groups remain in
+     `candidate_minecraft_version_profiles` until we explicitly promote them
+     to supported/publishable Modrinth targets.
 
 -20. Automated client smoke validation (unreleased):
    - Added a no-mod `smokelaunch` Loom project that launches exact Minecraft
@@ -55,9 +77,8 @@ Current checkpoint: Step 8 automated CI smoke validation
      `1.21.11`, `1.21.9`, and `1.21.10`.
    - Verified `.\gradlew.bat smokeTestValidationClients`; all twelve automated
      client launches passed locally.
-   - Next: loop back to Step 7 to decide whether to promote
-     `1.21.9-1.21.10` from candidate to supported/publishable and then probe
-     the next compatibility boundary.
+   - Superseded by item 21, which adds broad `1.20.x` and `1.21.x` candidate
+     coverage and passes the full automated launch matrix.
 
 -19. CI validation and smoke-test matrix foundation (unreleased):
    - Added `candidate_minecraft_version_profiles` so CI can build candidate
@@ -531,15 +552,15 @@ depend on Core; Catalogue and Search both need Core's identity/namespace/event l
      - `minecraft_dependency`: Fabric Loader dependency range for metadata.
      - `modrinth_game_versions`: exact game versions to publish after smoke tests.
      - `compat_group`: source overlay group for version-specific APIs.
-   - Current status: IN PROGRESS. Gradle now supports compatibility-group profile
-     metadata, profile-id release folders, generated Fabric dependency ranges,
-     profile metadata verification, and `src/compat/<compat_group>/` source
-     overlays. The first grouped non-`1.21.11` candidate profile,
-     `1.21.9-1.21.10`, now compiles, builds release jars, and passes automated
-     client smoke launches on `1.21.9` and `1.21.10`, but remains in
-     `candidate_minecraft_version_profiles` until we choose to promote it.
-     Older `1.21.x`, `1.20.x`, and `1.19.x` releases still need source/API
-     porting before Modrinth listings.
+   - Current status: DONE for broad `1.20.x` and `1.21.x` candidate coverage.
+     Gradle supports compatibility-group profile metadata, profile-id release
+     folders, generated Fabric dependency ranges, profile metadata verification,
+     and `src/compat/<compat_group>/` source overlays. Candidate grouped jars
+     now compile, build, and pass automated client smoke launches for
+     `1.21.9-1.21.10`, `1.21.6-1.21.8`, `1.21-1.21.5`,
+     `1.20.5-1.20.6`, and `1.20-1.20.4`, but remain in
+     `candidate_minecraft_version_profiles` until we choose to promote them.
+     `1.19.x` and older are intentionally out of scope for now.
      Next blocker for the v26 lane is still installing/running a Java 25
      toolchain, then compiling a 26.x profile and fixing source/API breaks.
 8. Add CI validation before publishing:

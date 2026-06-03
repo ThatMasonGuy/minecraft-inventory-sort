@@ -165,8 +165,15 @@ public class ServerWorldProfileScreen extends Screen {
         return true;
     }
 
-    @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+        return handleMouseScrolled(verticalAmount);
+    }
+
+    public boolean mouseScrolled(double mouseX, double mouseY, double verticalAmount) {
+        return handleMouseScrolled(verticalAmount);
+    }
+
+    private boolean handleMouseScrolled(double verticalAmount) {
         if (serverKey != null) {
             List<String> profiles = ServerWorldProfileManager.getInstance().getProfiles(serverKey);
             int maxScroll = Math.max(0, profiles.size() - 5);
@@ -180,6 +187,6 @@ public class ServerWorldProfileScreen extends Screen {
                 }
             }
         }
-        return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
+        return false;
     }
 }

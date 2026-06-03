@@ -28,6 +28,122 @@
           "notes": "Grouped candidate release jars launched successfully as Sort-only, Search-only, Catalogue-only, and all-three installs."
         }
       }
+    },
+    "1.21.6-1.21.8": {
+      "profile_id": "1.21.6-1.21.8",
+      "game_versions": {
+        "1.21.6": {
+          "status": "pass",
+          "tested_at": "2026-06-03",
+          "method": "automated smokeTestValidationClients launch matrix",
+          "notes": "Grouped candidate release jars launched successfully as Sort-only, Search-only, Catalogue-only, and all-three installs."
+        },
+        "1.21.7": {
+          "status": "pass",
+          "tested_at": "2026-06-03",
+          "method": "automated smokeTestValidationClients launch matrix",
+          "notes": "Grouped candidate release jars launched successfully as Sort-only, Search-only, Catalogue-only, and all-three installs."
+        },
+        "1.21.8": {
+          "status": "pass",
+          "tested_at": "2026-06-03",
+          "method": "automated smokeTestValidationClients launch matrix",
+          "notes": "Grouped candidate release jars launched successfully as Sort-only, Search-only, Catalogue-only, and all-three installs."
+        }
+      }
+    },
+    "1.21-1.21.5": {
+      "profile_id": "1.21-1.21.5",
+      "game_versions": {
+        "1.21": {
+          "status": "pass",
+          "tested_at": "2026-06-03",
+          "method": "automated smokeTestValidationClients launch matrix",
+          "notes": "Grouped candidate release jars launched successfully as Sort-only, Search-only, Catalogue-only, and all-three installs."
+        },
+        "1.21.1": {
+          "status": "pass",
+          "tested_at": "2026-06-03",
+          "method": "automated smokeTestValidationClients launch matrix",
+          "notes": "Grouped candidate release jars launched successfully as Sort-only, Search-only, Catalogue-only, and all-three installs."
+        },
+        "1.21.2": {
+          "status": "pass",
+          "tested_at": "2026-06-03",
+          "method": "automated smokeTestValidationClients launch matrix",
+          "notes": "Grouped candidate release jars launched successfully as Sort-only, Search-only, Catalogue-only, and all-three installs."
+        },
+        "1.21.3": {
+          "status": "pass",
+          "tested_at": "2026-06-03",
+          "method": "automated smokeTestValidationClients launch matrix",
+          "notes": "Grouped candidate release jars launched successfully as Sort-only, Search-only, Catalogue-only, and all-three installs."
+        },
+        "1.21.4": {
+          "status": "pass",
+          "tested_at": "2026-06-03",
+          "method": "automated smokeTestValidationClients launch matrix",
+          "notes": "Grouped candidate release jars launched successfully as Sort-only, Search-only, Catalogue-only, and all-three installs."
+        },
+        "1.21.5": {
+          "status": "pass",
+          "tested_at": "2026-06-03",
+          "method": "automated smokeTestValidationClients launch matrix",
+          "notes": "Grouped candidate release jars launched successfully as Sort-only, Search-only, Catalogue-only, and all-three installs."
+        }
+      }
+    },
+    "1.20.5-1.20.6": {
+      "profile_id": "1.20.5-1.20.6",
+      "game_versions": {
+        "1.20.5": {
+          "status": "pass",
+          "tested_at": "2026-06-03",
+          "method": "automated smokeTestValidationClients launch matrix",
+          "notes": "Grouped candidate release jars launched successfully as Sort-only, Search-only, Catalogue-only, and all-three installs."
+        },
+        "1.20.6": {
+          "status": "pass",
+          "tested_at": "2026-06-03",
+          "method": "automated smokeTestValidationClients launch matrix",
+          "notes": "Grouped candidate release jars launched successfully as Sort-only, Search-only, Catalogue-only, and all-three installs."
+        }
+      }
+    },
+    "1.20-1.20.4": {
+      "profile_id": "1.20-1.20.4",
+      "game_versions": {
+        "1.20": {
+          "status": "pass",
+          "tested_at": "2026-06-03",
+          "method": "automated smokeTestValidationClients launch matrix",
+          "notes": "Grouped candidate release jars launched successfully as Sort-only, Search-only, Catalogue-only, and all-three installs."
+        },
+        "1.20.1": {
+          "status": "pass",
+          "tested_at": "2026-06-03",
+          "method": "automated smokeTestValidationClients launch matrix",
+          "notes": "Grouped candidate release jars launched successfully as Sort-only, Search-only, Catalogue-only, and all-three installs."
+        },
+        "1.20.2": {
+          "status": "pass",
+          "tested_at": "2026-06-03",
+          "method": "automated smokeTestValidationClients launch matrix",
+          "notes": "Grouped candidate release jars launched successfully as Sort-only, Search-only, Catalogue-only, and all-three installs."
+        },
+        "1.20.3": {
+          "status": "pass",
+          "tested_at": "2026-06-03",
+          "method": "automated smokeTestValidationClients launch matrix",
+          "notes": "Grouped candidate release jars launched successfully as Sort-only, Search-only, Catalogue-only, and all-three installs."
+        },
+        "1.20.4": {
+          "status": "pass",
+          "tested_at": "2026-06-03",
+          "method": "automated smokeTestValidationClients launch matrix",
+          "notes": "Grouped candidate release jars launched successfully as Sort-only, Search-only, Catalogue-only, and all-three installs."
+        }
+      }
     }
   }
 }
