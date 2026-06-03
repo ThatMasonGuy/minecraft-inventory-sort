@@ -1,7 +1,7 @@
 package tempeststudios.inventorysort.compat.core;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
@@ -16,27 +16,27 @@ public final class MinecraftApiCompat {
     }
 
     public static String dimensionId(ResourceKey<Level> dimension) {
-        return dimension.location().toString();
+        return dimension.identifier().toString();
     }
 
     public static BlockPos connectedChestPos(BlockPos pos, BlockState state) {
-        return pos.relative(ChestBlock.getConnectedDirection(state));
+        return ChestBlock.getConnectedBlockPos(pos, state);
     }
 
     public static long windowHandle(Minecraft client) {
-        return client.getWindow().getWindow();
+        return client.getWindow().handle();
     }
 
-    public static void pushHudPose(GuiGraphics graphics) {
-        graphics.pose().pushPose();
+    public static void pushHudPose(GuiGraphicsExtractor graphics) {
+        graphics.pose().pushMatrix();
     }
 
-    public static void scaleHudPose(GuiGraphics graphics, float scale) {
-        graphics.pose().scale(scale, scale, 1.0F);
+    public static void scaleHudPose(GuiGraphicsExtractor graphics, float scale) {
+        graphics.pose().scale(scale, scale);
     }
 
-    public static void popHudPose(GuiGraphics graphics) {
-        graphics.pose().popPose();
+    public static void popHudPose(GuiGraphicsExtractor graphics) {
+        graphics.pose().popMatrix();
     }
 
     public static Path singleplayerServerDirectory(Minecraft client) {
@@ -45,13 +45,13 @@ public final class MinecraftApiCompat {
 
     public static void sendSystemMessage(Minecraft client, Component message) {
         if (client.player != null) {
-            client.player.displayClientMessage(message, false);
+            client.player.sendSystemMessage(message);
         }
     }
 
     public static void sendOverlayMessage(Minecraft client, Component message) {
         if (client.player != null) {
-            client.player.displayClientMessage(message, true);
+            client.player.sendOverlayMessage(message);
         }
     }
 }

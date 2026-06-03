@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: Minecraft 26.x Java 25 toolchain and CI lane complete
+Current checkpoint: Minecraft 26.x Core helper compatibility overlay complete
 
 ## Project Workflow
 
@@ -36,6 +36,27 @@ Current checkpoint: Minecraft 26.x Java 25 toolchain and CI lane complete
 - Core no longer registers a public `/inventorysort` command root.
 
 ## Recently Fixed
+
+-32. Minecraft `26.x` Core helper compatibility overlay (unreleased):
+   - Added `26.1.2` and `26.2-pre-3` Core compatibility overlays for
+     Minecraft API helper calls, including dimension ids, connected chest
+     lookup, window handles, single-player server directories, HUD pose helpers,
+     and player feedback messages.
+   - Added a version-selected `ClientCommandCompat` adapter so shared command
+     code can use `ClientCommandManager` on `1.20.x`/`1.21.x` and
+     `ClientCommands` on `26.x`.
+   - Routed shared Core/Search/Catalogue command builders through
+     `ClientCommandCompat`.
+   - Routed shared player feedback calls through `MinecraftApiCompat` so
+     `1.20.x`/`1.21.x` keep `displayClientMessage` while `26.x` uses
+     `sendSystemMessage` / `sendOverlayMessage`.
+   - Verified default `.\gradlew.bat buildAllMods --no-daemon --console=plain`
+     still passes on the existing release lane.
+   - Verified the `26.1.2` Core compile probe now gets past the first helper,
+     command, and feedback-message API breaks. The remaining compile blockers
+     are the planned GUI/render extraction, HUD registry, and container input
+     changes.
+   - Next step is the `26.x` GUI/rendering abstraction.
 
 -31. Minecraft `26.x` Java 25 toolchain and CI lane (unreleased):
    - Gradle now requests the active profile's `java_version` as the Java
@@ -848,6 +869,12 @@ Forward tasks:
    - Port dimension id, chest neighbor lookup, window handle, single-player
      directory, HUD pose, and player feedback helpers to `26.x` names.
    - Add Core compile probing as the first validation target.
+   - Current status: DONE for the helper/adapter layer. `26.1.2` and
+     `26.2-pre-3` now have Core compatibility overlays for Minecraft helper
+     calls and the Fabric command builder rename, and shared player feedback
+     now goes through `MinecraftApiCompat`. The `26.1.2` Core compile probe
+     now stops at the expected GUI/render extraction, HUD registry, and
+     container input blockers for the next roadmap steps.
 4. GUI/rendering abstraction:
    - Refactor shared drawing helpers so shared logic does not directly depend on
      `GuiGraphics`.
@@ -859,6 +886,9 @@ Forward tasks:
    - Replace or wrap `HudRenderCallback` with the `26.x` HUD element registry.
    - Replace or wrap `ClientCommandManager` with `26.x` `ClientCommands`.
    - Keep command bodies/shared handlers version-independent.
+   - Current status: PARTIAL. Command builder calls are now wrapped with
+     `ClientCommandCompat`. HUD registration still needs the `26.x` HUD element
+     registry adapter during the GUI/rendering pass.
 6. Container/mixin input updates:
    - Port `ClickType` invokers and slot-click mixins to `26.x`
      `ContainerInput`.

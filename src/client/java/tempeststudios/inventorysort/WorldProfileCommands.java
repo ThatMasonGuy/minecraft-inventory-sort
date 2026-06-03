@@ -3,11 +3,11 @@ package tempeststudios.inventorysort;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
+import tempeststudios.inventorysort.compat.core.ClientCommandCompat;
 
 public final class WorldProfileCommands {
 
@@ -15,19 +15,19 @@ public final class WorldProfileCommands {
     }
 
     public static LiteralArgumentBuilder<FabricClientCommandSource> build() {
-        return ClientCommandManager.literal("world")
-                .then(ClientCommandManager.literal("list")
+        return ClientCommandCompat.literal("world")
+                .then(ClientCommandCompat.literal("list")
                         .executes(WorldProfileCommands::listWorldProfiles)
                 )
-                .then(ClientCommandManager.literal("use")
-                        .then(ClientCommandManager.argument("name", StringArgumentType.word())
+                .then(ClientCommandCompat.literal("use")
+                        .then(ClientCommandCompat.argument("name", StringArgumentType.word())
                                 .executes(context -> useWorldProfile(context, StringArgumentType.getString(context, "name")))
                         )
                 )
-                .then(ClientCommandManager.literal("default")
+                .then(ClientCommandCompat.literal("default")
                         .executes(context -> useWorldProfile(context, "default"))
                 )
-                .then(ClientCommandManager.literal("current")
+                .then(ClientCommandCompat.literal("current")
                         .executes(WorldProfileCommands::currentWorldProfile)
                 );
     }

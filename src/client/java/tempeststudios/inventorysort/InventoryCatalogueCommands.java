@@ -2,10 +2,10 @@ package tempeststudios.inventorysort;
 
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import tempeststudios.inventorysort.compat.core.ClientCommandCompat;
 
 import java.util.List;
 
@@ -15,23 +15,23 @@ public final class InventoryCatalogueCommands {
     }
 
     public static LiteralArgumentBuilder<FabricClientCommandSource> build() {
-        return ClientCommandManager.literal("inventorycatalogue")
-                .then(ClientCommandManager.literal("start")
+        return ClientCommandCompat.literal("inventorycatalogue")
+                .then(ClientCommandCompat.literal("start")
                         .executes(context -> startCatalog(context, false))
-                        .then(ClientCommandManager.literal("includeInventory")
+                        .then(ClientCommandCompat.literal("includeInventory")
                                 .executes(context -> startCatalog(context, true))
                         )
                 )
-                .then(ClientCommandManager.literal("stop")
+                .then(ClientCommandCompat.literal("stop")
                         .executes(InventoryCatalogueCommands::stopCatalog)
                 )
-                .then(ClientCommandManager.literal("status")
+                .then(ClientCommandCompat.literal("status")
                         .executes(InventoryCatalogueCommands::catalogStatus)
                 )
-                .then(ClientCommandManager.literal("report")
+                .then(ClientCommandCompat.literal("report")
                         .executes(InventoryCatalogueCommands::catalogReport)
                 )
-                .then(ClientCommandManager.literal("clear")
+                .then(ClientCommandCompat.literal("clear")
                         .executes(InventoryCatalogueCommands::clearCatalog)
                 );
     }

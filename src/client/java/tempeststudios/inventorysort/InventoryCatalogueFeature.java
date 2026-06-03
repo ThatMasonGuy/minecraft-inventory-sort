@@ -2,6 +2,7 @@ package tempeststudios.inventorysort;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
+import tempeststudios.inventorysort.compat.core.MinecraftApiCompat;
 import tempeststudios.inventorysort.core.InventorySortEvents;
 
 public final class InventoryCatalogueFeature {
@@ -75,8 +76,8 @@ public final class InventoryCatalogueFeature {
     }
 
     private static void displayMessage(Minecraft client, String message, net.minecraft.ChatFormatting style) {
-        if (client != null && client.player != null) {
-            client.player.displayClientMessage(Component.literal(message).withStyle(style), false);
+        if (client != null) {
+            MinecraftApiCompat.sendSystemMessage(client, Component.literal(message).withStyle(style));
         }
     }
 }

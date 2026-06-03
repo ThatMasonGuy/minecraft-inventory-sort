@@ -3,7 +3,9 @@ package tempeststudios.inventorysort;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 import tempeststudios.inventorysort.compat.core.MinecraftApiCompat;
 import tempeststudios.inventorysort.core.InventorySortEvents;
@@ -108,10 +110,8 @@ public final class ServerWorldProfileManager {
         if (confirmKeyDown && !confirmKeyWasDown) {
             String serverKey = TrackingNamespace.currentServerKey(client);
             confirmActiveProfile(serverKey);
-            if (client.player != null) {
-                client.player.displayClientMessage(net.minecraft.network.chat.Component.literal("Tracking world confirmed: "
-                        + getActiveProfile(serverKey)).withStyle(net.minecraft.ChatFormatting.GREEN), false);
-            }
+            MinecraftApiCompat.sendSystemMessage(client, Component.literal("Tracking world confirmed: "
+                    + getActiveProfile(serverKey)).withStyle(ChatFormatting.GREEN));
         } else if (menuKeyDown && !menuKeyWasDown) {
             client.setScreen(new ServerWorldProfileScreen(null, true));
         }

@@ -3,6 +3,7 @@ package tempeststudios.inventorysort.compat.core;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.ChestBlock;
@@ -40,5 +41,17 @@ public final class MinecraftApiCompat {
 
     public static Path singleplayerServerDirectory(Minecraft client) {
         return client.getSingleplayerServer().getServerDirectory();
+    }
+
+    public static void sendSystemMessage(Minecraft client, Component message) {
+        if (client.player != null) {
+            client.player.displayClientMessage(message, false);
+        }
+    }
+
+    public static void sendOverlayMessage(Minecraft client, Component message) {
+        if (client.player != null) {
+            client.player.displayClientMessage(message, true);
+        }
     }
 }

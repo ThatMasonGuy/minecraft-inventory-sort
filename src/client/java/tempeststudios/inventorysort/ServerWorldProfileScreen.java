@@ -7,6 +7,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import tempeststudios.inventorysort.compat.core.MinecraftApiCompat;
 
 import java.util.List;
 
@@ -136,10 +137,8 @@ public class ServerWorldProfileScreen extends Screen {
         }
         ServerWorldProfileManager.getInstance().setActiveProfile(serverKey, profile);
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player != null) {
-            mc.player.displayClientMessage(Component.literal("Tracking world: "
-                    + ServerWorldProfileManager.getInstance().getActiveProfile(serverKey)).withStyle(ChatFormatting.GREEN), false);
-        }
+        MinecraftApiCompat.sendSystemMessage(mc, Component.literal("Tracking world: "
+                + ServerWorldProfileManager.getInstance().getActiveProfile(serverKey)).withStyle(ChatFormatting.GREEN));
         closeToParent();
     }
 
