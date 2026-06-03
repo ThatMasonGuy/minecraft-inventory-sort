@@ -3,7 +3,7 @@
 A lightweight **client-side** Minecraft mod that adds robust sorting capabilities and powerful inventory tracking to container screens. Intelligently organize your items, find misplaced gear, and keep tabs on your storage.
 
 - **Mod ID:** `inventorysort`
-- **Minecraft:** `1.21.11` default release profile
+- **Minecraft:** `1.20.x` and `1.21.x` compatibility-group releases
 - **Loader:** Fabric
 - **Java:** 21+
 - **License:** LGPL-3.0-only
@@ -45,7 +45,7 @@ A lightweight **client-side** Minecraft mod that adds robust sorting capabilitie
 
 - **Client-Side Only:** This mod operates entirely on the client. It adds no new blocks, items, or server-side mechanics, making it usable on vanilla servers where client-side utility mods are allowed.
 - **Framework:** Requires **Fabric Loader** and **Fabric API** matching the target Minecraft version.
-- **Current Release Target:** The split release jars are supported/publishable for Minecraft `1.21.11`. Candidate profiles now compile, build, and pass automated client smoke launches across `1.20.x` and `1.21.x`, but still need promotion from candidate to supported before Modrinth listing. See `COMPATIBILITY.md` before listing additional game versions.
+- **Current Release Target:** The split release jars are supported/publishable for Minecraft `1.20.x` and `1.21.x` through smoke-tested compatibility-group builds. See `COMPATIBILITY.md` for the exact profile ranges.
 - **"Known Current Locations":** The tracking features rely on what your client has *seen*. It provides "known current locations," not guaranteed live server truth. If another player empties a chest while you are away, your client will still remember the old contents until you reopen and rescan that container.
 
 ## Future Plans

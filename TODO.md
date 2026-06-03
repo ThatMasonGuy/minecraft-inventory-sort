@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: Step 9 per-release Modrinth notes
+Current checkpoint: Step 9 final 3.0.0 broad Modrinth release sweep
 
 ## Project Workflow
 
@@ -24,7 +24,7 @@ Current checkpoint: Step 9 per-release Modrinth notes
   standalone and all-three validation passed.
 - Automated client smoke validation launches the packaged release jars as
   Sort-only, Search-only, Catalogue-only, and all-three installs on Minecraft
-  `1.21.11` plus candidate runtimes from `1.20` through `1.21.10`.
+  `1.21.11` plus supported runtimes from `1.20` through `1.21.10`.
 
 ## Current Command Roots
 
@@ -37,6 +37,23 @@ Current checkpoint: Step 9 per-release Modrinth notes
 
 ## Recently Fixed
 
+-26. Final `3.0.0` broad Modrinth release sweep (unreleased):
+   - Bumped `mod_version` to `3.0.0`.
+   - Added `gradle/release-notes/3.0.0.md` for the public Modrinth release.
+   - Promoted the smoke-passed compatibility groups into
+     `supported_minecraft_version_profiles`: `1.21.11`,
+     `1.21.9-1.21.10`, `1.21.6-1.21.8`, `1.21-1.21.5`,
+     `1.20.5-1.20.6`, and `1.20-1.20.4`.
+   - Cleared `candidate_minecraft_version_profiles` so the public publish set
+     is exactly the supported `1.20.x` and `1.21.x` release matrix.
+   - Updated release-facing compatibility docs and README metadata for the
+     `3.0.0` supported profile set.
+   - Verified `.\gradlew.bat ciValidation --no-daemon --console=plain`; the
+     full supported matrix passed in 43m 17s across all six compatibility
+     groups and all automated standalone/all-public smoke launches.
+   - Next: commit and push the release sweep, then publish all 3.0.0
+     compatibility-group versions as listed Modrinth releases.
+
 -25. Per-release Modrinth notes (unreleased):
    - Changed Modrinth publish automation to read release notes from
      `gradle/release-notes/<mod_version>.md` by default instead of pulling the
@@ -48,9 +65,9 @@ Current checkpoint: Step 9 per-release Modrinth notes
    - Updated `AGENTS.md`, `README.md`, and `gradle/modrinth-publishing.md` so
      future work keeps broad repo history in `CHANGELOG.md` and concise
      Modrinth-facing notes under `gradle/release-notes/`.
-   - Next: create `gradle/release-notes/3.0.0.md`, bump `mod_version`, promote
-     smoke-passed compatibility groups, run full validation, and publish after
-     user approval.
+   - Completed by item 26, which creates the `3.0.0` release notes, bumps the
+     mod version, promotes the smoke-passed compatibility groups, and starts the
+     final publish sweep after user approval.
 
 -24. Focused `2.6.4` Modrinth pipeline validation (unreleased):
    - Bumped `mod_version` from `2.6.3` to `2.6.4` for a focused validation
@@ -73,9 +90,9 @@ Current checkpoint: Step 9 per-release Modrinth notes
      - InvSort `2.6.4`: Modrinth version `l8tVjMEf`
      - InvSearch `2.6.4`: Modrinth version `ITIdiJHe`
      - InvCatalogue `2.6.4`: Modrinth version `k3rNn4zA`
-   - Keep `supported_minecraft_version_profiles=1.21.11` for this validation
-     run. The broad `1.20.x`/`1.21.x` candidate groups should stay candidates
-     until the later `3.0.0` promotion.
+   - Kept `supported_minecraft_version_profiles=1.21.11` for this validation
+     run. The broad `1.20.x`/`1.21.x` groups stayed candidates until the later
+     `3.0.0` promotion in item 26.
 
 -23. Modrinth publishing automation (unreleased):
    - Added Modrinth project IDs for InvSort, InvSearch, and InvCatalogue in
@@ -133,9 +150,8 @@ Current checkpoint: Step 9 per-release Modrinth notes
    - Verified `.\gradlew.bat ciValidation --no-daemon --console=plain`; the
      full launch matrix passed across `1.21.11`, `1.21.9-1.21.10`,
      `1.21.6-1.21.8`, `1.21-1.21.5`, `1.20.5-1.20.6`, and `1.20-1.20.4`.
-   - Important: these new broad groups remain in
-     `candidate_minecraft_version_profiles` until we explicitly promote them
-     to supported/publishable Modrinth targets.
+   - These broad groups were later promoted to supported/publishable Modrinth
+     targets by item 26 for the `3.0.0` release.
 
 -20. Automated client smoke validation (unreleased):
    - Added a no-mod `smokelaunch` Loom project that launches exact Minecraft
@@ -630,14 +646,14 @@ depend on Core; Catalogue and Search both need Core's identity/namespace/event l
      - `minecraft_dependency`: Fabric Loader dependency range for metadata.
      - `modrinth_game_versions`: exact game versions to publish after smoke tests.
      - `compat_group`: source overlay group for version-specific APIs.
-   - Current status: DONE for broad `1.20.x` and `1.21.x` candidate coverage.
+   - Current status: DONE for broad `1.20.x` and `1.21.x` supported coverage.
      Gradle supports compatibility-group profile metadata, profile-id release
      folders, generated Fabric dependency ranges, profile metadata verification,
-     and `src/compat/<compat_group>/` source overlays. Candidate grouped jars
-     now compile, build, and pass automated client smoke launches for
+     and `src/compat/<compat_group>/` source overlays. Grouped jars now compile,
+     build, and pass automated client smoke launches for
      `1.21.9-1.21.10`, `1.21.6-1.21.8`, `1.21-1.21.5`,
-     `1.20.5-1.20.6`, and `1.20-1.20.4`, but remain in
-     `candidate_minecraft_version_profiles` until we choose to promote them.
+     `1.20.5-1.20.6`, and `1.20-1.20.4`. They were promoted into
+     `supported_minecraft_version_profiles` for the `3.0.0` release.
      `1.19.x` and older are intentionally out of scope for now.
      Next blocker for the v26 lane is still installing/running a Java 25
      toolchain, then compiling a 26.x profile and fixing source/API breaks.
@@ -650,20 +666,20 @@ depend on Core; Catalogue and Search both need Core's identity/namespace/event l
    - CI should produce build artifacts grouped by profile/range so manual testing
      and Modrinth upload metadata stay aligned.
    - Current status: DONE for the current validation matrix. `ciValidation` now
-     builds supported and candidate profiles, verifies release jar metadata and
-     nested Core jars, checks smoke-test records, and launches exact Minecraft
-     runtimes with the packaged release jars as standalone and all-three
-     installs. `publishValidation` is now available as the fast supported-only
-     gate before Modrinth publishing. Candidate profiles are still tracked
-     separately from publishable supported profiles.
+     builds supported profiles and any configured candidate profiles, verifies
+     release jar metadata and nested Core jars, checks smoke-test records, and
+     launches exact Minecraft runtimes with the packaged release jars as
+     standalone and all-three installs. `publishValidation` is now available as
+     the fast supported-only gate before Modrinth publishing. Candidate profiles
+     are tracked separately from publishable supported profiles.
 9. Configure Modrinth publishing:
    - Give each public feature mod its own Modrinth project id and upload metadata.
    - Publish the correct jar, Minecraft version, loader, dependencies, and
      changelog for each target.
-   - Current status: DONE for supported-profile automation. Gradle now prepares
-     and dry-runs Modrinth uploads for supported profiles only, with a guarded
-     real upload task and manual GitHub Actions workflow. Candidate profiles are
-     still ignored by publishing until promoted.
+   - Current status: IN PROGRESS for the final `3.0.0` public release. Gradle
+     prepares and dry-runs Modrinth uploads for supported profiles only, with a
+     guarded real upload task and manual GitHub Actions workflow. Candidate
+     profiles are still ignored by publishing until promoted.
 
 ### Goes in Core (shared by 2+ features)
 

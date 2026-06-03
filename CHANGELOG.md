@@ -43,8 +43,8 @@ All notable project changes will be documented here.
   server directory paths, item stack components vs tags, recipe book screen
   presence, mouse wheel method signatures, and older button render overrides.
 - Recorded passing automated smoke results for the full `1.20.x` and `1.21.x`
-  candidate matrix. These profiles remain non-publishable until deliberately
-  promoted from candidate to supported.
+  candidate matrix, then promoted those smoke-passed profiles to supported for
+  the `3.0.0` release.
 - Added `publishValidation` and `smokeTestSupportedClients` as a fast
   supported-only pre-publish gate, plus `smokeTestSelectedClients` filters for
   local smoke-test spot checks.
@@ -59,6 +59,11 @@ All notable project changes will be documented here.
 - Changed Modrinth publishing to use concise per-version release notes from
   `gradle/release-notes/<mod_version>.md` instead of reposting the whole
   project changelog.
+- Bumped the public release target to `3.0.0`, added
+  `gradle/release-notes/3.0.0.md`, and promoted the supported Modrinth publish
+  matrix to cover Minecraft `1.20.x` and `1.21.x` compatibility groups.
+- Verified the full `3.0.0` supported matrix with `ciValidation`, including all
+  six compatibility groups and automated standalone/all-public smoke launches.
 - Moved target-specific custom button render hooks into `1.21.9-1.21.10` and
   `1.21.11` compat overlays while keeping the shared drawing logic in Core.
 - Added `COMPATIBILITY.md` with the Minecraft version probe matrix and Modrinth listing recommendation.
