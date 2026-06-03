@@ -49,6 +49,11 @@ jobs:
         with:
           java-version: '21'
           distribution: 'microsoft'
+      - name: setup jdk 17 toolchain
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
       - name: setup jdk 25 toolchain
         uses: actions/setup-java@v4
         with:

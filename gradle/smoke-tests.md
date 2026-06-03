@@ -28,11 +28,12 @@ as:
 - all public feature jars together
 
 The smoke launcher arms `InventorySortSmokeTest`, waits until the Minecraft
-client reaches the tick loop, logs `INVENTORYSORT_SMOKE_TEST_PASS`, and closes
-the client. On GitHub Actions, the manual Modrinth publish workflow runs these
-launches under `xvfb` before upload. Broad supported matrices can take close to
-an hour on a local machine; the current `3.1.0` publish lane is the smaller
-smoke-passed `26.x` matrix.
+client reaches the tick loop, force-loads key mixin targets, logs
+`INVENTORYSORT_SMOKE_TEST_PASS`, and closes the client. On GitHub Actions, the
+manual Modrinth publish workflow runs these launches under `xvfb` before
+upload. Broad supported matrices can take close to an hour on a local machine,
+so the manual Modrinth publish workflow is the normal place to run the full
+matrix.
 
 Normal push/PR builds intentionally run only `buildAllMods` for the default
 profile. Use local full smoke testing only when you specifically need it; the

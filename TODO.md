@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: Minecraft 26.x 3.1.1 launch-crash hotfix prepared
+Current checkpoint: Unified Minecraft 1.20.x/1.21.x/26.x 3.1.1 release prepared
 
 ## Project Workflow
 
@@ -23,8 +23,9 @@ Current checkpoint: Minecraft 26.x 3.1.1 launch-crash hotfix prepared
   Search+Catalogue was not separately tested, but is expected to work after the
   standalone and all-three validation passed.
 - Automated client smoke validation launches the packaged release jars as
-  Sort-only, Search-only, Catalogue-only, and all-three installs on Minecraft
-  `1.21.11` plus supported runtimes from `1.20` through `1.21.10`.
+  Sort-only, Search-only, Catalogue-only, and all-three installs on supported
+  runtimes from Minecraft `1.20` through `1.21.11`, plus `26.1`, `26.1.1`,
+  `26.1.2`, and `26.2-pre-3`.
 
 ## Current Command Roots
 
@@ -36,6 +37,30 @@ Current checkpoint: Minecraft 26.x 3.1.1 launch-crash hotfix prepared
 - Core no longer registers a public `/inventorysort` command root.
 
 ## Recently Fixed
+
+-42. Unified `3.1.1` release matrix (unreleased):
+   - Promoted all smoke-passed compatibility groups into the active
+     `3.1.1` supported publish lane:
+     `1.20-1.20.4`, `1.20.5-1.20.6`, `1.21-1.21.5`,
+     `1.21.6-1.21.8`, `1.21.9-1.21.10`, `1.21.11`,
+     `26.1.2`, and `26.2-pre-3`.
+   - Added `JAVA_HOME_17_X64` to Gradle toolchain environment discovery so the
+     Java 17 `1.20-1.20.4` lane can be rebuilt locally without changing the
+     active Java 21 install.
+   - Updated the Modrinth publish and compatibility-validation workflows to
+     install Java 17 alongside Java 21 and Java 25.
+   - Updated `gradle/release-notes/3.1.1.md` so the Modrinth changelog matches
+     a unified release across Minecraft `1.20.x`, `1.21.x`, and `26.x`.
+   - Updated README, compatibility, version-profile, smoke-test, and Modrinth
+     publishing docs to describe the full `3.1.1` release matrix.
+   - Verified `.\gradlew.bat buildAllVersions --no-daemon --console=plain`;
+     it rebuilt all eight local release folders with 24 total `3.1.1` jars.
+   - Verified `.\gradlew.bat publishModrinthDryRun -x smokeTestSupportedClients
+     --no-daemon --console=plain`; it wrote a 24-upload Modrinth plan covering
+     all eight compatibility groups for InvSort, InvSearch, and InvCatalogue.
+   - Next step: push to GitHub and trigger the guarded Modrinth publish
+     workflow with `dry_run=false`, `version_type=release`,
+     `requested_status=listed`, and `gradle_java_version=25`.
 
 -41. Minecraft `26.x` launch-crash hotfix (unreleased):
    - Investigated a real Minecraft `26.1.2` launch crash from the published

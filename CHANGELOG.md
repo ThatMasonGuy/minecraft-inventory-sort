@@ -17,6 +17,14 @@ All notable project changes will be documented here.
 
 ### Changed
 
+- Promoted all smoke-passed Minecraft `1.20.x`, `1.21.x`, and `26.x`
+  compatibility groups into one unified `3.1.1` supported publish lane,
+  rebuilt the local release artifacts for all eight groups, and verified the
+  Modrinth dry-run plan contains 24 uploads across InvSort, InvSearch, and
+  InvCatalogue.
+- Added Java 17 toolchain discovery and GitHub Actions setup alongside Java 21
+  and Java 25 so the full `3.1.1` publish matrix can build locally and in the
+  guarded Modrinth workflow.
 - Bumped the Minecraft `26.x` hotfix lane to `3.1.1` and added focused
   Modrinth-facing release notes for the launch-crash fix.
 - Updated README, compatibility, and version-profile documentation to point at

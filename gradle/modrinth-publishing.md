@@ -103,10 +103,10 @@ Override with `-Pmodrinth_profile_version_suffix=always` or
 
 GitHub Actions has a manual `modrinth publish` workflow. Its dry-run mode does
 not require `MODRINTH_TOKEN`; real publishing requires the repository secret
-`MODRINTH_TOKEN`. The workflow installs Java 21 and Java 25 toolchains and has a
-`gradle_java_version` input. Use Java 25 for the `3.1.0` Minecraft `26.x`
-release lane; use Java 21 only when intentionally returning to the older
-`1.20.x`/`1.21.x` release lane.
+`MODRINTH_TOKEN`. The workflow installs Java 17, Java 21, and Java 25 toolchains
+before running the full supported-profile publish gate. The `gradle_java_version`
+input controls only the Java runtime used to run Gradle itself; toolchain
+selection still follows each Minecraft profile's `java_version`.
 
 For normal development, run local fast builds such as `buildAllMods`, commit,
 push, and then use the manual `modrinth publish` workflow when ready to release.

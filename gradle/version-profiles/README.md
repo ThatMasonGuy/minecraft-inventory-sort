@@ -11,7 +11,7 @@ The default profile is configured in `gradle.properties`:
 
 ```properties
 minecraft_version_profile=1.21.11
-supported_minecraft_version_profiles=26.1.2,26.2-pre-3
+supported_minecraft_version_profiles=1.20-1.20.4,1.20.5-1.20.6,1.21-1.21.5,1.21.6-1.21.8,1.21.9-1.21.10,1.21.11,26.1.2,26.2-pre-3
 candidate_minecraft_version_profiles=
 ```
 
@@ -29,11 +29,12 @@ Useful commands:
 ```
 
 Gradle uses the active profile's `java_version` as a Java toolchain request for
-compile and client-run tasks. The default `1.20.x`/`1.21.x` lane uses Java 21.
-Minecraft `26.x` profiles request Java 25, so local compile/run work needs a
-Java 25 JDK installed or exposed through one of `JAVA_HOME`, `JAVA_HOME_21_X64`,
-or `JAVA_HOME_25_X64`. GitHub Actions installs the needed toolchains for manual
-compatibility validation.
+compile and client-run tasks. The `1.20-1.20.4` lane uses Java 17,
+`1.20.5+`/`1.21.x` lanes use Java 21, and Minecraft `26.x` profiles request
+Java 25. Local compile/run work needs the relevant JDKs installed or exposed
+through one of `JAVA_HOME`, `JAVA_HOME_17_X64`, `JAVA_HOME_21_X64`, or
+`JAVA_HOME_25_X64`. GitHub Actions installs the needed toolchains for manual
+compatibility validation and publishing.
 
 Release jars are collected under `build/release/<profile_id>/`.
 
@@ -96,12 +97,12 @@ Current 26.x release range plan:
   `26.2-pre-3`.
 
 Only add a profile to `supported_minecraft_version_profiles` after it compiles
-and launches cleanly. The current `3.1.1` supported publish lane is `26.x` only.
-The earlier `3.0.0` Modrinth release remains the published `1.20.x`/`1.21.x`
-lane. `ciValidation` builds supported and candidate profiles, runs automated
-client smoke launches, and only allows supported profiles to publish when their
-smoke records are `pass`.
+and launches cleanly. The current `3.1.1` supported publish lane includes the
+smoke-passed `1.20.x`, `1.21.x`, and `26.x` compatibility groups.
+`ciValidation` builds supported and candidate profiles, runs automated client
+smoke launches, and only allows supported profiles to publish when their smoke
+records are `pass`.
 
 The 26.x profiles now configure through the non-remapping build lane. The manual
-GitHub Actions Modrinth workflow should use Java 25 for the `3.1.1` publish
-lane without changing the fast push/PR workflow.
+GitHub Actions Modrinth workflow installs Java 17, Java 21, and Java 25 before
+the `3.1.1` publish gate without changing the fast push/PR workflow.

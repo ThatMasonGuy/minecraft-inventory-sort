@@ -24,6 +24,7 @@ on:
         options:
           - '25'
           - '21'
+          - '17'
 
 jobs:
   compatibility:
@@ -39,10 +40,21 @@ jobs:
         with:
           java-version: '21'
           distribution: 'microsoft'
+      - name: setup jdk 17 toolchain
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
       - name: setup jdk 25 toolchain
         uses: actions/setup-java@v4
         with:
           java-version: '25'
+          distribution: 'temurin'
+      - name: select gradle jdk 17
+        if: ${{ inputs.gradle_java_version == '17' }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
           distribution: 'temurin'
       - name: select gradle jdk 21
         if: ${{ inputs.gradle_java_version == '21' }}
