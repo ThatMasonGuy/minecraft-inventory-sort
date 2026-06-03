@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: `2.6.3` + compatibility-group build profile foundation
+Current checkpoint: `2.6.3` + `1.21.10` compile/build candidate profile
 
 ## Project Workflow
 
@@ -34,6 +34,28 @@ Current checkpoint: `2.6.3` + compatibility-group build profile foundation
 
 ## Recently Fixed
 
+-16. `1.21.10` compatibility candidate (unreleased):
+   - Added `gradle/version-profiles/1.21.10.properties` as a candidate
+     compatibility-group profile.
+   - Added `src/compat/1.21.10` and `src/compat/1.21.11` source overlays for
+     Minecraft API differences that cannot compile from one shared source file.
+   - Moved custom button render hooks into version-specific wrapper classes:
+     `1.21.10` uses `renderWidget`, while `1.21.11` uses `renderContents`.
+   - Added `MinecraftApiCompat.dimensionId(...)` adapters for the
+     `ResourceKey.location()` / `ResourceKey.identifier()` API rename.
+   - Removed direct Chest/Hopper Minecart class imports from shared identity code
+     and now recognizes those containers by stable entity type id.
+   - Verified sequential profile builds:
+     `.\gradlew.bat clean build` for `1.21.11`, and
+     `.\gradlew.bat clean buildAllMods "-Pminecraft_version_profile=1.21.10"`.
+   - Verified the `1.21.10` release jars collect under `build/release/1.21.10/`
+     and declare `minecraft ~1.21.10`, `java >=21`, and
+     `fabricloader >=0.18.4`.
+   - Important: `1.21.10` is still not a supported Modrinth listing until the
+     release jars pass normal launcher smoke testing.
+   - Next Step 7 slice: launcher smoke-test the `1.21.10` jars, then probe
+     whether the same adapter shape can cover `1.21.9` or needs another group.
+
 -15. Compatibility-group build profile foundation (unreleased):
    - Extended Gradle profiles with `profile_id`, `minecraft_dependency`,
      `modrinth_game_versions`, and `compat_group`.
@@ -46,8 +68,7 @@ Current checkpoint: `2.6.3` + compatibility-group build profile foundation
      version-specific API adapters.
    - Verified `.\gradlew.bat printVersionProfile`, `.\gradlew.bat clean build`,
      and `.\gradlew.bat buildAllVersions` on the current `1.21.11` profile.
-   - Next Step 7 slice: add the first non-`1.21.11` compatibility-group profile
-     and start moving API differences behind compat adapters until it compiles.
+   - First non-`1.21.11` compatibility-group profile is now tracked in item 16.
 
 -14. Compatibility-group version strategy (unreleased):
    - Documented that version profiles should become release compatibility groups,
@@ -78,7 +99,7 @@ Current checkpoint: `2.6.3` + compatibility-group build profile foundation
    - Added candidate `26.1.2` and `26.2-pre-3` profiles for migration work; both
      require Java 25 before source/API compile validation.
    - Upgraded the Gradle wrapper to 9.4.0 for Loom 1.16 candidate profile support.
-   - Release jars now collect under `build/release/<minecraft_version>/`.
+   - Release jars now collect under `build/release/<profile_id>/`.
 
 -11. License alignment (unreleased):
    - Replaced the old repo license text with LGPL-3.0-only and added the GPLv3
@@ -109,9 +130,9 @@ Current checkpoint: `2.6.3` + compatibility-group build profile foundation
 
 -8. One-click release jar collection (unreleased):
    - Added `collectReleaseJars`, which copies only the three public feature jars
-     into `build/release/<minecraft_version>/`.
+     into `build/release/<profile_id>/`.
    - `buildAllMods` now builds Core + Sort/Search/Catalogue and produces a
-     publish-ready `build/release/<minecraft_version>/` folder in one command.
+     publish-ready `build/release/<profile_id>/` folder in one command.
    - CI artifact upload now collects `build/release/` recursively instead of
      module-local libs.
 
@@ -426,12 +447,13 @@ depend on Core; Catalogue and Search both need Core's identity/namespace/event l
    - Current status: IN PROGRESS. Gradle now supports compatibility-group profile
      metadata, profile-id release folders, generated Fabric dependency ranges,
      profile metadata verification, and `src/compat/<compat_group>/` source
-     overlays. Compatibility research confirms the current source only compiles
-     as-is on `1.21.11`; older `1.21.x`, `1.20.x`, and `1.19.x` releases need
-     source/API porting before Modrinth listings. Next Step 7 slice is adding the
-     first non-`1.21.11` compatibility group and adapter code until it compiles.
-     Next blocker for the v26 lane is still installing/running a Java 25
-     toolchain, then compiling a 26.x profile and fixing source/API breaks.
+     overlays. The first non-`1.21.11` candidate profile, `1.21.10`, now
+     compiles and builds release jars after small compat adapters, but it is not
+     supported/publishable until launcher smoke testing passes. Older `1.21.x`,
+     `1.20.x`, and `1.19.x` releases still need source/API porting before
+     Modrinth listings. Next blocker for the v26 lane is still
+     installing/running a Java 25 toolchain, then compiling a 26.x profile and
+     fixing source/API breaks.
 8. Add CI validation before publishing:
    - Add automated build verification for every supported compatibility-group
      profile.
@@ -455,7 +477,8 @@ depend on Core; Catalogue and Search both need Core's identity/namespace/event l
   `MultiPlayerGameModeMixin`.
 - World scoping: `TrackingNamespace`, `ServerWorldProfileManager`,
   `ServerWorldProfileHud`, `ServerWorldProfileScreen`.
-- UI primitives: `InventorySortUIUtils`, the three button classes.
+- UI primitives: `InventorySortUIUtils`, shared button renderers, and the
+  compat-selected concrete button classes.
 - Accessor/invoker mixins: `ScreenAccessor`, `AbstractContainerScreenAccessor`,
   `AbstractContainerScreenInvoker`, `AbstractContainerMenuInvoker`.
 

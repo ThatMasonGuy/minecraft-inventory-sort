@@ -2,10 +2,9 @@ package tempeststudios.inventorysort;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.vehicle.minecart.MinecartChest;
-import net.minecraft.world.entity.vehicle.minecart.MinecartHopper;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.AbstractFurnaceBlock;
@@ -23,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import tempeststudios.inventorysort.compat.core.MinecraftApiCompat;
 
 public final class ContainerIdentity {
     private final String namespace;
@@ -117,12 +117,13 @@ public final class ContainerIdentity {
             return null;
         }
 
-        String containerType;
-        if (entity instanceof MinecartChest) {
-            containerType = "Chest Minecart";
-        } else if (entity instanceof MinecartHopper) {
-            containerType = "Hopper Minecart";
-        } else {
+        String entityTypeId = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString();
+        String containerType = switch (entityTypeId) {
+            case "minecraft:chest_minecart" -> "Chest Minecart";
+            case "minecraft:hopper_minecart" -> "Hopper Minecart";
+            default -> null;
+        };
+        if (containerType == null) {
             return null;
         }
 
@@ -198,7 +199,7 @@ public final class ContainerIdentity {
         if (dimension == null) {
             return "unknown";
         }
-        return dimension.identifier().toString();
+        return MinecraftApiCompat.dimensionId(dimension);
     }
 
     public String getNamespace() {

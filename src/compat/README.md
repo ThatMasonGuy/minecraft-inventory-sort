@@ -25,5 +25,8 @@ tempeststudios.inventorysort.compat.catalogue -> inventorycatalogue
 ```
 
 Avoid compiling duplicate fully-qualified class names from shared and compat
-source folders. Prefer shared code calling small compat adapter classes over
-copying whole feature classes into a compat group.
+source folders. If a Minecraft API requires the same public class name to have a
+different method signature, remove that concrete class from shared source and
+keep only the target-specific wrappers in compat groups. Prefer shared code
+calling small compat adapter or renderer classes over copying whole feature
+classes into a compat group.

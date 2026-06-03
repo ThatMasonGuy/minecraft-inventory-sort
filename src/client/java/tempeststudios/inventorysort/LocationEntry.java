@@ -3,6 +3,7 @@ package tempeststudios.inventorysort;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
+import tempeststudios.inventorysort.compat.core.MinecraftApiCompat;
 
 public class LocationEntry {
     private final LocationType type;
@@ -65,7 +66,7 @@ public class LocationEntry {
     }
 
     private static String dimensionKeyOf(ResourceKey<Level> dimension) {
-        return dimension != null ? dimension.identifier().toString() : null;
+        return dimension != null ? MinecraftApiCompat.dimensionId(dimension) : null;
     }
 
     // Constructor for player inventory
