@@ -21,6 +21,8 @@ All notable project changes will be documented here.
   `26.1-26.1.2` jar, `26.2-pre-3` publishes the exact pre-release jar,
   candidate profiles are cleared, and the public release notes now describe the
   validated 26.x versions.
+- Published all six `3.1.0` Minecraft `26.x` versions through the guarded
+  GitHub Actions Modrinth workflow with `requested_status=listed`.
 - Added Java toolchain handling and manual CI support for Minecraft `26.x`
   migration work: compile/client-run tasks now request the active profile's
   `java_version`, GitHub Actions has a focused Java 25 compatibility-validation

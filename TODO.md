@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: Minecraft 26.x 3.1.0 promotion ready for publish workflow
+Current checkpoint: Minecraft 26.x 3.1.0 published through guarded workflow
 
 ## Project Workflow
 
@@ -53,8 +53,25 @@ Current checkpoint: Minecraft 26.x 3.1.0 promotion ready for publish workflow
    - Verified `publishModrinthDryRun -x smokeTestSupportedClients` writes the
      expected six-upload `3.1.0` Modrinth plan: Sort/Search/Catalogue for
      `26.1-26.1.2`, plus Sort/Search/Catalogue for `26.2-pre-3`.
-   - Next step is committing, pushing, and running the guarded Modrinth publish
-     workflow with Java 25.
+   - Pushed commit `4c4cc13` and triggered GitHub Actions run
+     `26887305101` (`modrinth publish`) with `dry_run=false`,
+     `version_type=release`, `requested_status=listed`, and
+     `gradle_java_version=25`.
+   - The workflow passed in 9m51s, ran the supported `26.x` smoke matrix under
+     `xvfb`, and uploaded:
+     - InvSort:
+       - `3.1.0+mc26.1-26.1.2`: `eCQRy8yN`
+       - `3.1.0+mc26.2-pre-3`: `5SYieSUN`
+     - InvSearch:
+       - `3.1.0+mc26.1-26.1.2`: `D3qSEGTH`
+       - `3.1.0+mc26.2-pre-3`: `u09BCKUg`
+     - InvCatalogue:
+       - `3.1.0+mc26.1-26.1.2`: `YP0PHkOr`
+       - `3.1.0+mc26.2-pre-3`: `Hc3QRfTb`
+   - Public unauthenticated Modrinth API lookups for the uploaded version ids
+     returned 404 immediately after upload, consistent with project/version
+     review or public-visibility delay rather than a workflow upload failure.
+   - Step 9 is complete for the current `26.x` publish lane.
 
 -39. Minecraft `26.x` automated smoke testing (unreleased):
    - Ran the selected `26.x` candidate smoke matrix with packaged release jars.
@@ -1092,9 +1109,9 @@ Forward tasks:
    - Once passing, promote it to `supported_minecraft_version_profiles`.
    - Add `gradle/release-notes/<version>.md`, run the Modrinth publish workflow,
      and list the smoke-passed `26.x` versions.
-   - Current status: IN PROGRESS. The smoke-passed `26.x` profiles have been
-     promoted for `3.1.0`; the remaining gate is the guarded GitHub Actions
-     Modrinth publish workflow with Java 25.
+   - Current status: DONE. The smoke-passed `26.x` profiles were promoted for
+     `3.1.0`, and the guarded GitHub Actions Modrinth workflow passed with
+     listed uploads for all six public `26.x` versions.
 10. Branch fallback trigger:
    - Branch only if `26.x` forces duplicated feature logic rather than isolated
      build config, rendering adapters, and mixin surfaces.
