@@ -6,6 +6,9 @@ All notable project changes will be documented here.
 
 ### Fixed
 
+- Reduced public release jar sizes by packaging only each module's declared icon
+  asset, shrinking the per-mod icons to metadata-sized JPGs, and adding a
+  release-jar size guard so public jars must stay below `199000` bytes.
 - Fixed the Minecraft `26.x` Core entity-interaction mixin for
   `MultiPlayerGameMode`: `26.x` exposes a single `interact(Player, Entity,
   EntityHitResult, InteractionHand)` method instead of the older separate

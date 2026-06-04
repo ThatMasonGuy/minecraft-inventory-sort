@@ -71,6 +71,12 @@ def publicFeatureProjects = [
 		project(':inventorysearch'),
 		project(':inventorycatalogue')
 ]
+def moduleAssetIncludes = [
+		':inventorysort-core': ['inventory-sort/icon.png'],
+		':inventorysort'     : ['inventory-sort/invsort.jpg'],
+		':inventorysearch'   : ['inventory-sort/invsearch.jpg'],
+		':inventorycatalogue': ['inventory-sort/invcatalogue.jpg']
+]
 def publicFeatureModrinthProjects = [
 		[
 				project          : project(':inventorysort'),
@@ -103,6 +109,7 @@ def smokeTestRequiredMinecraftVersionProfiles = profileListProperty(
 		'smoke_test_required_minecraft_version_profiles',
 		supportedMinecraftVersionProfiles.join(',')
 )
+def maxPublicReleaseJarSizeBytes = (findProperty('public_release_max_jar_size_bytes') ?: '199000').toString() as long
 def excludedSharedClientSources = profileProperty('excluded_shared_client_sources', '')
 		.split(',')
 		.collect { it.trim() }
@@ -190,8 +197,13 @@ subprojects {
 		filesMatching("*.mixins.json") {
 			expand(resourceProperties)
 		}
-		from(rootProject.file("src/main/resources/assets")) {
-			into "assets"
+		def assetIncludes = moduleAssetIncludes[project.path] ?: []
+		inputs.property("inventorysort_asset_includes", assetIncludes.join(','))
+		if (!assetIncludes.isEmpty()) {
+			from(rootProject.file("src/main/resources/assets")) {
+				into "assets"
+				include assetIncludes
+			}
 		}
 		duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 	}
@@ -311,6 +323,9 @@ tasks.register('verifyReleaseJars') {
 			if (!releaseJar.isFile()) {
 				throw new GradleException("Missing release jar: ${releaseJar}")
 			}
+			if (releaseJar.length() > maxPublicReleaseJarSizeBytes) {
+				throw new GradleException("${releaseJar.name} is ${releaseJar.length()} bytes, exceeding max ${maxPublicReleaseJarSizeBytes} bytes")
+			}
 
 			def entries = [] as Set
 			def fabricMetadata = null
@@ -343,6 +358,14 @@ tasks.register('verifyReleaseJars') {
 			}
 			if (!fabricMetadata.icon || !entries.contains(fabricMetadata.icon.toString())) {
 				throw new GradleException("${releaseJar.name} declares missing icon ${fabricMetadata.icon}")
+			}
+			def allowedAssets = (moduleAssetIncludes[featureProject.path] ?: [])
+					.collect { "assets/${it}" } as Set
+			def packagedAssets = entries.findAll {
+				it.startsWith('assets/inventory-sort/') && !it.endsWith('/')
+			} as Set
+			if (packagedAssets != allowedAssets) {
+				throw new GradleException("${releaseJar.name} packages assets ${packagedAssets}, expected ${allowedAssets}")
 			}
 		}
 	}

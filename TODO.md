@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: Post-3.1.1 documentation handoff cleanup complete
+Current checkpoint: Release jar size cleanup complete
 
 ## Project Workflow
 
@@ -37,6 +37,29 @@ Current checkpoint: Post-3.1.1 documentation handoff cleanup complete
 - Core no longer registers a public `/inventorysort` command root.
 
 ## Recently Fixed
+
+-44. Release jar size cleanup (unreleased):
+   - Investigated the post-split jar size jump from roughly low hundreds of KB
+     to roughly `862-888 KB` per public jar.
+   - Root cause: every module packaged all shared assets, including all three
+     large per-mod JPG icons, and each public feature jar also embedded Core
+     with the same full asset set.
+   - Changed Gradle resource packaging so Core includes only
+     `assets/inventory-sort/icon.png`, Sort includes only `invsort.jpg`, Search
+     includes only `invsearch.jpg`, and Catalogue includes only
+     `invcatalogue.jpg`.
+   - Resized the three per-mod JPG metadata icons to `256x256`, reducing them
+     from `114-146 KB` each to roughly `18-19 KB` each.
+   - Added a `verifyReleaseJars` guard that fails public release jars above
+     `199000` bytes and verifies public jars only package their declared icon
+     asset.
+   - Verified `.\gradlew.bat buildAllVersions --no-daemon --console=plain`;
+     all 24 public `3.1.1` release jars rebuilt successfully.
+   - Confirmed the rebuilt public release jars are `131457-156225` bytes, with
+     the largest jar below the `199000` byte target.
+   - Added draft `gradle/release-notes/3.1.2.md` for this user-facing packaging
+     improvement if it is published as the next patch.
+   - Verified final diff checks and committed the cleanup.
 
 -43. Documentation handoff cleanup (unreleased):
    - Updated `AGENTS.md` with a fresh-agent reading order, the actual
