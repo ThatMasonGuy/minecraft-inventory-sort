@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: all public Modrinth page copy refreshed
+Current checkpoint: 3.1.2 publish prepared
 
 ## Project Workflow
 
@@ -37,6 +37,15 @@ Current checkpoint: all public Modrinth page copy refreshed
 - Core no longer registers a public `/inventorysort` command root.
 
 ## Recently Fixed
+
+-47. `3.1.2` packaging cleanup publish (unreleased):
+   - Bumped `mod_version` from `3.1.1` to `3.1.2`.
+   - Updated README to identify `3.1.2` as the current release lane.
+   - Updated `gradle/release-notes/3.1.2.md` to call out that current release
+     jars are roughly 5-6x smaller, dropping from about `862-888 KB` to about
+     `131-156 KB` each.
+   - Next step: verify locally, commit, push, then run the guarded GitHub
+     Actions Modrinth publish workflow as a listed release.
 
 -46. InvSearch and InvCatalogue Modrinth page copy refresh (unreleased):
    - Added source-of-truth Modrinth page summaries and description Markdown for

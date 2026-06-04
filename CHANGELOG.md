@@ -23,6 +23,9 @@ All notable project changes will be documented here.
 
 ### Changed
 
+- Bumped the queued packaging cleanup release to `3.1.2` so the smaller jars
+  and refreshed metadata summaries can be published across all supported
+  Minecraft compatibility groups.
 - Added source-of-truth Modrinth project page copy for all three public mods
   and refreshed their metadata summaries used by loaders and mod lists.
 - Updated project onboarding and release-process documentation so a fresh agent
