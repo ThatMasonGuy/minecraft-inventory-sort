@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: 3.1.3 icon refresh published
+Current checkpoint: 3.1.3 icon refresh GitHub release created
 
 ## Project Workflow
 
@@ -96,7 +96,11 @@ Current checkpoint: 3.1.3 icon refresh published
        `3.1.3+mc1.21.11` `7f81Mm2H`,
        `3.1.3+mc26.1-26.1.2` `hETjLZkK`,
        `3.1.3+mc26.2-pre-3` `E3CFq9g4`.
-   - Next step: create the `v3.1.3` GitHub tag and release.
+   - Created annotated Git tag `v3.1.3` on release source commit `c3346e6`.
+   - Created GitHub release `Inventory Mods 3.1.3`:
+     `https://github.com/ThatMasonGuy/minecraft-inventory-sort/releases/tag/v3.1.3`.
+   - The GitHub release does not attach jar assets; it points users to the
+     canonical Modrinth project pages and the 24 uploaded Modrinth version URLs.
 
 -49. GitHub repository About metadata refresh (unreleased):
    - Updated the live GitHub repository description to describe InvSort,

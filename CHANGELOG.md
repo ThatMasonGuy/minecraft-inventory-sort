@@ -23,6 +23,8 @@ All notable project changes will be documented here.
 
 ### Changed
 
+- Created the GitHub `v3.1.3` tag and release for the icon refresh, pointing
+  downloads to the published Modrinth versions.
 - Published the `3.1.3` icon refresh release through the guarded GitHub
   Actions Modrinth workflow, uploading all 24 listed compatibility-group
   versions after the full smoke matrix passed.
