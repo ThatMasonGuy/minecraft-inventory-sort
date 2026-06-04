@@ -23,6 +23,9 @@ All notable project changes will be documented here.
 
 ### Changed
 
+- Published the `3.1.3` icon refresh release through the guarded GitHub
+  Actions Modrinth workflow, uploading all 24 listed compatibility-group
+  versions after the full smoke matrix passed.
 - Bumped the icon refresh release to `3.1.3`, replaced the packaged public mod
   icons, and updated the live Modrinth project icons for all three public mods.
 - Updated the GitHub repository About metadata with the current split-mod
