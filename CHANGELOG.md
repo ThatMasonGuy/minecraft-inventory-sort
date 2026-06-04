@@ -23,6 +23,9 @@ All notable project changes will be documented here.
 
 ### Changed
 
+- Published the `3.1.2` packaging cleanup release through the guarded GitHub
+  Actions Modrinth workflow, uploading all 24 listed compatibility-group
+  versions after the full smoke matrix passed.
 - Bumped the queued packaging cleanup release to `3.1.2` so the smaller jars
   and refreshed metadata summaries can be published across all supported
   Minecraft compatibility groups.

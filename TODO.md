@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: 3.1.2 publish prepared
+Current checkpoint: 3.1.2 packaging cleanup published
 
 ## Project Workflow
 
@@ -44,8 +44,45 @@ Current checkpoint: 3.1.2 publish prepared
    - Updated `gradle/release-notes/3.1.2.md` to call out that current release
      jars are roughly 5-6x smaller, dropping from about `862-888 KB` to about
      `131-156 KB` each.
-   - Next step: verify locally, commit, push, then run the guarded GitHub
-     Actions Modrinth publish workflow as a listed release.
+   - Verified `git diff --check` and
+     `.\gradlew.bat buildAllMods --no-daemon --console=plain`; default
+     `1.21.11` jars rebuilt at `134099-155263` bytes.
+   - Pushed commit `9740215` and the fast GitHub build `26939731373` passed.
+   - Ran the guarded GitHub Actions Modrinth publish workflow
+     `26939817894` as a listed release. It completed in `45m6s`, recorded
+     `92` smoke pass lines, prepared `24` upload-plan entries, and uploaded all
+     `24` supported public versions.
+   - Refreshed local ignored `build/release/` from the GitHub workflow artifact
+     so all eight local release folders contain the published `3.1.2` jars and
+     no stale `3.1.1` jars. The largest local published jar is `156249` bytes.
+   - Uploaded Modrinth versions:
+     - InvSort:
+       `3.1.2+mc1.20-1.20.4` `hZ2Nin6T`,
+       `3.1.2+mc1.20.5-1.20.6` `BbB72m5g`,
+       `3.1.2+mc1.21-1.21.5` `9rgZ15Gi`,
+       `3.1.2+mc1.21.6-1.21.8` `7BTWmrgp`,
+       `3.1.2+mc1.21.9-1.21.10` `Ob9P3g7O`,
+       `3.1.2+mc1.21.11` `gahcvA21`,
+       `3.1.2+mc26.1-26.1.2` `mpLwcxBU`,
+       `3.1.2+mc26.2-pre-3` `jCKYi5Me`.
+     - InvSearch:
+       `3.1.2+mc1.20-1.20.4` `oS9hgFqE`,
+       `3.1.2+mc1.20.5-1.20.6` `UQrTErEN`,
+       `3.1.2+mc1.21-1.21.5` `912yIhwu`,
+       `3.1.2+mc1.21.6-1.21.8` `1mkkgJZV`,
+       `3.1.2+mc1.21.9-1.21.10` `lTwu813j`,
+       `3.1.2+mc1.21.11` `bavd4UJL`,
+       `3.1.2+mc26.1-26.1.2` `IIozutcI`,
+       `3.1.2+mc26.2-pre-3` `2EQEowJX`.
+     - InvCatalogue:
+       `3.1.2+mc1.20-1.20.4` `oQK5d8sc`,
+       `3.1.2+mc1.20.5-1.20.6` `l2uq6quh`,
+       `3.1.2+mc1.21-1.21.5` `YviEKx4t`,
+       `3.1.2+mc1.21.6-1.21.8` `heQSwYks`,
+       `3.1.2+mc1.21.9-1.21.10` `uapVbqgB`,
+       `3.1.2+mc1.21.11` `1tBzoWW5`,
+       `3.1.2+mc26.1-26.1.2` `VFXtd0OC`,
+       `3.1.2+mc26.2-pre-3` `aPvh0lV7`.
 
 -46. InvSearch and InvCatalogue Modrinth page copy refresh (unreleased):
    - Added source-of-truth Modrinth page summaries and description Markdown for
