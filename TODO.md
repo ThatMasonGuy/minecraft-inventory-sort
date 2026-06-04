@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: Unified Minecraft 1.20.x/1.21.x/26.x 3.1.1 release published
+Current checkpoint: Post-3.1.1 documentation handoff cleanup complete
 
 ## Project Workflow
 
@@ -37,6 +37,23 @@ Current checkpoint: Unified Minecraft 1.20.x/1.21.x/26.x 3.1.1 release published
 - Core no longer registers a public `/inventorysort` command root.
 
 ## Recently Fixed
+
+-43. Documentation handoff cleanup (unreleased):
+   - Updated `AGENTS.md` with a fresh-agent reading order, the actual
+     verification command ladder, local-vs-GitHub validation guidance, and the
+     rule for updating Modrinth-facing release notes only for user-facing
+     release changes.
+   - Added `gradle/compatibility-release-playbook.md` as a portable plan for
+     adapting the compatibility-group, smoke-test, and guarded publish strategy
+     to other single-mod projects.
+   - Clarified in `gradle/version-profiles/README.md` that supported/candidate
+     profile lists use profile file names while release folders and Modrinth
+     suffixes use `profile_id`.
+   - Expanded `gradle/modrinth-publishing.md` with when to update the active
+     user-facing release note file as work progresses.
+   - Rebuilt `README.md` with clean ASCII punctuation and a link to the
+     compatibility-release playbook.
+   - Verified `git diff --check` for the documentation cleanup.
 
 -42. Unified `3.1.1` release matrix (unreleased):
    - Promoted all smoke-passed compatibility groups into the active

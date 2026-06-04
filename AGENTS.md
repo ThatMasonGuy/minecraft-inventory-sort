@@ -1,24 +1,72 @@
 # AGENTS.md
 
+## Fresh Agent Start Here
+
+Read these files before making changes:
+
+1. `AGENTS.md` for workflow rules and verification expectations.
+2. `TODO.md` for the current checkpoint, confirmed behavior, and active backlog.
+3. `README.md` for the user-facing mod shape and basic build commands.
+4. `COMPATIBILITY.md` for the currently supported Minecraft ranges.
+5. `gradle/version-profiles/README.md` for profile metadata, Java toolchains,
+   compat overlays, and candidate-vs-supported rules.
+6. `gradle/smoke-tests.md` for local spot checks and the full smoke matrix.
+7. `gradle/modrinth-publishing.md` for release notes, secrets, dry runs, and
+   guarded publishing.
+8. `gradle/compatibility-release-playbook.md` for the portable compatibility
+   and CI plan that can be adapted to other mods.
+
+After reading the docs, run `git status --short` before editing. Preserve any
+unrelated user changes.
+
 ## Project Workflow
 
-- Keep the repo in a clean checkpoint-driven state while splitting the mod and preparing multi-version releases.
+- Keep the repo in a clean checkpoint-driven state while maintaining the split
+  mods and multi-version release pipeline.
 - After each major change or implementation step:
   1. Update `TODO.md` with the completed work, current state, and next relevant task.
   2. Update `CHANGELOG.md` with the repo-facing engineering history.
-  3. Run the appropriate verification command, usually `.\gradlew.bat clean build` for baseline/build changes.
-  4. Commit the change before starting the next major step.
+  3. Update `gradle/release-notes/<mod_version>.md` when the change is
+     user-facing for the release being prepared. Do not put internal-only CI,
+     shim, refactor, or docs housekeeping into Modrinth release notes.
+  4. Run the appropriate verification command.
+  5. Commit the change before starting the next major step.
+- Verification command ladder:
+  - Docs-only changes: `git diff --check`.
+  - Normal local/push sanity check: `.\gradlew.bat buildAllMods --no-daemon --console=plain`.
+  - Targeted Minecraft profile build:
+    `.\gradlew.bat buildAllMods "-Pminecraft_version_profile=<profile>" --no-daemon --console=plain`.
+  - Rebuild every supported publish profile:
+    `.\gradlew.bat buildAllVersions --no-daemon --console=plain`.
+  - Focused launcher spot check:
+    `.\gradlew.bat smokeTestSelectedClients "-Pinventorysort_smoke_profiles=<profile_id>" "-Pinventorysort_smoke_game_versions=<version>" "-Pinventorysort_smoke_install_sets=<install_set>" --no-daemon --console=plain`.
+  - Full local matrix only when explicitly needed:
+    `.\gradlew.bat ciValidation --no-daemon --console=plain`.
 - Before any Modrinth publish or dry-run publish for a new `mod_version`, add a
   concise per-release note file at `gradle/release-notes/<mod_version>.md`.
   This file is the Modrinth changelog for that version. Do not rely on the full
   `CHANGELOG.md` or the whole `## Unreleased` section for Modrinth uploads.
-- During the Minecraft 26.x development/release lane, keep the active
-  `gradle/release-notes/<mod_version>.md` file updated only with user-facing
-  changes for that Modrinth release. Put internal build, shim, CI, and
-  migration details in `CHANGELOG.md` and `TODO.md` instead.
+- Keep the active `gradle/release-notes/<mod_version>.md` file updated as
+  user-facing changes accumulate for that Modrinth release. Put internal build,
+  shim, CI, docs, and migration details in `CHANGELOG.md` and `TODO.md`
+  instead.
 - If multiple major changes happen in one session, stop between each major boundary to update `TODO.md`, update `CHANGELOG.md`, verify, and commit.
 - Keep commits focused. Do not bundle unrelated split, cleanup, publishing, or version-migration work into one commit.
 - Before editing or committing, check `git status --short` and preserve any user changes that are unrelated to the current task.
+
+## Local vs GitHub Validation
+
+- Use local `buildAllMods` for rapid development.
+- Use `buildAllVersions` when changing profile metadata, compat overlays,
+  release packaging, or anything that should compile across every supported
+  publish profile.
+- Use `smokeTestSelectedClients` for focused launcher checks around a suspected
+  runtime issue.
+- Prefer the manual GitHub Actions `modrinth publish` workflow for the full
+  supported smoke matrix. It installs Java 17, Java 21, and Java 25, runs under
+  `xvfb`, and avoids locking the local machine for close to an hour.
+- Real Modrinth uploads should go through the guarded GitHub workflow unless
+  the user explicitly asks for a local `publishModrinth`.
 
 ## Major Change Boundaries
 
@@ -36,11 +84,16 @@ Examples of major boundaries for this project:
 
 - Keep user installation simple: each public feature mod should be installable on its own.
 - Shared Core code should be packaged so users do not need to download a separate Core mod manually.
-- Split the current single mod on the existing Minecraft target first, then port the split modules to newer Minecraft versions.
+- Keep Sort, Search, and Catalogue as separate public mods while packaging the
+  shared Core internally so users can install any one feature mod by itself.
 - Treat Minecraft version profiles as release compatibility groups, not necessarily
   one profile per exact patch version. A profile should compile one jar from one
   anchor Minecraft version, list every Minecraft version that exact jar has passed
   smoke testing on, and publish only those tested game versions to Modrinth.
+- `supported_minecraft_version_profiles` and
+  `candidate_minecraft_version_profiles` list profile file names. Release
+  folders and Modrinth version suffixes use each profile's `profile_id`, which
+  can be broader than the file name.
 - For the Minecraft 26.x lane, keep `26.1.2.properties` as the compile anchor
   for the grouped `26.1-26.1.2` candidate jar, with `26.1.properties` and
   `26.1.1.properties` used only as exact smoke runtimes. Keep `26.2-pre-3` exact
@@ -49,8 +102,8 @@ Examples of major boundaries for this project:
   Fabric Loader reports/compares runtime versions like `26.2-pre.3`; follow
   Fabric API's `minecraft` dependency string for `fabric.mod.json` and keep
   `modrinth_game_versions` as the Modrinth label.
-- Add automated CI validation before Modrinth automation: compile/build checks,
-  release jar metadata checks, and launcher smoke tests for every Minecraft version
-  claimed by a compatibility-group profile.
+- Keep automated validation ahead of Modrinth publishing: compile/build checks,
+  release jar metadata checks, and launcher smoke tests must pass for every
+  Minecraft version claimed by a compatibility-group profile.
 - Keep `CHANGELOG.md` as the broad repo history. Keep Modrinth-facing release
   notes focused, version-specific, and user-facing in `gradle/release-notes/`.

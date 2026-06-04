@@ -20,6 +20,9 @@ All notable project changes will be documented here.
 
 ### Changed
 
+- Updated project onboarding and release-process documentation so a fresh agent
+  can find the right workflow, verification commands, release-note rules, and
+  reusable compatibility-release plan without reconstructing the chat history.
 - Promoted all smoke-passed Minecraft `1.20.x`, `1.21.x`, and `26.x`
   compatibility groups into one unified `3.1.1` supported publish lane,
   rebuilt the local release artifacts for all eight groups, and verified the

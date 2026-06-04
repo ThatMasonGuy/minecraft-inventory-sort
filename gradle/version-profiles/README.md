@@ -15,6 +15,11 @@ supported_minecraft_version_profiles=1.20-1.20.4,1.20.5-1.20.6,1.21-1.21.5,1.21.
 candidate_minecraft_version_profiles=
 ```
 
+The supported/candidate lists contain profile file names without the
+`.properties` extension. Release output folders and Modrinth version suffixes
+use the profile's `profile_id`, so a file such as `26.1.2.properties` can build
+and publish under `build/release/26.1-26.1.2/`.
+
 Useful commands:
 
 ```powershell

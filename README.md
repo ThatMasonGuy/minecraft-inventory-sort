@@ -12,7 +12,8 @@ A lightweight **client-side** Minecraft mod that adds robust sorting capabilitie
 ## Features
 
 ### 1. Sorting Capabilities
-- **Inventory & Container Sorting:** Adds a **Sort** button to supported container screens, letting you organize any supported GUI instantly. Works on chests, barrels, shulker boxes, droppers, and dispensers (hoppers, furnaces, and brewing stands are skipped — their slots are functional).
+
+- **Inventory & Container Sorting:** Adds a **Sort** button to supported container screens, letting you organize any supported GUI instantly. Works on chests, barrels, shulker boxes, droppers, and dispensers (hoppers, furnaces, and brewing stands are skipped - their slots are functional).
 - **Hotbar-friendly Top-up Behavior:** Intelligently tops up partial hotbar stacks from your main inventory *before* sorting, ensuring your tools and blocks are ready to use.
 - **Restacking and Compaction:** Performs restacking and stable compaction so full stacks and empties are arranged cleanly, leaving no awkward gaps.
 - **Practical Category-based Ordering:** Sorts items by practical priorities:
@@ -22,6 +23,7 @@ A lightweight **client-side** Minecraft mod that adds robust sorting capabilitie
 - Leaves hotbar organization intentional when sorting the player inventory.
 
 ### 2. Inventory Search
+
 - **Searchable Inventory:** Quickly search for items across your immediate inventory and previously tracked containers.
 - **Known-current Item Location Tracking:** Remembers where you last saw an item, acting as an intelligent memory aid for your storage systems.
 - **Per-location Counts:** Displays exact quantities of searched items at each specific location.
@@ -29,6 +31,7 @@ A lightweight **client-side** Minecraft mod that adds robust sorting capabilitie
 - **Expanded Location/Details View:** View detailed context about where your items are stored to easily locate them in a massive base.
 
 ### 3. Tracked Storage & Known Locations
+
 - **Fixed Block Containers:** Automatically tracks the contents of standard chests, barrels, and other block-based storage.
 - **Ender Chest Tracking:** Treats Ender Chests as player-scoped storage, tracking them properly across dimensions.
 - **Placed Shulkers:** Dynamically updates contents when you interact with placed shulker boxes.
@@ -37,9 +40,10 @@ A lightweight **client-side** Minecraft mod that adds robust sorting capabilitie
 - **World Confirmation HUD:** Uses a non-intrusive HUD prompt to confirm the world/profile context, preventing writes to the wrong database until confirmed without blocking your gameplay.
 
 ### 4. Catalogue Mode
+
 - **Cataloguing Sessions:** Start a session with `/inventorycatalogue start` (use `/inventorycatalogue start includeInventory` to also count your own inventory), then walk your base opening every chest, shulker, ender chest, minecart, and other storage. Finish with `/inventorycatalogue stop` to get a deduplicated tally of everything you own.
 - **Identity-Based Deduplication:** Built on the same container-identity system as Tracked Storage, so single vs. double chests, individual shulkers, per-player ender chests, and minecarts are each counted once. Reopening a container refreshes its snapshot instead of double-counting it.
-- **Per-World & Persistent:** Catalogue data is scoped per server/world profile and saved to disk, so a tally accumulates across play sessions and survives restarts — perfect for seeing exactly how much of everything you hoarded by the end of a world. Reset a world's catalogue with `/inventorycatalogue clear`.
+- **Per-World & Persistent:** Catalogue data is scoped per server/world profile and saved to disk, so a tally accumulates across play sessions and survives restarts - perfect for seeing exactly how much of everything you hoarded by the end of a world. Reset a world's catalogue with `/inventorycatalogue clear`.
 - **Reports:** `/inventorycatalogue status` and `/inventorycatalogue report` show running totals in chat; `/inventorycatalogue stop` also writes a full plain-text report to `.minecraft/inventorysort/catalog/`.
 
 ## Compatibility & Scope
@@ -115,6 +119,8 @@ Modrinth publishing is configured through supported profiles only:
 Real uploads require `MODRINTH_TOKEN` outside the repo. See
 `gradle/modrinth-publishing.md`. Each published `mod_version` also needs a
 focused Modrinth changelog at `gradle/release-notes/<mod_version>.md`.
+For the reusable compatibility-group strategy behind the build, smoke-test, and
+publish pipeline, see `gradle/compatibility-release-playbook.md`.
 
 Module-local build artifacts are also generated in:
 
@@ -134,12 +140,12 @@ Run the client for local testing:
 
 ## Project Structure
 
-- `src/client/java/.../InventorySorter.java` – Core logic for sorting, restacking, hotbar top-ups, and layout organization.
-- `src/client/java/.../ItemLocationTracker.java` – The engine powering known-current item location tracking and container snapshots.
-- `src/client/java/.../SearchModalScreen.java` – UI implementation for the live inventory and container search feature.
-- `src/client/java/.../CatalogSession.java` – Cataloguing session lifecycle (start/stop/status/report) and report generation.
-- `src/client/java/.../CatalogStore.java` – Persistent, per-world catalogue store keyed by container identity.
-- `src/client/java/.../ServerWorldProfileManager.java` – Manages different tracking databases across multiplayer servers and single-player worlds.
+- `src/client/java/.../InventorySorter.java` - Core logic for sorting, restacking, hotbar top-ups, and layout organization.
+- `src/client/java/.../ItemLocationTracker.java` - The engine powering known-current item location tracking and container snapshots.
+- `src/client/java/.../SearchModalScreen.java` - UI implementation for the live inventory and container search feature.
+- `src/client/java/.../CatalogSession.java` - Cataloguing session lifecycle (start/stop/status/report) and report generation.
+- `src/client/java/.../CatalogStore.java` - Persistent, per-world catalogue store keyed by container identity.
+- `src/client/java/.../ServerWorldProfileManager.java` - Manages different tracking databases across multiplayer servers and single-player worlds.
 - `src/client/java/.../mixin/HandledScreenMixin.java` - Injects and renders the **Sort** and transfer buttons into existing container screens.
 - `src/client/java/.../mixin/SearchButtonMixin.java` - Injects the inventory search button independently from the sorting feature.
 - `src/compat/<compat_group>/` - Optional compatibility overlays selected by Minecraft version profile.

@@ -57,6 +57,13 @@ The publish tasks fail if the release note file is missing or blank. This keeps
 Modrinth uploads focused on what changed in that release instead of reposting
 the entire project changelog.
 
+Update the active release note file as user-facing changes accumulate for the
+release being prepared. Examples include new features, user-visible fixes,
+newly supported Minecraft versions, command changes, config changes, and install
+or compatibility notes. Do not include internal-only build rewiring, CI
+plumbing, docs cleanup, or implementation details unless they change what users
+should know before installing the release.
+
 Use `CHANGELOG.md` for the broad repo history, and use
 `gradle/release-notes/<version>.md` for the exact Modrinth-facing notes. To test
 or publish with a different notes file, pass:
