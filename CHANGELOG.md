@@ -23,6 +23,8 @@ All notable project changes will be documented here.
 
 ### Changed
 
+- Added source-of-truth Modrinth project page copy for InvSort and refreshed
+  the Inventory Sort metadata summary used by loaders and mod lists.
 - Updated project onboarding and release-process documentation so a fresh agent
   can find the right workflow, verification commands, release-note rules, and
   reusable compatibility-release plan without reconstructing the chat history.

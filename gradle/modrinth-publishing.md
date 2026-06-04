@@ -72,6 +72,19 @@ or publish with a different notes file, pass:
 .\gradlew.bat publishModrinthDryRun "-Pmodrinth_changelog_file=gradle/release-notes/3.0.0.md"
 ```
 
+## Project Page Copy
+
+Modrinth project summaries and long descriptions are tracked in:
+
+```text
+gradle/modrinth-project-pages.md
+```
+
+Update this file before changing live Modrinth project metadata. The publishing
+tasks upload version files and per-version changelogs only; they do not update
+the project summary, project body, gallery, categories, or other page-level
+metadata.
+
 ## Project IDs
 
 The public Modrinth project IDs are stored in `gradle.properties`:

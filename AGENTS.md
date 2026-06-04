@@ -13,7 +13,9 @@ Read these files before making changes:
 6. `gradle/smoke-tests.md` for local spot checks and the full smoke matrix.
 7. `gradle/modrinth-publishing.md` for release notes, secrets, dry runs, and
    guarded publishing.
-8. `gradle/compatibility-release-playbook.md` for the portable compatibility
+8. `gradle/modrinth-project-pages.md` for Modrinth project summaries and
+   description-page source copy.
+9. `gradle/compatibility-release-playbook.md` for the portable compatibility
    and CI plan that can be adapted to other mods.
 
 After reading the docs, run `git status --short` before editing. Preserve any

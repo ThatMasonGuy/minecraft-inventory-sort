@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: Release jar size cleanup complete
+Current checkpoint: InvSort Modrinth page copy prepared
 
 ## Project Workflow
 
@@ -37,6 +37,22 @@ Current checkpoint: Release jar size cleanup complete
 - Core no longer registers a public `/inventorysort` command root.
 
 ## Recently Fixed
+
+-45. InvSort Modrinth page copy refresh (unreleased):
+   - Added `gradle/modrinth-project-pages.md` as the source-of-truth file for
+     Modrinth project summaries and description-page copy.
+   - Drafted a cleaner InvSort project summary and description in the same
+     style as the Lifetime Stat Tracker page: short intro, feature list,
+     good-for list, and install note.
+   - Updated `AGENTS.md` and `gradle/modrinth-publishing.md` so future agents
+     know where Modrinth page-level copy lives and that publish tasks upload
+     versions only, not project page metadata.
+   - Updated the Inventory Sort Fabric metadata description to match the new
+     short Modrinth summary.
+   - Updated draft `gradle/release-notes/3.1.2.md` with the user-visible
+     metadata refresh.
+   - Live Modrinth project metadata still needs to be updated through the
+     Modrinth UI or an API token with project-edit permissions.
 
 -44. Release jar size cleanup (unreleased):
    - Investigated the post-split jar size jump from roughly low hundreds of KB

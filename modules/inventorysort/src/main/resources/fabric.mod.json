@@ -3,7 +3,7 @@
   "id": "inventorysort",
   "version": "${version}",
   "name": "Inventory Sort",
-  "description": "Client-side inventory sorting and auto-stacking for containers",
+  "description": "Quickly sort Minecraft inventories and containers into a clean, predictable order.",
   "authors": ["Tempest Studios"],
   "contact": {},
   "license": "LGPL-3.0-only",
