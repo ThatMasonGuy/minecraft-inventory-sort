@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: InvSort Modrinth page copy prepared
+Current checkpoint: all public Modrinth page copy refreshed
 
 ## Project Workflow
 
@@ -38,6 +38,19 @@ Current checkpoint: InvSort Modrinth page copy prepared
 
 ## Recently Fixed
 
+-46. InvSearch and InvCatalogue Modrinth page copy refresh (unreleased):
+   - Added source-of-truth Modrinth page summaries and description Markdown for
+     InvSearch and InvCatalogue in `gradle/modrinth-project-pages.md`.
+   - Updated Inventory Search and Inventory Catalogue Fabric metadata
+     descriptions to match their new Modrinth summaries.
+   - Updated draft `gradle/release-notes/3.1.2.md` so the queued patch release
+     mentions all three refreshed metadata descriptions.
+   - Verified `git diff --check` and
+     `.\gradlew.bat buildAllMods --no-daemon --console=plain`.
+   - Updated the live InvSearch and InvCatalogue Modrinth project summaries and
+     description pages through the Modrinth API, with readback verification.
+   - Saved before/after API snapshots under ignored `build/modrinth/` artifacts.
+
 -45. InvSort Modrinth page copy refresh (unreleased):
    - Added `gradle/modrinth-project-pages.md` as the source-of-truth file for
      Modrinth project summaries and description-page copy.
@@ -51,8 +64,8 @@ Current checkpoint: InvSort Modrinth page copy prepared
      short Modrinth summary.
    - Updated draft `gradle/release-notes/3.1.2.md` with the user-visible
      metadata refresh.
-   - Live Modrinth project metadata still needs to be updated through the
-     Modrinth UI or an API token with project-edit permissions.
+   - Updated the live InvSort Modrinth project summary and description page
+     through the Modrinth API, with readback verification.
 
 -44. Release jar size cleanup (unreleased):
    - Investigated the post-split jar size jump from roughly low hundreds of KB

@@ -3,7 +3,7 @@
   "id": "inventorycatalogue",
   "version": "${version}",
   "name": "Inventory Catalogue",
-  "description": "Client-side storage catalogue sessions and reports",
+  "description": "Run storage catalogue sessions that count your Minecraft base and write clear item reports.",
   "authors": ["Tempest Studios"],
   "contact": {},
   "license": "LGPL-3.0-only",
