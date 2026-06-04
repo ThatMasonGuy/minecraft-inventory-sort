@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: 3.1.2 GitHub release created
+Current checkpoint: GitHub repository About metadata refreshed
 
 ## Project Workflow
 
@@ -37,6 +37,18 @@ Current checkpoint: 3.1.2 GitHub release created
 - Core no longer registers a public `/inventorysort` command root.
 
 ## Recently Fixed
+
+-49. GitHub repository About metadata refresh (unreleased):
+   - Updated the live GitHub repository description to describe InvSort,
+     InvSearch, and InvCatalogue as separate client-side Fabric inventory mods
+     across Minecraft `1.20.x`, `1.21.x`, and `26.x`.
+   - Set the repository homepage URL to the InvSort Modrinth page:
+     `https://modrinth.com/mod/invsort`.
+   - Added GitHub topics:
+     `minecraft`, `minecraft-mod`, `fabric`, `fabricmc`, `modrinth`,
+     `inventory`, `inventory-management`, `inventory-sort`,
+     `inventory-search`, `inventory-catalogue`, `storage-management`,
+     `client-side`, and `java`.
 
 -48. GitHub release tagging for Modrinth publishes (unreleased):
    - Created annotated Git tag `v3.1.2` on release source commit `713b9ec`.

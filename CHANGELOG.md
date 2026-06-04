@@ -23,6 +23,8 @@ All notable project changes will be documented here.
 
 ### Changed
 
+- Updated the GitHub repository About metadata with the current split-mod
+  summary, InvSort Modrinth homepage, and repository topics.
 - Created the GitHub `v3.1.2` tag and release that points downloads to the
   published Modrinth versions, and documented GitHub release maintenance for
   future Modrinth publishes.
