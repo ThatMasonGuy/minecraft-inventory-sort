@@ -69,6 +69,12 @@ unrelated user changes.
   `xvfb`, and avoids locking the local machine for close to an hour.
 - Real Modrinth uploads should go through the guarded GitHub workflow unless
   the user explicitly asks for a local `publishModrinth`.
+- After every successful real Modrinth publish, create an annotated Git tag
+  named `v<mod_version>` on the released source commit and create a GitHub
+  release for that tag. The GitHub release should not attach jar assets;
+  Modrinth is the canonical download surface. Link the public Modrinth projects,
+  the uploaded Modrinth version URLs, the release source commit, and the
+  successful publish workflow run.
 
 ## Major Change Boundaries
 
@@ -80,6 +86,7 @@ Examples of major boundaries for this project:
 - Splitting Sort, Search, or Catalogue into separate modules.
 - Gradle build/publish task changes.
 - Modrinth publishing configuration.
+- GitHub release/tag publishing configuration.
 - Minecraft/Fabric/Loom version migration.
 
 ## Current Direction

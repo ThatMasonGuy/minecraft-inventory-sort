@@ -133,6 +133,33 @@ push, and then use the manual `modrinth publish` workflow when ready to release.
 The regular push/PR workflow is intentionally quick; the Modrinth workflow runs
 the expensive supported-profile build and smoke gate before upload.
 
+## GitHub Tags And Releases
+
+Every real Modrinth publish should also get a GitHub tag and GitHub release.
+Do this after the Modrinth workflow succeeds and the upload/version IDs are
+known.
+
+- Create an annotated Git tag named `v<mod_version>` on the released source
+  commit. For publish-record commits, tag the commit that represents the actual
+  shipped source state, not a later documentation-only follow-up.
+- Create a GitHub release titled for the published version, such as
+  `Inventory Mods 3.1.2`.
+- Do not attach GitHub jar assets. Modrinth is the canonical download surface,
+  and GitHub should provide only source archives plus links.
+- The release body should link to each public Modrinth project, list the
+  published Modrinth version URLs for each compatibility group, and include the
+  release source commit plus the successful `modrinth publish` workflow URL.
+- After creating the release, record the GitHub release URL in `TODO.md` and
+  add a short repo-facing note to `CHANGELOG.md`.
+
+Useful commands:
+
+```powershell
+git tag -a "v<mod_version>" <released_commit> -m "Inventory Mods <mod_version>"
+git push origin "v<mod_version>"
+gh release create "v<mod_version>" --title "Inventory Mods <mod_version>" --notes-file <notes-file> --latest
+```
+
 ## API References
 
 - Modrinth API overview: `https://docs.modrinth.com/api/`

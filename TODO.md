@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: 3.1.2 packaging cleanup published
+Current checkpoint: 3.1.2 GitHub release created
 
 ## Project Workflow
 
@@ -37,6 +37,18 @@ Current checkpoint: 3.1.2 packaging cleanup published
 - Core no longer registers a public `/inventorysort` command root.
 
 ## Recently Fixed
+
+-48. GitHub release tagging for Modrinth publishes (unreleased):
+   - Created annotated Git tag `v3.1.2` on release source commit `713b9ec`.
+   - Created GitHub release `Inventory Mods 3.1.2`:
+     `https://github.com/ThatMasonGuy/minecraft-inventory-sort/releases/tag/v3.1.2`.
+   - The GitHub release does not attach jar assets; it points users to the
+     canonical Modrinth project pages and the 24 uploaded Modrinth version URLs.
+   - Updated `AGENTS.md` so future agents know every successful real Modrinth
+     publish must be followed by an annotated `v<mod_version>` tag and GitHub
+     release.
+   - Updated `gradle/modrinth-publishing.md` with the ongoing GitHub
+     tag/release procedure and release body expectations.
 
 -47. `3.1.2` packaging cleanup publish (unreleased):
    - Bumped `mod_version` from `3.1.1` to `3.1.2`.

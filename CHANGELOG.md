@@ -23,6 +23,9 @@ All notable project changes will be documented here.
 
 ### Changed
 
+- Created the GitHub `v3.1.2` tag and release that points downloads to the
+  published Modrinth versions, and documented GitHub release maintenance for
+  future Modrinth publishes.
 - Published the `3.1.2` packaging cleanup release through the guarded GitHub
   Actions Modrinth workflow, uploading all 24 listed compatibility-group
   versions after the full smoke matrix passed.
