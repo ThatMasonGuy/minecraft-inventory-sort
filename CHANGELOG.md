@@ -23,6 +23,8 @@ All notable project changes will be documented here.
 
 ### Changed
 
+- Bumped the icon refresh release to `3.1.3`, replaced the packaged public mod
+  icons, and updated the live Modrinth project icons for all three public mods.
 - Updated the GitHub repository About metadata with the current split-mod
   summary, InvSort Modrinth homepage, and repository topics.
 - Created the GitHub `v3.1.2` tag and release that points downloads to the

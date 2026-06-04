@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: GitHub repository About metadata refreshed
+Current checkpoint: 3.1.3 icon refresh prepared
 
 ## Project Workflow
 
@@ -37,6 +37,25 @@ Current checkpoint: GitHub repository About metadata refreshed
 - Core no longer registers a public `/inventorysort` command root.
 
 ## Recently Fixed
+
+-50. `3.1.3` icon refresh publish (unreleased):
+   - Consumed root source images `InvSort.jpg`, `InvSearch.jpg`, and
+     `InvCatalogue.jpg`.
+   - Resized the new icons to `256x256` JPG assets:
+     `invsort.jpg` `25305` bytes, `invsearch.jpg` `23529` bytes, and
+     `invcatalogue.jpg` `23498` bytes.
+   - Updated the live Modrinth project icons for InvSort, InvSearch, and
+     InvCatalogue through the Modrinth project icon API, with changed
+     `icon_url` readbacks saved under ignored `build/modrinth/` snapshots.
+   - Bumped `mod_version` from `3.1.2` to `3.1.3`.
+   - Updated README to identify `3.1.3` as the current release lane.
+   - Added `gradle/release-notes/3.1.3.md` for the user-facing Modrinth
+     changelog.
+   - Verified `git diff --check` and
+     `.\gradlew.bat buildAllMods --no-daemon --console=plain`; default
+     `1.21.11` jars rebuilt at `140059-161210` bytes.
+   - Next step: commit, push, run the guarded GitHub Actions Modrinth publish
+     workflow, then create the `v3.1.3` GitHub tag and release.
 
 -49. GitHub repository About metadata refresh (unreleased):
    - Updated the live GitHub repository description to describe InvSort,
