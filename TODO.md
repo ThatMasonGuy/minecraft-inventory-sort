@@ -10,8 +10,10 @@ open so chat closing does not immediately hide it, and the report browser now
 uses a darker modern-Minecraft-style layout instead of the old InvSearch-like
 grey panel treatment. Follow-up sizing fixes keep the selected-item sidebar
 clipped and scrollable, prevent top summary text from running behind the
-sidebar, and keep scrolled item tiles inside the grid frame. Full smoke/CI
-validation is deferred until the feature set is complete.
+sidebar, and keep scrolled item tiles inside the grid frame. Item-grid badges
+now abbreviate large counts with `K`/`M`/`B`, while the sidebar keeps showing
+the exact selected-item count. Full smoke/CI validation is deferred until the
+feature set is complete.
 
 ## Project Workflow
 
@@ -216,6 +218,9 @@ Requested capabilities:
      clips and scrolls the selected-item sidebar, and redraws grid/detail
      borders above their clipped contents so oversized report details and
      scrolled items stay visually contained.
+   - DONE (3.2.0 queued): item-grid count badges now abbreviate values from
+     `1K` upward with rounded `K`/`M`/`B` units, while selected-item details
+     continue to show the exact comma-formatted total.
 2. Snapshot history:
    - DONE (3.2.0 queued): stopping a session now writes a timestamped
      structured report snapshot alongside the existing plain-text report.

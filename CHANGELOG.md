@@ -57,6 +57,9 @@ All notable project changes will be documented here.
 
 ### Changed
 
+- Changed InvCatalogue report-browser item-grid count badges to use rounded
+  `K`/`M`/`B` abbreviations from `1K` upward while keeping exact selected-item
+  totals in the sidebar.
 - Restyled the InvCatalogue report browser with darker modern-Minecraft-style
   chrome, slot-style item tiles, and local Catalogue back/close controls so it
   no longer visually follows the older InvSearch modal theme.

@@ -716,13 +716,25 @@ public class CatalogReportBrowserScreen extends Screen {
     }
 
     private static String compactCount(int count) {
-        if (count >= 1_000_000) {
-            return (count / 1_000_000) + "m";
+        if (count < 1_000) {
+            return String.valueOf(count);
         }
-        if (count >= 10_000) {
-            return (count / 1_000) + "k";
+
+        String[] suffixes = {"", "K", "M", "B"};
+        double value = count;
+        int suffixIndex = 0;
+        while (value >= 999.5 && suffixIndex < suffixes.length - 1) {
+            value /= 1_000.0;
+            suffixIndex++;
         }
-        return String.valueOf(count);
+
+        String formatted = value < 10.0
+                ? String.format(Locale.ROOT, "%.1f", value)
+                : String.format(Locale.ROOT, "%.0f", value);
+        if (formatted.endsWith(".0")) {
+            formatted = formatted.substring(0, formatted.length() - 2);
+        }
+        return formatted + suffixes[suffixIndex];
     }
 
     private static String stackSummary(ItemStack icon, int count) {
