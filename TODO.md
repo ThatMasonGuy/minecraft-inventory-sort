@@ -16,8 +16,15 @@ the exact selected-item count. InvSort now has a revised right-click rules
 screen for custom category/item ordering, protected slots, item-specific slots,
 and global plus per-container/per-screen rule scopes. The rules screen now fits
 inside scaled Minecraft viewports, shows one rule list at a time, and supports
-Ctrl-click plus Shift-click slot multi-selection. Full smoke/CI validation is
-deferred until the feature set is complete.
+Ctrl-click plus Shift-click slot multi-selection. All three feature screens have
+since been unified under a shared modern dark `InvUi` theme with a per-mod
+accent: the InvSort rules screen is now tab-based (Slots/Order) with a scope
+selector and a selection panel, the InvSearch modal uses card rows with
+held-vs-tracked counts plus a restyled tracked-world picker, and the
+InvCatalogue browser/detail views are restyled to match. The UI redesign builds
+clean on every supported 1.x profile (`1.20-1.20.4` through `1.21.11`); the
+`26.x` profiles still require the GitHub Java 25 toolchain to compile locally.
+Full smoke/CI validation is deferred until the feature set is complete.
 
 ## Project Workflow
 
@@ -262,6 +269,39 @@ Requested capabilities:
      history data model needed for comparisons.
 
 ## Recently Fixed
+
+-57. Cohesive in-game UI redesign for `3.2.0` minor release (unreleased):
+   - Added a shared `InvUi` theme helper in `src/client/java` (registered in the
+     Core client source set) that draws the modern dark window, panels, slot
+     tiles, list rows, fields, segmented tabs, chips, count badges, and
+     scrollbars through the existing `InventorySortDrawContext` abstraction, so
+     the look is reusable on both the 1.x and 26.x rendering lanes.
+   - Restyled `InventorySortTextButtonRenderer` and
+     `InventorySortModalIconButtonRenderer` to the new flat button theme, which
+     restyles buttons across all three feature screens at once.
+   - Rebuilt `InventorySortConfigScreen` into `Slots` and `Order` tabs with a
+     scope segmented control, a responsive slot grid, a live selection/legend
+     panel, and tooltip-labelled slot actions. Chrome controls use invisible
+     hitbox buttons (not a `mouseClicked` override) to stay compatible across the
+     1.20-1.21.11 mouse-event API drift.
+   - Rebuilt `SearchModalScreen` with card result rows, held-versus-tracked
+     count colours, an accent-barred locations panel, a focus-highlighted search
+     field, and a right rail scrollbar; restyled `ServerWorldProfileScreen` to
+     match with an active-profile indicator.
+   - Rebuilt `CatalogReportBrowserScreen` browser and detail views with world
+     section bands, report cards, slot-tile item grid with count badges, and a
+     selected-item sidebar with a report-share bar.
+   - Used a Python (PIL) replica of the `InvUi` pixel math to preview each screen
+     layout at min/max sizes before writing the Java; preview tooling lives only
+     under the ignored `build/ui-preview/` directory.
+   - Verified `.\gradlew.bat buildAllMods --no-daemon --console=plain` on the
+     default `1.21.11` profile.
+   - Verified `buildAllMods` directly on every supported 1.x profile:
+     `1.20-1.20.4`, `1.20.5-1.20.6`, `1.21-1.21.5`, `1.21.6-1.21.8`,
+     `1.21.9-1.21.10`, and `1.21.11`. The `26.x` profiles remain gated on the
+     GitHub Java 25 toolchain and are not locally buildable on this machine.
+   - Full smoke/CI validation remains deferred until the rest of the `3.2.0`
+     minor-release work is complete.
 
 -56. InvSort rules-screen usability revision for `3.2.0` minor release
      (unreleased):

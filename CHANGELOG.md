@@ -18,6 +18,28 @@ All notable project changes will be documented here.
 - Added per-version hitbox-only button shims and 26.x
   `GuiGraphicsExtractor` overlays so the new Catalogue report browser follows
   the existing GUI lifecycle boundaries across supported profile groups.
+- Added a shared `InvUi` theme helper (operating on the existing
+  `InventorySortDrawContext` abstraction) that centralizes the modern dark
+  window, panel, slot, row, field, tab, chip, and scrollbar drawing for all
+  three feature screens across the 1.x and 26.x rendering lanes.
+
+### Changed
+
+- Unified the InvSort rules, InvSearch results/world, and InvCatalogue report
+  screens under one modern dark theme with a per-mod accent (gold for InvSort,
+  blue for InvSearch, green for InvCatalogue) so the three menus read as one
+  suite instead of the previous mismatched grey and ad-hoc dark panels.
+- Restyled the shared text and modal icon button renderers to the new flat
+  theme, so every menu in the suite picks up consistent buttons.
+- Reworked the InvSort rules screen into `Slots` and `Order` tabs with an
+  explicit scope selector, a live slot selection/legend panel, and
+  tooltip-labelled `Protect` / `Assign Item` / `Clear` actions.
+- Restyled InvSearch results as card rows with colour-coded counts (held in
+  your inventory versus tracked elsewhere) and an accent-barred locations
+  panel, and matched the tracked-world selector to the same theme.
+- Restyled the InvCatalogue browser report cards and world section bands plus
+  the detail item grid and selected-item sidebar, adding a share bar for an
+  item's portion of the report total.
 
 ### Fixed
 
