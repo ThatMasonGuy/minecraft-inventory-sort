@@ -58,6 +58,17 @@ All notable project changes will be documented here.
 
 ### Fixed
 
+- Fixed shared category classification for the new `:category` searches so
+  redstone items and redstone dust are matched by `:redstone` instead of being
+  swallowed by the broad stone-name terrain rule, while dusts such as
+  glowstone dust no longer appear under `:stone`.
+- Fixed the tracked-world picker mouse-wheel handler so it only scrolls the
+  saved-world list when the cursor is over that list, including the Minecraft
+  26.x screen overlays.
+- Delegated the legacy `InventorySorter.categoryKey` entry point to the shared
+  `InventorySortCategories` helper so custom sorting, InvSearch, and
+  InvCatalogue category filters cannot drift onto separate classification
+  rules.
 - Fixed the regenerated 26.x InvSearch screen overlay to use
   `MinecraftApiCompat.setScreen`, preserving the `26.2-pre-3`
   `client.gui.setScreen(...)` path after Minecraft removed `Minecraft#setScreen`.

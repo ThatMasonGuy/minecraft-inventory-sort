@@ -272,15 +272,16 @@ public class ServerWorldProfileScreen extends Screen {
     }
 
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
-        return handleMouseScrolled(verticalAmount);
+        return handleMouseScrolled(mouseX, mouseY, verticalAmount);
     }
 
     public boolean mouseScrolled(double mouseX, double mouseY, double verticalAmount) {
-        return handleMouseScrolled(verticalAmount);
+        return handleMouseScrolled(mouseX, mouseY, verticalAmount);
     }
 
-    private boolean handleMouseScrolled(double verticalAmount) {
-        if (serverKey != null && scrollable) {
+    private boolean handleMouseScrolled(double mouseX, double mouseY, double verticalAmount) {
+        if (serverKey != null && scrollable
+                && isInside(mouseX, mouseY, wellX, listY - 2, wellW, listBottom - (listY - 2))) {
             int delta = (int) Math.signum(-verticalAmount);
             int before = scrollOffset;
             scrollBy(delta);

@@ -28,8 +28,12 @@ Search modal, tracked-world picker, and Catalogue browser/detail views; the
 `26.2-pre-3` all-public install also passes a focused launch smoke test.
 InvSearch and the InvCatalogue report-browser filter now accept `:category`
 queries such as `:wood`, `:stone`, and `:tools`, backed by the shared Core copy
-of the InvSort category vocabulary and aliases. Full smoke/CI validation is
-deferred until the feature set is complete.
+of the InvSort category vocabulary and aliases. A final pre-CI bug pass tightened
+that shared classifier so redstone items and dusts no longer get swallowed by
+the broad stone category, delegated the stale InvSort legacy classifier to the
+shared helper, and constrained the tracked-world picker mouse wheel to its list
+well across shared and 26.x screens. Full smoke/CI validation is deferred until
+the feature set is complete.
 
 ## Project Workflow
 

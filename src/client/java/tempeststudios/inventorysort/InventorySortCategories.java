@@ -180,10 +180,13 @@ public final class InventorySortCategories {
                 || path.contains("mycelium") || path.contains("mud")) {
             return "10_terrain_dirt";
         }
-        if (path.contains("stone") || path.contains("cobblestone") || path.contains("deepslate")
-                || path.contains("granite") || path.contains("diorite") || path.contains("andesite")
-                || path.contains("tuff") || path.contains("calcite") || path.contains("basalt")
-                || path.contains("blackstone") || path.contains("netherrack") || path.contains("end_stone")) {
+        if (isRedstonePath(path)) {
+            return "30_redstone";
+        }
+        if (isDustPath(path)) {
+            return "24_minerals_dusts";
+        }
+        if (isTerrainStonePath(path)) {
             return "11_terrain_stone";
         }
         if (path.contains("sand") || path.contains("gravel") || path.contains("clay")) {
@@ -203,18 +206,6 @@ public final class InventorySortCategories {
         }
         if (path.endsWith("_nugget")) {
             return "23_minerals_nuggets";
-        }
-        if (path.equals("redstone") || path.equals("glowstone_dust") || path.equals("gunpowder")
-                || path.equals("blaze_powder") || path.equals("bone_meal")) {
-            return "24_minerals_dusts";
-        }
-
-        if (path.contains("redstone") || path.contains("repeater") || path.contains("comparator")
-                || path.contains("piston") || path.contains("observer") || path.contains("hopper")
-                || path.contains("dispenser") || path.contains("dropper") || path.contains("lever")
-                || path.contains("button") || path.contains("pressure_plate") || path.contains("rail")
-                || path.contains("detector")) {
-            return "30_redstone";
         }
 
         if (path.contains("slab")) {
@@ -275,6 +266,29 @@ public final class InventorySortCategories {
         }
 
         return "90_misc";
+    }
+
+    private static boolean isTerrainStonePath(String path) {
+        if (path.contains("redstone") || path.contains("glowstone")) {
+            return false;
+        }
+        return path.contains("stone") || path.contains("cobblestone") || path.contains("deepslate")
+                || path.contains("granite") || path.contains("diorite") || path.contains("andesite")
+                || path.contains("tuff") || path.contains("calcite") || path.contains("basalt")
+                || path.contains("blackstone") || path.contains("netherrack") || path.contains("end_stone");
+    }
+
+    private static boolean isDustPath(String path) {
+        return path.equals("glowstone_dust") || path.equals("gunpowder")
+                || path.equals("blaze_powder") || path.equals("bone_meal");
+    }
+
+    private static boolean isRedstonePath(String path) {
+        return path.equals("redstone") || path.contains("redstone") || path.contains("repeater")
+                || path.contains("comparator") || path.contains("piston") || path.contains("observer")
+                || path.contains("hopper") || path.contains("dispenser") || path.contains("dropper")
+                || path.contains("lever") || path.contains("button") || path.contains("pressure_plate")
+                || path.contains("rail") || path.contains("detector");
     }
 
     private static Map<String, Set<String>> buildAliases() {

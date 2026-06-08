@@ -643,6 +643,11 @@ public class InventorySorter {
 	}
 
 	public static String categoryKey(ItemStack stack) {
+		return InventorySortCategories.categoryKey(stack);
+	}
+
+	@SuppressWarnings("unused")
+	private static String legacyCategoryKey(ItemStack stack) {
 		if (stack.isEmpty())
 			return "99_empty";
 
