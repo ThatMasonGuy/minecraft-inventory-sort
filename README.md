@@ -3,7 +3,7 @@
 A lightweight **client-side** Minecraft mod that adds robust sorting capabilities and powerful inventory tracking to container screens. Intelligently organize your items, find misplaced gear, and keep tabs on your storage.
 
 - **Mod ID:** `inventorysort`
-- **Minecraft:** current `3.1.3` release lane targets `1.20.x`, `1.21.x`, and
+- **Minecraft:** current `3.2.0` release lane targets `1.20.x`, `1.21.x`, and
   `26.x` through compatibility-group releases
 - **Loader:** Fabric
 - **Java:** 17+ for `1.20-1.20.4`, 21+ for `1.20.5+`, 25+ for `26.x`

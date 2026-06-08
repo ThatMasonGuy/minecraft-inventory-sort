@@ -55,6 +55,7 @@ All notable project changes will be documented here.
 - Shared the InvSort category vocabulary through Core so standalone InvSearch
   and InvCatalogue jars can use category matching without depending on the
   public InvSort feature jar.
+- Bumped the queued minor release to `3.2.0` for validation and publishing.
 
 ### Fixed
 

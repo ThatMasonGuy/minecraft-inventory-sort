@@ -35,8 +35,9 @@ shared helper, and constrained the tracked-world picker mouse wheel to its list
 well across shared and 26.x screens. A final packaging sweep found the generated
 release jars clean of project docs, source files, source images, and extra public
 assets; `verifyReleaseJars` now also fails if those non-runtime files appear in
-either a public feature jar or its embedded Core jar. Full smoke/CI validation
-is deferred until the feature set is complete.
+either a public feature jar or its embedded Core jar. `mod_version` is now
+bumped to `3.2.0` for the release jars and the guarded GitHub validation/publish
+workflow.
 
 ## Project Workflow
 
