@@ -12,9 +12,11 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import tempeststudios.inventorysort.InventorySortConfigScreen;
 import tempeststudios.inventorysort.InventorySortIconButton;
 import tempeststudios.inventorysort.InventorySorter;
 import tempeststudios.inventorysort.RecipeBookAwareButtonScreen;
+import tempeststudios.inventorysort.compat.core.MinecraftApiCompat;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -80,7 +82,8 @@ public abstract class HandledScreenMixin implements RecipeBookAwareButtonScreen 
                 btn -> {
                     InventorySorter.sortPlayerInventory(screen, client.player);
                     inventorySort$clearFocus(client, screen, btn);
-                });
+                },
+                btn -> inventorySort$openRulesScreen(client, screen, false, btn));
 
         if (inventorySort$isContainer) {
             inventorySort$addButton(screen, screenAccessor, inventorySort$PLAYER_MATCHING_TO_CONTAINER, InventorySortIconButton.MATCHING,
@@ -100,7 +103,8 @@ public abstract class HandledScreenMixin implements RecipeBookAwareButtonScreen 
                     btn -> {
                         InventorySorter.sortInventory(screen, client.player);
                         inventorySort$clearFocus(client, screen, btn);
-                    });
+                    },
+                    btn -> inventorySort$openRulesScreen(client, screen, true, btn));
             inventorySort$addButton(screen, screenAccessor, inventorySort$CONTAINER_MATCHING_TO_PLAYER, InventorySortIconButton.MATCHING,
                     "Move matching items to inventory",
                     btn -> {
@@ -123,8 +127,19 @@ public abstract class HandledScreenMixin implements RecipeBookAwareButtonScreen 
                                          int icon,
                                          String tooltip,
                                          Button.OnPress onPress) {
+        inventorySort$addButton(screen, screenAccessor, role, icon, tooltip, onPress, null);
+    }
+
+    @Unique
+    private void inventorySort$addButton(AbstractContainerScreen<?> screen,
+                                         ScreenAccessor screenAccessor,
+                                         int role,
+                                         int icon,
+                                         String tooltip,
+                                         Button.OnPress onPress,
+                                         Button.OnPress secondaryOnPress) {
         int[] pos = inventorySort$positionFor(role, screen, (AbstractContainerScreenAccessor) this);
-        Button button = new InventorySortIconButton(pos[0], pos[1], icon, Component.literal(tooltip), onPress);
+        Button button = new InventorySortIconButton(pos[0], pos[1], icon, Component.literal(tooltip), onPress, secondaryOnPress);
         screenAccessor.invokeAddRenderableWidget(button);
         inventorySort$trackedButtons.add(button);
         inventorySort$trackedButtonRoles.add(role);
@@ -136,6 +151,18 @@ public abstract class HandledScreenMixin implements RecipeBookAwareButtonScreen 
             btn.setFocused(false);
             screen.setFocused(null);
         });
+    }
+
+    @Unique
+    private static void inventorySort$openRulesScreen(Minecraft client,
+                                                      AbstractContainerScreen<?> screen,
+                                                      boolean containerTarget,
+                                                      Button btn) {
+        if (client.player == null) {
+            return;
+        }
+        MinecraftApiCompat.setScreen(client, new InventorySortConfigScreen(screen, client.player, containerTarget));
+        inventorySort$clearFocus(client, screen, btn);
     }
 
     @Inject(method = "extractRenderState", at = @At("HEAD"))

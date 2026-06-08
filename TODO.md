@@ -12,8 +12,10 @@ grey panel treatment. Follow-up sizing fixes keep the selected-item sidebar
 clipped and scrollable, prevent top summary text from running behind the
 sidebar, and keep scrolled item tiles inside the grid frame. Item-grid badges
 now abbreviate large counts with `K`/`M`/`B`, while the sidebar keeps showing
-the exact selected-item count. Full smoke/CI validation is deferred until the
-feature set is complete.
+the exact selected-item count. InvSort now has a first-pass right-click rules
+screen for custom category/item ordering, locked slots, reserved item slots, and
+global plus per-container/per-screen rule scopes. Full smoke/CI validation is
+deferred until the feature set is complete.
 
 ## Project Workflow
 
@@ -171,31 +173,43 @@ Dropped from active bugs by user decision:
 Goal: add an in-game configuration menu for user-defined sorting behavior across
 player inventories and containers.
 
+Status: first-pass implementation is complete locally for the queued `3.2.0`
+minor release.
+
 Requested capabilities:
 
 1. Custom sort order:
-   - Let players define their own sorting order for inventories and chests.
-   - Decide whether the first version supports item ids only, categories only,
-     or both.
-   - Keep default behavior available when no custom order is configured.
+   - DONE (3.2.0 queued): Let players define their own sorting order for
+     inventories and chests.
+   - DONE (3.2.0 queued): First version supports both category ordering and
+     optional specific item-id ordering. Category order remains the broader
+     preference, while exact item order can be enabled for full custom control.
+   - DONE (3.2.0 queued): Default behavior remains available when no custom
+     order is configured.
 2. Restricted slots:
-   - Let players mark specific inventory/container slots as restricted.
-   - Restricted slots should not receive sorted items.
-   - Decide whether restricted slots are also protected from being moved out of,
-     or only protected from being sorted into.
+   - DONE (3.2.0 queued): Let players mark specific inventory/container slots
+     as restricted.
+   - DONE (3.2.0 queued): Restricted slots do not receive sorted items.
+   - DONE (3.2.0 queued): Restricted slots are fully protected by sorting; the
+     normal sort pass does not move items out of them or into them.
 3. Reserved item slots:
-   - Let players assign specific items to specific slots, such as logs in the
-     bottom-right inventory slot, planks in the middle-right slot, and sticks in
-     the top-right slot.
-   - Sorting should fill reserved slots with matching items when possible and
-     avoid putting other item types there.
+   - DONE (3.2.0 queued): Let players assign specific items to specific slots,
+     such as logs in the bottom-right inventory slot, planks in the middle-right
+     slot, and sticks in the top-right slot.
+   - DONE (3.2.0 queued): Sorting fills reserved slots with matching items when
+     possible and avoids putting other item types there.
 4. Scope and persistence decisions:
-   - Decide whether rules are global, per screen type, per container identity, or
-     a combination.
-   - Store rules locally under the existing `inventorysort` game directory and
-     keep them client-side only.
-   - Make sure rules work across the supported version-profile matrix and with
-     the future bundle partitioning behavior.
+   - DONE (3.2.0 queued): Rules support global player inventory behavior,
+     global container defaults, and per-container overrides when Core has a
+     concrete identity. Unsupported/transient containers fall back to a
+     per-screen override.
+   - DONE (3.2.0 queued): Rules are stored client-side under the existing
+     `inventorysort` game directory in `sort_rules.json`, using temp-file writes
+     and `.bak` recovery.
+   - DONE (3.2.0 queued): Rules compile across the supported profile matrix and
+     compose with the bundle partitioning behavior: bundles are still moved to
+     the front of the movable sortable area, while locked/reserved slots are
+     withheld from that movable area.
 
 ### InvCatalogue In-Game GUI And Snapshot Comparison
 
@@ -236,6 +250,31 @@ Requested capabilities:
      history data model needed for comparisons.
 
 ## Recently Fixed
+
+-55. InvSort custom sorting and slot-rule menu for `3.2.0` minor release
+     (unreleased):
+   - Added a local `SortRuleStore` persisted at `inventorysort/sort_rules.json`
+     with temp-file saves and `.bak` recovery.
+   - Added a right-click Sort-button rules screen for player inventory rules and
+     container rules.
+   - Added custom category order, optional specific item-id order, locked slots,
+     and reserved item slots.
+   - Sorting now enforces reserved slots before normal sorting, excludes locked
+     and reserved slots from the movable region, and still partitions bundles to
+     the front of the remaining movable area before sorting ordinary items.
+   - Added global player rules, global container defaults, concrete
+     per-container overrides, and per-screen fallback overrides when a concrete
+     container identity is unavailable.
+   - Moved right-click handling into versioned icon-button shims so the entry
+     point works across older `double,double,int` mouse APIs, newer
+     `MouseButtonEvent` APIs, and the 26.x render/input lane.
+   - Added 26.x `GuiGraphicsExtractor` overlays for the InvSort rules screen.
+   - Verified `.\gradlew.bat buildAllMods --no-daemon --console=plain`.
+   - Verified
+     `.\gradlew.bat smokeTestSelectedClients "-Pinventorysort_smoke_profiles=1.21.11" "-Pinventorysort_smoke_game_versions=1.21.11" "-Pinventorysort_smoke_install_sets=inventorysort-only" --no-daemon --console=plain`.
+   - Verified `.\gradlew.bat buildAllVersions --no-daemon --console=plain`.
+   - Full smoke/CI validation remains deferred until the rest of the `3.2.0`
+     minor-release work is complete.
 
 -54. InvCatalogue report browser command follow-up for `3.2.0` minor release
      (unreleased):

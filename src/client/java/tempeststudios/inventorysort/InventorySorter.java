@@ -26,6 +26,7 @@ public class InventorySorter {
 		PlayerSlotRegions regions = getPlayerSlotRegions(menu, player);
 		List<Slot> playerHotbar = regions.hotbar;
 		List<Slot> playerMain = regions.main;
+		SortRuleStore.SortRules playerRules = SortRuleStore.getInstance().playerRules();
 
 		tempeststudios.inventorysort.core.InventorySortCore.LOGGER.debug("Found {} hotbar slots, {} main inventory slots",
 				playerHotbar.size(), playerMain.size());
@@ -34,7 +35,7 @@ public class InventorySorter {
 		if (!playerHotbar.isEmpty() && !playerMain.isEmpty()) {
 			if (!ensureCursorEmpty(menu, invoker, playerMain, playerHotbar))
 				return;
-			topUpHotbar(menu, invoker, playerHotbar, playerMain);
+			topUpHotbar(menu, invoker, playerHotbar, movableSlots(playerMain, playerRules, true));
 			if (!ensureCursorEmpty(menu, invoker, playerMain, playerHotbar))
 				return;
 		}
@@ -45,7 +46,7 @@ public class InventorySorter {
 		List<Slot> slotsToSort = getSortableSlots(menu, screen, playerMain);
 		tempeststudios.inventorysort.core.InventorySortCore.LOGGER.debug("Found {} slots to sort", slotsToSort.size());
 
-		sortSlots(menu, invoker, slotsToSort, playerMain, playerHotbar);
+		sortSlots(menu, invoker, slotsToSort, playerMain, playerHotbar, containerRulesFor(screen));
 
 		tempeststudios.inventorysort.core.InventorySortCore.LOGGER.info("Sorting complete!");
 	}
@@ -59,16 +60,17 @@ public class InventorySorter {
 		PlayerSlotRegions regions = getPlayerSlotRegions(menu, player);
 		List<Slot> playerHotbar = regions.hotbar;
 		List<Slot> playerMain = regions.main;
+		SortRuleStore.SortRules rules = SortRuleStore.getInstance().playerRules();
 
 		if (!playerHotbar.isEmpty() && !playerMain.isEmpty()) {
 			if (!ensureCursorEmpty(menu, invoker, playerMain, playerHotbar))
 				return;
-			topUpHotbar(menu, invoker, playerHotbar, playerMain);
+			topUpHotbar(menu, invoker, playerHotbar, movableSlots(playerMain, rules, true));
 			if (!ensureCursorEmpty(menu, invoker, playerMain, playerHotbar))
 				return;
 		}
 
-		sortSlots(menu, invoker, new ArrayList<>(playerMain), playerHotbar, playerHotbar);
+		sortSlots(menu, invoker, new ArrayList<>(playerMain), playerHotbar, playerHotbar, rules);
 
 		tempeststudios.inventorysort.core.InventorySortCore.LOGGER.info("Player inventory sorting complete!");
 	}
@@ -77,14 +79,25 @@ public class InventorySorter {
 								  AbstractContainerScreenInvoker invoker,
 								  List<Slot> slotsToSort,
 								  List<Slot> fallbackSlots,
-								  List<Slot> hotbarBufferSlots) {
+								  List<Slot> hotbarBufferSlots,
+								  SortRuleStore.SortRules rules) {
 		if (slotsToSort.isEmpty())
 			return;
 
 		if (!ensureCursorEmpty(menu, invoker, slotsToSort, fallbackSlots))
 			return;
 
-		List<Slot> sortableSlots = moveBundlesToFront(invoker, slotsToSort, hotbarBufferSlots);
+		if (rules != null && rules.enabled) {
+			enforceReservedSlots(menu, invoker, slotsToSort, rules);
+			if (!ensureCursorEmpty(menu, invoker, slotsToSort, fallbackSlots))
+				return;
+		}
+
+		List<Slot> movableSlots = movableSlots(slotsToSort, rules, true);
+		if (movableSlots.isEmpty())
+			return;
+
+		List<Slot> sortableSlots = moveBundlesToFront(invoker, movableSlots, hotbarBufferSlots);
 		if (!ensureCursorEmpty(menu, invoker, slotsToSort, fallbackSlots))
 			return;
 		if (sortableSlots.isEmpty())
@@ -98,7 +111,7 @@ public class InventorySorter {
 
 		// C) Sort by: maxStackSize DESC (64 first), then category grouping, then
 		// alphabetical, then components hash
-		List<ItemStack> desired = buildDesiredLayout(sortableSlots);
+		List<ItemStack> desired = buildDesiredLayout(sortableSlots, rules);
 
 		// D) Apply layout (treat same item+components as "already correct", ignore
 		// counts; restack handles fullness)
@@ -112,6 +125,147 @@ public class InventorySorter {
 
 		// Final safety
 		ensureCursorEmpty(menu, invoker, sortableSlots, fallbackSlots);
+	}
+
+	private static SortRuleStore.SortRules containerRulesFor(AbstractContainerScreen<?> screen) {
+		SortRuleStore store = SortRuleStore.getInstance();
+		if (screen instanceof InventorySortContainerContext context) {
+			return store.effectiveContainerRules(
+					context.inventorysort$getContainerIdentity(),
+					context.inventorysort$getScreenClassName());
+		}
+		return store.containerDefaultRules();
+	}
+
+	private static List<Slot> movableSlots(List<Slot> slots,
+										   SortRuleStore.SortRules rules,
+										   boolean excludeReserved) {
+		if (rules == null || !rules.enabled) {
+			return new ArrayList<>(slots);
+		}
+
+		List<Slot> movable = new ArrayList<>();
+		for (int i = 0; i < slots.size(); i++) {
+			SortRuleStore.SlotRule rule = rules.ruleFor(i);
+			if (rule.restricted || (excludeReserved && rule.hasReservation())) {
+				continue;
+			}
+			movable.add(slots.get(i));
+		}
+		return movable;
+	}
+
+	private static void enforceReservedSlots(AbstractContainerMenu menu,
+											 AbstractContainerScreenInvoker invoker,
+											 List<Slot> slots,
+											 SortRuleStore.SortRules rules) {
+		for (int i = 0; i < slots.size(); i++) {
+			SortRuleStore.SlotRule rule = rules.ruleFor(i);
+			if (rule.restricted || !rule.hasReservation()) {
+				continue;
+			}
+
+			Slot target = slots.get(i);
+			ItemStack targetStack = target.getItem();
+			String reservedItemId = rule.reservedItemId;
+			if (!targetStack.isEmpty() && isBundle(targetStack) && !itemIdEquals(targetStack, reservedItemId)) {
+				continue;
+			}
+
+			if (targetStack.isEmpty() || !itemIdEquals(targetStack, reservedItemId)) {
+				int matching = findReservedSource(slots, rules, reservedItemId, i);
+				if (matching != -1) {
+					swap(invoker, target, slots.get(matching));
+				} else if (!targetStack.isEmpty()) {
+					int empty = findEmptyMovableSlot(slots, rules, i);
+					if (empty != -1) {
+						swap(invoker, target, slots.get(empty));
+					}
+				}
+			}
+
+			fillReservedSlot(menu, invoker, target, slots, rules, reservedItemId, i);
+		}
+	}
+
+	private static void fillReservedSlot(AbstractContainerMenu menu,
+										 AbstractContainerScreenInvoker invoker,
+										 Slot target,
+										 List<Slot> slots,
+										 SortRuleStore.SortRules rules,
+										 String reservedItemId,
+										 int targetIndex) {
+		ItemStack targetStack = target.getItem();
+		if (targetStack.isEmpty() || !itemIdEquals(targetStack, reservedItemId) || isBundle(targetStack)) {
+			return;
+		}
+
+		int max = targetStack.getMaxStackSize();
+		if (max <= 1 || targetStack.getCount() >= max) {
+			return;
+		}
+
+		for (int i = 0; i < slots.size(); i++) {
+			if (i == targetIndex) {
+				continue;
+			}
+			SortRuleStore.SlotRule rule = rules.ruleFor(i);
+			if (rule.restricted || rule.hasReservation()) {
+				continue;
+			}
+
+			ItemStack source = slots.get(i).getItem();
+			if (source.isEmpty() || isBundle(source) || !sameItemAndComponents(target.getItem(), source)) {
+				continue;
+			}
+
+			click(invoker, slots.get(i));
+			click(invoker, target);
+			if (!menu.getCarried().isEmpty()) {
+				click(invoker, slots.get(i));
+			}
+
+			targetStack = target.getItem();
+			if (targetStack.isEmpty() || targetStack.getCount() >= max) {
+				return;
+			}
+		}
+	}
+
+	private static int findReservedSource(List<Slot> slots,
+										  SortRuleStore.SortRules rules,
+										  String reservedItemId,
+										  int targetIndex) {
+		for (int i = 0; i < slots.size(); i++) {
+			if (i == targetIndex) {
+				continue;
+			}
+			SortRuleStore.SlotRule rule = rules.ruleFor(i);
+			if (rule.restricted || rule.hasReservation()) {
+				continue;
+			}
+			ItemStack stack = slots.get(i).getItem();
+			if (!stack.isEmpty() && !isBundle(stack) && itemIdEquals(stack, reservedItemId)) {
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	private static int findEmptyMovableSlot(List<Slot> slots, SortRuleStore.SortRules rules, int targetIndex) {
+		for (int i = 0; i < slots.size(); i++) {
+			if (i == targetIndex) {
+				continue;
+			}
+			SortRuleStore.SlotRule rule = rules.ruleFor(i);
+			if (rule.restricted || rule.hasReservation()) {
+				continue;
+			}
+			if (slots.get(i).getItem().isEmpty()) {
+				return i;
+			}
+		}
+		return -1;
 	}
 
 	private static List<Slot> moveBundlesToFront(AbstractContainerScreenInvoker invoker,
@@ -282,7 +436,7 @@ public class InventorySorter {
 		ContainerClickCompat.quickMove(invoker, slot);
 	}
 
-	private static List<Slot> getContainerSlots(AbstractContainerMenu menu, AbstractContainerScreen<?> screen) {
+	public static List<Slot> getContainerSlots(AbstractContainerMenu menu, AbstractContainerScreen<?> screen) {
 		String screenName = screen.getClass().getSimpleName();
 		int totalSlots = menu.slots.size();
 
@@ -304,6 +458,10 @@ public class InventorySorter {
 		if (containerSize <= 0) return Collections.emptyList();
 
 		return new ArrayList<>(menu.slots.subList(0, containerSize));
+	}
+
+	public static List<Slot> getPlayerMainSlots(AbstractContainerMenu menu, Player player) {
+		return new ArrayList<>(getPlayerSlotRegions(menu, player).main);
 	}
 
 	private static Set<StackKey> buildTypeSet(List<Slot> slots) {
@@ -400,7 +558,7 @@ public class InventorySorter {
 	// Sorting / grouping
 	// ─────────────────────────────────────────────────────────────
 
-	private static List<ItemStack> buildDesiredLayout(List<Slot> slots) {
+	private static List<ItemStack> buildDesiredLayout(List<Slot> slots, SortRuleStore.SortRules rules) {
 		List<ItemStack> stacks = new ArrayList<>();
 		for (Slot s : slots) {
 			ItemStack st = s.getItem();
@@ -408,7 +566,7 @@ public class InventorySorter {
 				stacks.add(st.copy());
 		}
 
-		stacks.sort(STACK_COMPARATOR);
+		stacks.sort(comparatorFor(rules));
 
 		List<ItemStack> desired = new ArrayList<>(slots.size());
 		desired.addAll(stacks);
@@ -418,6 +576,49 @@ public class InventorySorter {
 		return desired;
 	}
 
+	public record CategoryDefinition(String key, String label) {
+	}
+
+	public static final List<CategoryDefinition> DEFAULT_CATEGORIES = List.of(
+			new CategoryDefinition("00_storage_bundle", "Bundles"),
+			new CategoryDefinition("00_storage_ender_chest", "Ender Chests"),
+			new CategoryDefinition("00_storage_shulker", "Shulker Boxes"),
+			new CategoryDefinition("01_wood_logs", "Logs"),
+			new CategoryDefinition("02_wood_planks", "Planks"),
+			new CategoryDefinition("03_wood_items", "Wood Items"),
+			new CategoryDefinition("04_wood_leaves", "Leaves"),
+			new CategoryDefinition("05_wood_saplings", "Saplings"),
+			new CategoryDefinition("10_terrain_dirt", "Dirt"),
+			new CategoryDefinition("11_terrain_stone", "Stone"),
+			new CategoryDefinition("12_terrain_sand", "Sand"),
+			new CategoryDefinition("20_minerals_ores", "Ores"),
+			new CategoryDefinition("21_minerals_gems", "Gems"),
+			new CategoryDefinition("22_minerals_ingots", "Ingots"),
+			new CategoryDefinition("23_minerals_nuggets", "Nuggets"),
+			new CategoryDefinition("24_minerals_dusts", "Dusts"),
+			new CategoryDefinition("30_redstone", "Redstone"),
+			new CategoryDefinition("40_build_slabs", "Slabs"),
+			new CategoryDefinition("41_build_stairs", "Stairs"),
+			new CategoryDefinition("42_build_edges", "Fences/Walls"),
+			new CategoryDefinition("43_build_doors", "Doors"),
+			new CategoryDefinition("44_build_glass", "Glass"),
+			new CategoryDefinition("45_build_wool", "Wool"),
+			new CategoryDefinition("46_build_concrete", "Concrete"),
+			new CategoryDefinition("50_food_raw_meat", "Raw Meat"),
+			new CategoryDefinition("51_food_cooked_meat", "Cooked Meat"),
+			new CategoryDefinition("52_food_crops", "Crops"),
+			new CategoryDefinition("53_food_prepared", "Prepared Food"),
+			new CategoryDefinition("54_food_fruits", "Fruit"),
+			new CategoryDefinition("60_combat_weapons", "Weapons"),
+			new CategoryDefinition("61_tools", "Tools"),
+			new CategoryDefinition("62_armor", "Armor"),
+			new CategoryDefinition("70_potions_brewing", "Potions/Brewing"),
+			new CategoryDefinition("80_misc_storage", "Storage"),
+			new CategoryDefinition("81_misc_books", "Books"),
+			new CategoryDefinition("82_misc_mob_drops", "Mob Drops"),
+			new CategoryDefinition("90_misc", "Misc")
+	);
+
 	// 64-stack items first, then smaller. Within that, group by category. Then alphabetical.
 	private static final Comparator<ItemStack> STACK_COMPARATOR = Comparator
 			.comparingInt((ItemStack s) -> -s.getMaxStackSize())
@@ -426,7 +627,58 @@ public class InventorySorter {
 			.thenComparingInt(ItemStackCompat::identityHash)
 			.thenComparingInt(s -> -s.getCount());
 
-	private static String categoryKey(ItemStack stack) {
+	private static Comparator<ItemStack> comparatorFor(SortRuleStore.SortRules rules) {
+		if (rules == null || !rules.enabled || !rules.usesCustomOrder()) {
+			return STACK_COMPARATOR;
+		}
+
+		return (a, b) -> {
+			String aId = itemId(a);
+			String bId = itemId(b);
+			int aItemRank = rules.itemRank(aId);
+			int bItemRank = rules.itemRank(bId);
+
+			if (rules.absoluteItemOrder && (aItemRank >= 0 || bItemRank >= 0)) {
+				int cmp = compareRank(aItemRank, bItemRank);
+				if (cmp != 0) {
+					return cmp;
+				}
+			}
+
+			int aCategoryRank = rules.categoryRank(categoryKey(a));
+			int bCategoryRank = rules.categoryRank(categoryKey(b));
+			if (aCategoryRank >= 0 || bCategoryRank >= 0) {
+				int cmp = compareRank(aCategoryRank, bCategoryRank);
+				if (cmp != 0) {
+					return cmp;
+				}
+			}
+
+			if (!rules.absoluteItemOrder && (aItemRank >= 0 || bItemRank >= 0)) {
+				int cmp = compareRank(aItemRank, bItemRank);
+				if (cmp != 0) {
+					return cmp;
+				}
+			}
+
+			return STACK_COMPARATOR.compare(a, b);
+		};
+	}
+
+	private static int compareRank(int left, int right) {
+		if (left == right) {
+			return 0;
+		}
+		if (left < 0) {
+			return 1;
+		}
+		if (right < 0) {
+			return -1;
+		}
+		return Integer.compare(left, right);
+	}
+
+	public static String categoryKey(ItemStack stack) {
 		if (stack.isEmpty())
 			return "99_empty";
 
@@ -822,6 +1074,17 @@ public class InventorySorter {
 		if (a.isEmpty() || b.isEmpty())
 			return false;
 		return sameItemAndComponents(a, b);
+	}
+
+	public static String itemId(ItemStack stack) {
+		if (stack == null || stack.isEmpty()) {
+			return "";
+		}
+		return BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
+	}
+
+	private static boolean itemIdEquals(ItemStack stack, String itemId) {
+		return itemId != null && itemId.equals(itemId(stack));
 	}
 
 	// ─────────────────────────────────────────────────────────────

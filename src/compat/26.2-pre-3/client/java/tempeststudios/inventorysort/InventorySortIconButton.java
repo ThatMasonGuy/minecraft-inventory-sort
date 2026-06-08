@@ -3,6 +3,7 @@ package tempeststudios.inventorysort;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 
 public class InventorySortIconButton extends Button {
@@ -12,11 +13,26 @@ public class InventorySortIconButton extends Button {
     public static final int SEARCH = InventorySortIconButtonRenderer.SEARCH;
 
     private final int icon;
+    private final OnPress secondaryOnPress;
 
     public InventorySortIconButton(int x, int y, int icon, Component tooltip, OnPress onPress) {
+        this(x, y, icon, tooltip, onPress, null);
+    }
+
+    public InventorySortIconButton(int x, int y, int icon, Component tooltip, OnPress onPress, OnPress secondaryOnPress) {
         super(x, y, InventorySortIconButtonRenderer.SIZE, InventorySortIconButtonRenderer.SIZE, Component.empty(), onPress, DEFAULT_NARRATION);
         this.icon = icon;
+        this.secondaryOnPress = secondaryOnPress;
         setTooltip(Tooltip.create(tooltip));
+    }
+
+    @Override
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        if (secondaryOnPress != null && event.button() == 1 && active && visible && isMouseOver(event.x(), event.y())) {
+            secondaryOnPress.onPress(this);
+            return true;
+        }
+        return super.mouseClicked(event, doubleClick);
     }
 
     @Override

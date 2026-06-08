@@ -14,6 +14,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import tempeststudios.inventorysort.ContainerIdentity;
 import tempeststudios.inventorysort.ContainerPositionCapture;
+import tempeststudios.inventorysort.InventorySortContainerContext;
 import tempeststudios.inventorysort.core.InventorySortCore;
 import tempeststudios.inventorysort.core.InventorySortEvents;
 
@@ -21,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Mixin(AbstractContainerScreen.class)
-public abstract class ContainerTrackingMixin {
+public abstract class ContainerTrackingMixin implements InventorySortContainerContext {
 
     @Shadow public AbstractContainerMenu menu;
 
@@ -222,5 +223,20 @@ public abstract class ContainerTrackingMixin {
             }
         }
         return items;
+    }
+
+    @Override
+    public ContainerIdentity inventorysort$getContainerIdentity() {
+        return inventorySort$capturedIdentity;
+    }
+
+    @Override
+    public String inventorysort$getContainerType() {
+        return inventorySort$capturedContainerType;
+    }
+
+    @Override
+    public String inventorysort$getScreenClassName() {
+        return inventorySort$screenClassName;
     }
 }
