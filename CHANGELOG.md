@@ -8,8 +8,8 @@ All notable project changes will be documented here.
 
 - Added a first-pass InvSort rules screen, opened by right-clicking the Sort
   button, for configuring player-inventory rules and container rules in game.
-- Added InvSort custom category ordering, custom item-id ordering, fully locked
-  slots, reserved item slots, and local JSON persistence with global container
+- Added InvSort custom category ordering, custom item-id ordering, protected
+  slots, item-specific slots, and local JSON persistence with global container
   defaults plus per-container/per-screen overrides.
 - Added `/inventorycatalogue reports`, an in-game InvCatalogue report browser
   that groups saved reports by world/profile, opens a visual item-count grid
@@ -62,6 +62,9 @@ All notable project changes will be documented here.
 
 ### Changed
 
+- Revised the InvSort rules screen to fit scaled Minecraft viewports, show one
+  category/item-order list at a time, use clearer `Protect`/`Item Slot` slot
+  actions, and support Ctrl-click plus Shift-click slot multi-selection.
 - Extended the versioned icon-button shims with an optional secondary-click
   action so the InvSort rules menu can respect the mouse-input API changes from
   older `double,double,int` clicks to newer `MouseButtonEvent` clicks and the

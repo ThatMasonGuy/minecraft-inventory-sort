@@ -12,9 +12,11 @@ grey panel treatment. Follow-up sizing fixes keep the selected-item sidebar
 clipped and scrollable, prevent top summary text from running behind the
 sidebar, and keep scrolled item tiles inside the grid frame. Item-grid badges
 now abbreviate large counts with `K`/`M`/`B`, while the sidebar keeps showing
-the exact selected-item count. InvSort now has a first-pass right-click rules
-screen for custom category/item ordering, locked slots, reserved item slots, and
-global plus per-container/per-screen rule scopes. Full smoke/CI validation is
+the exact selected-item count. InvSort now has a revised right-click rules
+screen for custom category/item ordering, protected slots, item-specific slots,
+and global plus per-container/per-screen rule scopes. The rules screen now fits
+inside scaled Minecraft viewports, shows one rule list at a time, and supports
+Ctrl-click plus Shift-click slot multi-selection. Full smoke/CI validation is
 deferred until the feature set is complete.
 
 ## Project Workflow
@@ -173,8 +175,8 @@ Dropped from active bugs by user decision:
 Goal: add an in-game configuration menu for user-defined sorting behavior across
 player inventories and containers.
 
-Status: first-pass implementation is complete locally for the queued `3.2.0`
-minor release.
+Status: implementation plus the first usability revision are complete locally
+for the queued `3.2.0` minor release.
 
 Requested capabilities:
 
@@ -186,17 +188,17 @@ Requested capabilities:
      preference, while exact item order can be enabled for full custom control.
    - DONE (3.2.0 queued): Default behavior remains available when no custom
      order is configured.
-2. Restricted slots:
+2. Protected slots:
    - DONE (3.2.0 queued): Let players mark specific inventory/container slots
-     as restricted.
-   - DONE (3.2.0 queued): Restricted slots do not receive sorted items.
-   - DONE (3.2.0 queued): Restricted slots are fully protected by sorting; the
+     as protected.
+   - DONE (3.2.0 queued): Protected slots do not receive sorted items.
+   - DONE (3.2.0 queued): Protected slots are fully protected by sorting; the
      normal sort pass does not move items out of them or into them.
-3. Reserved item slots:
+3. Item-specific slots:
    - DONE (3.2.0 queued): Let players assign specific items to specific slots,
      such as logs in the bottom-right inventory slot, planks in the middle-right
      slot, and sticks in the top-right slot.
-   - DONE (3.2.0 queued): Sorting fills reserved slots with matching items when
+   - DONE (3.2.0 queued): Sorting fills item-specific slots with matching items when
      possible and avoids putting other item types there.
 4. Scope and persistence decisions:
    - DONE (3.2.0 queued): Rules support global player inventory behavior,
@@ -208,8 +210,18 @@ Requested capabilities:
      and `.bak` recovery.
    - DONE (3.2.0 queued): Rules compile across the supported profile matrix and
      compose with the bundle partitioning behavior: bundles are still moved to
-     the front of the movable sortable area, while locked/reserved slots are
+     the front of the movable sortable area, while protected/item slots are
      withheld from that movable area.
+5. Rules-screen usability:
+   - DONE (3.2.0 queued): Revised the rules screen so the panel and controls
+     stay inside the scaled Minecraft viewport instead of using fixed interior
+     columns.
+   - DONE (3.2.0 queued): Replaced the simultaneous category/item columns with
+     a single right-side list switched by `Category` and `Items` buttons.
+   - DONE (3.2.0 queued): Renamed slot actions to `Protect`, `Item Slot`, and
+     `Clear` so the rule semantics are visible in the UI.
+   - DONE (3.2.0 queued): Added Ctrl-click slot toggling and Shift-click range
+     selection; slot actions now apply to the full current selection.
 
 ### InvCatalogue In-Game GUI And Snapshot Comparison
 
@@ -251,17 +263,35 @@ Requested capabilities:
 
 ## Recently Fixed
 
+-56. InvSort rules-screen usability revision for `3.2.0` minor release
+     (unreleased):
+   - Reworked the rules screen layout to use a responsive panel that keeps
+     buttons, slot actions, and the right-side rule list inside scaled
+     Minecraft viewports.
+   - Replaced the fixed simultaneous category/item columns with one right-side
+     list switched between `Category` and `Items` modes.
+   - Renamed unclear slot actions from lock/reserve terminology to `Protect`,
+     `Item Slot`, and `Clear`.
+   - Added Ctrl-click slot toggling and Shift-click range selection so protected
+     slots, item slots, and slot clearing can be applied to multiple slots at
+     once.
+   - Verified `.\gradlew.bat buildAllMods --no-daemon --console=plain`.
+   - Verified `.\gradlew.bat buildAllVersions --no-daemon --console=plain`.
+   - Full smoke/CI validation remains deferred until the rest of the `3.2.0`
+     minor-release work is complete.
+
 -55. InvSort custom sorting and slot-rule menu for `3.2.0` minor release
      (unreleased):
    - Added a local `SortRuleStore` persisted at `inventorysort/sort_rules.json`
      with temp-file saves and `.bak` recovery.
    - Added a right-click Sort-button rules screen for player inventory rules and
      container rules.
-   - Added custom category order, optional specific item-id order, locked slots,
-     and reserved item slots.
-   - Sorting now enforces reserved slots before normal sorting, excludes locked
-     and reserved slots from the movable region, and still partitions bundles to
-     the front of the remaining movable area before sorting ordinary items.
+   - Added custom category order, optional specific item-id order, protected
+     slots, and item-specific slots.
+   - Sorting now enforces item-specific slots before normal sorting, excludes
+     protected and item-specific slots from the movable region, and still
+     partitions bundles to the front of the remaining movable area before
+     sorting ordinary items.
    - Added global player rules, global container defaults, concrete
      per-container overrides, and per-screen fallback overrides when a concrete
      container identity is unavailable.
