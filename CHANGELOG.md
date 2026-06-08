@@ -6,6 +6,9 @@ All notable project changes will be documented here.
 
 ### Fixed
 
+- Fixed InvSort sorting when bundles are present by moving bundle stacks to the
+  front of the selected sortable region with a hotbar-buffer swap before sorting
+  the non-bundle items behind them.
 - Reduced public release jar sizes by packaging only each module's declared icon
   asset, shrinking the per-mod icons to metadata-sized JPGs, and adding a
   release-jar size guard so public jars must stay below `199000` bytes.
@@ -23,6 +26,9 @@ All notable project changes will be documented here.
 
 ### Changed
 
+- Added Sort compatibility shims for hotbar swap clicks and moved bundle
+  detection behind per-profile `ItemStackCompat` overlays, including the 26.x
+  `ContainerInput.SWAP` path.
 - Pruned the split-mod bug intake based on user decisions, added the InvSort
   bundle sorting bug, and captured the requested InvSort custom sorting/slot
   rules plus InvCatalogue GUI/snapshot-comparison feature tracks.

@@ -15,4 +15,8 @@ public final class ContainerClickCompat {
     public static void quickMove(AbstractContainerScreenInvoker invoker, Slot slot) {
         invoker.invokeSlotClicked(slot, slot.index, 0, ClickType.QUICK_MOVE);
     }
+
+    public static void hotbarSwap(AbstractContainerScreenInvoker invoker, Slot slot, int hotbarIndex) {
+        invoker.invokeSlotClicked(slot, slot.index, hotbarIndex, ClickType.SWAP);
+    }
 }

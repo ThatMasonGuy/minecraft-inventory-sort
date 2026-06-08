@@ -6,7 +6,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
-import net.minecraft.world.item.BundleItem;
 import net.minecraft.world.item.ItemStack;
 import tempeststudios.inventorysort.compat.sort.ContainerClickCompat;
 import tempeststudios.inventorysort.compat.sort.ItemStackCompat;
@@ -46,7 +45,7 @@ public class InventorySorter {
 		List<Slot> slotsToSort = getSortableSlots(menu, screen, playerMain);
 		tempeststudios.inventorysort.core.InventorySortCore.LOGGER.debug("Found {} slots to sort", slotsToSort.size());
 
-		sortSlots(menu, invoker, slotsToSort, playerMain);
+		sortSlots(menu, invoker, slotsToSort, playerMain, playerHotbar);
 
 		tempeststudios.inventorysort.core.InventorySortCore.LOGGER.info("Sorting complete!");
 	}
@@ -69,7 +68,7 @@ public class InventorySorter {
 				return;
 		}
 
-		sortSlots(menu, invoker, new ArrayList<>(playerMain), playerHotbar);
+		sortSlots(menu, invoker, new ArrayList<>(playerMain), playerHotbar, playerHotbar);
 
 		tempeststudios.inventorysort.core.InventorySortCore.LOGGER.info("Player inventory sorting complete!");
 	}
@@ -77,35 +76,117 @@ public class InventorySorter {
 	private static void sortSlots(AbstractContainerMenu menu,
 								  AbstractContainerScreenInvoker invoker,
 								  List<Slot> slotsToSort,
-								  List<Slot> fallbackSlots) {
+								  List<Slot> fallbackSlots,
+								  List<Slot> hotbarBufferSlots) {
 		if (slotsToSort.isEmpty())
 			return;
 
 		if (!ensureCursorEmpty(menu, invoker, slotsToSort, fallbackSlots))
 			return;
 
+		List<Slot> sortableSlots = moveBundlesToFront(invoker, slotsToSort, hotbarBufferSlots);
+		if (!ensureCursorEmpty(menu, invoker, slotsToSort, fallbackSlots))
+			return;
+		if (sortableSlots.isEmpty())
+			return;
+
 		// A) Compact empties to the end (stable)
-		stableCompact(slotsToSort, invoker, menu);
+		stableCompact(sortableSlots, invoker, menu);
 
 		// B) Restack within region
-		restack(menu, invoker, slotsToSort);
+		restack(menu, invoker, sortableSlots);
 
 		// C) Sort by: maxStackSize DESC (64 first), then category grouping, then
 		// alphabetical, then components hash
-		List<ItemStack> desired = buildDesiredLayout(slotsToSort);
+		List<ItemStack> desired = buildDesiredLayout(sortableSlots);
 
 		// D) Apply layout (treat same item+components as "already correct", ignore
 		// counts; restack handles fullness)
-		applyLayout(menu, invoker, slotsToSort, desired);
+		applyLayout(menu, invoker, sortableSlots, desired);
 
 		// E) Restack again now that like-items are adjacent (full stacks first naturally)
-		restack(menu, invoker, slotsToSort);
+		restack(menu, invoker, sortableSlots);
 
 		// F) Final compact
-		stableCompact(slotsToSort, invoker, menu);
+		stableCompact(sortableSlots, invoker, menu);
 
 		// Final safety
-		ensureCursorEmpty(menu, invoker, slotsToSort, fallbackSlots);
+		ensureCursorEmpty(menu, invoker, sortableSlots, fallbackSlots);
+	}
+
+	private static List<Slot> moveBundlesToFront(AbstractContainerScreenInvoker invoker,
+												 List<Slot> slots,
+												 List<Slot> hotbarBufferSlots) {
+		int bundleCount = countBundles(slots);
+		if (bundleCount == 0) {
+			return slots;
+		}
+
+		Slot hotbarBuffer = findHotbarBuffer(hotbarBufferSlots, slots);
+		if (hotbarBuffer == null) {
+			tempeststudios.inventorysort.core.InventorySortCore.LOGGER.warn(
+					"Cannot partition bundles before sorting because no hotbar buffer slot was available.");
+			return slots;
+		}
+
+		int targetIndex = 0;
+		for (int scanIndex = 0; scanIndex < slots.size(); scanIndex++) {
+			Slot source = slots.get(scanIndex);
+			if (!isBundle(source.getItem())) {
+				continue;
+			}
+			if (scanIndex != targetIndex) {
+				swapUsingHotbarBuffer(invoker, slots.get(targetIndex), source, hotbarBuffer);
+			}
+			targetIndex++;
+		}
+
+		if (bundleCount >= slots.size()) {
+			return Collections.emptyList();
+		}
+		return new ArrayList<>(slots.subList(bundleCount, slots.size()));
+	}
+
+	private static int countBundles(List<Slot> slots) {
+		int count = 0;
+		for (Slot slot : slots) {
+			if (isBundle(slot.getItem())) {
+				count++;
+			}
+		}
+		return count;
+	}
+
+	private static Slot findHotbarBuffer(List<Slot> hotbarSlots, List<Slot> protectedSlots) {
+		for (Slot slot : hotbarSlots) {
+			if (slot.getContainerSlot() >= 0 && slot.getContainerSlot() <= 8 && !protectedSlots.contains(slot)) {
+				return slot;
+			}
+		}
+		return null;
+	}
+
+	private static void swapUsingHotbarBuffer(AbstractContainerScreenInvoker invoker,
+											 Slot target,
+											 Slot source,
+											 Slot hotbarBuffer) {
+		if (target == source) {
+			return;
+		}
+
+		int hotbarIndex = hotbarBuffer.getContainerSlot();
+		if (target == hotbarBuffer) {
+			ContainerClickCompat.hotbarSwap(invoker, source, hotbarIndex);
+			return;
+		}
+		if (source == hotbarBuffer) {
+			ContainerClickCompat.hotbarSwap(invoker, target, hotbarIndex);
+			return;
+		}
+
+		ContainerClickCompat.hotbarSwap(invoker, target, hotbarIndex);
+		ContainerClickCompat.hotbarSwap(invoker, source, hotbarIndex);
+		ContainerClickCompat.hotbarSwap(invoker, target, hotbarIndex);
 	}
 
 	// ─────────────────────────────────────────────────────────────
@@ -195,45 +276,6 @@ public class InventorySorter {
 		}
 
 		ensureCursorEmpty(menu, invoker, containerSlots, playerSlots);
-	}
-
-	private static void fillPlayerStacksFromContainer(AbstractContainerMenu menu,
-													  AbstractContainerScreenInvoker invoker,
-													  List<Slot> playerSlots,
-													  List<Slot> containerSlots) {
-		for (Slot targetSlot : playerSlots) {
-			ItemStack target = targetSlot.getItem();
-			if (target.isEmpty()) continue;
-
-			// Skip bundles - don't want to accidentally fill them
-			if (isBundle(target)) continue;
-
-			int max = target.getMaxStackSize();
-			if (max <= 1) continue; // tools, etc.
-			if (target.getCount() >= max) continue;
-
-			for (Slot fromSlot : containerSlots) {
-				ItemStack from = fromSlot.getItem();
-				if (from.isEmpty()) continue;
-
-				// Skip bundles as source
-				if (isBundle(from)) continue;
-
-				if (!sameItemAndComponents(target, from)) continue;
-
-				// Pick up FROM -> click TARGET (merge) -> if remainder, return to FROM
-				click(invoker, fromSlot);
-				click(invoker, targetSlot);
-
-				if (!menu.getCarried().isEmpty()) {
-					click(invoker, fromSlot);
-				}
-
-				target = targetSlot.getItem();
-				if (target.isEmpty()) break;
-				if (target.getCount() >= max) break;
-			}
-		}
 	}
 
 	private static void quickMove(AbstractContainerScreenInvoker invoker, Slot slot) {
@@ -611,7 +653,7 @@ public class InventorySorter {
 			swap(invoker, slots.get(i), slots.get(j));
 
 			if (!menu.getCarried().isEmpty()) {
-				int empty = findFirstEmptyNonBundle(slots);
+				int empty = findFirstEmpty(slots);
 				if (empty != -1)
 					click(invoker, slots.get(empty));
 			}
@@ -720,14 +762,6 @@ public class InventorySorter {
 		return -1;
 	}
 
-	private static int findFirstEmptyNonBundle(List<Slot> slots) {
-		for (int i = 0; i < slots.size(); i++) {
-			if (slots.get(i).getItem().isEmpty())
-				return i;
-		}
-		return -1;
-	}
-
 	// ─────────────────────────────────────────────────────────────
 	// Cursor safety + click primitives
 	// ─────────────────────────────────────────────────────────────
@@ -739,16 +773,10 @@ public class InventorySorter {
 		if (menu.getCarried().isEmpty())
 			return true;
 
-		// Check if cursor is holding a bundle - if so, be careful where we place it
-		boolean cursorHasBundle = isBundle(menu.getCarried());
-
 		for (Slot s : preferred) {
 			if (s.getItem().isEmpty()) {
 				click(invoker, s);
 				return menu.getCarried().isEmpty();
-			}
-			if (!cursorHasBundle && isBundle(s.getItem())) {
-				continue;
 			}
 		}
 
@@ -756,9 +784,6 @@ public class InventorySorter {
 			if (s.getItem().isEmpty()) {
 				click(invoker, s);
 				return menu.getCarried().isEmpty();
-			}
-			if (!cursorHasBundle && isBundle(s.getItem())) {
-				continue;
 			}
 		}
 
@@ -805,8 +830,7 @@ public class InventorySorter {
 	// ─────────────────────────────────────────────────────────────
 
 	private static boolean isBundle(ItemStack stack) {
-		if (stack.isEmpty()) return false;
-		return stack.getItem() instanceof BundleItem;
+		return ItemStackCompat.isBundle(stack);
 	}
 
 	// ─────────────────────────────────────────────────────────────

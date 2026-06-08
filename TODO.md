@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: user bug reports and feature roadmap captured
+Current checkpoint: InvSort bundle partitioning fix built across supported profiles
 
 ## Project Workflow
 
@@ -66,30 +66,36 @@ Architecture checkpoint:
 
 ### InvSort Bug Report
 
-Status: active user-reported gameplay bug.
+Status: fixed locally for the queued `3.2.0` minor release.
 
 User-reported bug:
 
-1. Bundles in the sortable inventory space can make the rest of the inventory
+1. DONE (3.2.0 queued): Bundles in the sortable inventory space can make the rest of the inventory
    sort incorrectly and turn into a larger mess. Bundle handling is intentionally
    avoided because bundle contents are complicated, but plain bundle slots still
    need to stop disrupting non-bundle sorting.
-   - Proposed behavior: move all bundles to the start of the selected sortable
-     space, then sort everything behind them.
-   - Apply to player inventory sorting and container sorting where bundles are
-     present in the selected sortable region.
-   - Verify that bundle stacks are preserved, ordinary stacks still restack and
-     compact correctly, and restricted/future reserved slots are not broken by
-     the bundle partitioning.
+   - Implemented bundle partitioning before the normal sort pass: bundles move
+     to the front of the selected sortable space, then ordinary items are
+     compacted, restacked, and sorted behind them.
+   - Bundle moves use a hotbar-buffer `SWAP` action through the Sort click shim
+     instead of primary-click swaps, avoiding vanilla bundle insertion hooks.
+   - Moved bundle detection into `ItemStackCompat` profile overlays and added
+     `ContainerClickCompat.hotbarSwap` for the 1.x and 26.x click APIs.
+   - Removed the old unused `fillPlayerStacksFromContainer` helper and the
+     misleading `findFirstEmptyNonBundle` path.
+   - Verified `.\gradlew.bat buildAllMods --no-daemon --console=plain`.
+   - Verified `.\gradlew.bat buildAllVersions --no-daemon --console=plain`.
+   - Full smoke/CI validation is intentionally deferred until the end of the
+     queued minor-release feature set.
 
 Code-audit leads still worth keeping:
 
 1. Container slot detection still has a latent `"Crafting"` name-match trap in
    `InventorySorter`; if buttons are ever exposed on a crafting-like screen, the
    result slot could be treated as sortable.
-2. Dead or misleading helper code remains around `fillPlayerStacksFromContainer`,
-   `findFirstEmptyNonBundle`, and unreachable bundle-skip branches in
-   `ensureCursorEmpty`. Revisit this while fixing the bundle partitioning bug.
+2. DONE (3.2.0 queued): Removed the misleading bundle helper code touched by the
+   partitioning fix. Remaining cleanup should be filed only if a new repro needs
+   it.
 
 Dropped from active bugs by user decision:
 
@@ -200,6 +206,26 @@ Requested capabilities:
      history data model needed for comparisons.
 
 ## Recently Fixed
+
+-51. InvSort bundle partitioning fix for `3.2.0` minor release (unreleased):
+   - Fixed the user-reported case where bundles in a sortable inventory or
+     container region could disrupt the rest of the sort and leave ordinary
+     items in a worse order.
+   - Added a pre-sort bundle partition step that moves bundles to the front of
+     the selected sortable region, then sorts only the non-bundle tail behind
+     them.
+   - Used a hotbar-buffer `SWAP` action for bundle partitioning so bundle stacks
+     move as opaque items without primary-clicking items into bundle slots.
+   - Added `ContainerClickCompat.hotbarSwap` for the normal `ClickType.SWAP`
+     path and the 26.x `ContainerInput.SWAP` path.
+   - Moved bundle detection behind the per-profile `ItemStackCompat` shim.
+   - Removed the unused `fillPlayerStacksFromContainer` helper and the
+     misleading `findFirstEmptyNonBundle` helper.
+   - Added draft user-facing release notes in `gradle/release-notes/3.2.0.md`.
+   - Verified `.\gradlew.bat buildAllMods --no-daemon --console=plain`.
+   - Verified `.\gradlew.bat buildAllVersions --no-daemon --console=plain`.
+   - Full smoke/CI validation remains deferred until the rest of the `3.2.0`
+     minor-release work is complete.
 
 -50. `3.1.3` icon refresh publish (unreleased):
    - Consumed root source images `InvSort.jpg`, `InvSearch.jpg`, and
@@ -1298,12 +1324,10 @@ implemented yet — this is the backlog backup.
 3. 🟡 `"Crafting"` name match (`InventorySorter.java:257`, `:834`) would include the
    crafting result slot if ever reached (`containerSize = total-36`). Currently
    unreachable but a latent trap.
-4. 🟡 Dead/misleading code:
-   - `fillPlayerStacksFromContainer` (`:199`) never called.
-   - `findFirstEmptyNonBundle` (`:722`) is identical to `findFirstEmpty` — does not
-     actually skip bundles despite the name.
-   - Bundle-skip branches in `ensureCursorEmpty` (`:749`, `:759`) are unreachable
-     (sit after an `isEmpty()` early-return).
+4. 🟡 DONE (3.2.0 queued): Dead/misleading bundle helper code:
+   - Removed unused `fillPlayerStacksFromContainer`.
+   - Removed misleading `findFirstEmptyNonBundle`.
+   - Removed redundant bundle branches in `ensureCursorEmpty`.
 5. 🟢 DROPPED FROM ACTIVE BUGS (2026-06-08): "Sort container" also tops up the
    hotbar from main inventory first (`:34-40`) as intentional behavior.
 
