@@ -83,6 +83,15 @@ public final class ServerWorldProfileManager {
         return new ArrayList<>(profilesFor(serverKey).profiles);
     }
 
+    /** Epoch millis a profile was last activated, or 0 if never recorded. */
+    public long getLastUsed(String serverKey, String profile) {
+        if (serverKey == null || serverKey.isBlank() || profile == null) {
+            return 0L;
+        }
+        Long value = profilesFor(serverKey).lastUsed.get(profile);
+        return value == null ? 0L : value;
+    }
+
     public boolean needsConfirmation(Minecraft client) {
         String serverKey = TrackingNamespace.currentServerKey(client);
         if (serverKey == null) {
@@ -150,6 +159,7 @@ public final class ServerWorldProfileManager {
         serverProfiles.profiles.remove(profile);
         serverProfiles.profiles.add(0, profile);
         serverProfiles.activeProfile = profile;
+        serverProfiles.lastUsed.put(profile, System.currentTimeMillis());
         save();
         confirmActiveProfile(serverKey);
         publishNamespaceChanged(serverKey, profile);
@@ -222,6 +232,7 @@ public final class ServerWorldProfileManager {
     private static final class ServerProfiles {
         String activeProfile = DEFAULT_PROFILE;
         List<String> profiles = new ArrayList<>();
+        Map<String, Long> lastUsed = new HashMap<>();
 
         ServerProfiles() {
             profiles.add(DEFAULT_PROFILE);
@@ -230,6 +241,9 @@ public final class ServerWorldProfileManager {
         void normalize() {
             if (profiles == null) {
                 profiles = new ArrayList<>();
+            }
+            if (lastUsed == null) {
+                lastUsed = new HashMap<>();
             }
             if (!profiles.contains(DEFAULT_PROFILE)) {
                 profiles.add(DEFAULT_PROFILE);

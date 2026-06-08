@@ -36,7 +36,11 @@ All notable project changes will be documented here.
   tooltip-labelled `Protect` / `Assign Item` / `Clear` actions.
 - Restyled InvSearch results as card rows with colour-coded counts (held in
   your inventory versus tracked elsewhere) and an accent-barred locations
-  panel, and matched the tracked-world selector to the same theme.
+  panel, and matched the tracked-world selector to the same theme. The search
+  list redraws its frame over scrolled rows so partial rows stay contained, and
+  the world selector sizes its list to the available height (no more overlapping
+  controls), records and shows each world's last-used time, and marks the active
+  world.
 - Restyled the InvCatalogue browser report cards and world section bands plus
   the detail item grid and selected-item sidebar, adding a share bar for an
   item's portion of the report total.

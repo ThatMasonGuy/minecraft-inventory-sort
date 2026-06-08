@@ -257,7 +257,7 @@ public class SearchModalScreen extends Screen {
         int clipLeft = listX - 3;
         int clipTop = listTopY;
         int clipRight = railX - 2;
-        int clipBottom = listBottomY;
+        int clipBottom = listBottomY - 1;
         g.enableScissor(clipLeft, clipTop, clipRight, clipBottom);
 
         if (results.isEmpty()) {
@@ -281,8 +281,12 @@ public class SearchModalScreen extends Screen {
                 boolean hovered = mouseX >= listX && mouseX <= rowRightX && mouseY >= y && mouseY <= y + ROW_H;
                 InvUi.row(ui, listX, y, rowRightX - listX, ROW_H, hovered, isOpen, ACCENT);
 
-                g.renderItem(row.icon, listX + 3, y + 2);
-                g.renderItemDecorations(this.font, row.icon, listX + 3, y + 2);
+                // Item icons are flushed outside the scissor on some versions, so only
+                // draw them when the whole icon fits inside the list, never spilling out.
+                if (y + 2 >= listTopY && y + 18 <= clipBottom) {
+                    g.renderItem(row.icon, listX + 3, y + 2);
+                    g.renderItemDecorations(this.font, row.icon, listX + 3, y + 2);
+                }
 
                 int nameMaxW = Math.max(30, countRightX - 24 - nameX);
                 String name = this.font.plainSubstrByWidth(row.name, nameMaxW);
@@ -313,6 +317,9 @@ public class SearchModalScreen extends Screen {
             }
         }
         g.disableScissor();
+
+        // Redraw the well frame on top so scrolled rows never paint over its edges.
+        InvUi.insetBorder(ui, listX - 4, listTopY - 2, (railX + 14) - (listX - 4), listBottomY - (listTopY - 2));
 
         // Scrollbar between the rail arrows.
         int trackTop = listTopY + 16;
