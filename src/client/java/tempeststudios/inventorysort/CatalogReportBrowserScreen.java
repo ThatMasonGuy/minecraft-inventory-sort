@@ -3,6 +3,7 @@ package tempeststudios.inventorysort;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
@@ -17,38 +18,24 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+/**
+ * In-game InvCatalogue report browser. The browser view lists saved snapshots
+ * grouped by world; selecting one opens a detail view with a searchable item
+ * grid and a selected-item sidebar. Both views share the suite's InvUi theme
+ * with a green Catalogue accent.
+ */
 public class CatalogReportBrowserScreen extends Screen {
-    private static final int PAD = 16;
-    private static final int HEADER_H = 20;
-    private static final int REPORT_ROW_H = 36;
+    private static final int PAD = 14;
+    private static final int HEADER_H = 22;
+    private static final int REPORT_ROW_H = 38;
     private static final int CELL = 28;
-    private static final int SEARCH_H = 20;
-    private static final int DETAIL_TOP_H = 78;
+    private static final int TILE = 24;
     private static final int GRID_INSET = 8;
     private static final int DETAIL_INSET = 10;
     private static final int DETAIL_SCROLL_STEP = 18;
-    private static final int DETAIL_CONTENT_H = 164;
-    private static final int CLOSE_SIZE = 18;
-    private static final int BACK_W = 74;
-    private static final int BACK_H = 18;
+    private static final int DETAIL_CONTENT_H = 168;
 
-    private static final int OVERLAY = 0xAA000000;
-    private static final int FRAME_BG = 0xF0202020;
-    private static final int FRAME_HEADER = 0xF02C302D;
-    private static final int FRAME_BORDER = 0xFF777B72;
-    private static final int FRAME_SHADOW = 0xFF070707;
-    private static final int PANEL_BG = 0xFF111111;
-    private static final int PANEL_ALT = 0xFF1A1A1A;
-    private static final int PANEL_EDGE = 0xFF3F423D;
-    private static final int PANEL_EDGE_LIGHT = 0xFF757A70;
-    private static final int SLOT_BG = 0xFF858585;
-    private static final int SLOT_HOVER = 0xFFA7A7A7;
-    private static final int SLOT_SELECTED = 0xFFE3D48A;
-    private static final int TEXT_MAIN = 0xFFE8E8E8;
-    private static final int TEXT_MUTED = 0xFFB9B9B9;
-    private static final int TEXT_DIM = 0xFF8E8E8E;
-    private static final int ACCENT = 0xFFFFD95A;
-    private static final int ACCENT_GREEN = 0xFF90C76E;
+    private static final int ACCENT = InvUi.ACCENT_CATALOGUE;
 
     private static final Map<String, ItemEntry> ITEM_CACHE = new HashMap<>();
     private static boolean itemCacheLoaded = false;
@@ -73,6 +60,7 @@ public class CatalogReportBrowserScreen extends Screen {
     private int listY;
     private int listW;
     private int listH;
+    private int bandY;
     private int gridX;
     private int gridY;
     private int gridW;
@@ -97,21 +85,19 @@ public class CatalogReportBrowserScreen extends Screen {
         computeLayout();
         this.clearWidgets();
 
-        this.addRenderableWidget(new InventorySortHitboxButton(closeButtonX(), closeButtonY(), CLOSE_SIZE, CLOSE_SIZE,
-                Component.literal("Close"), button -> closeToParent()));
+        this.addRenderableWidget(new InventorySortModalIconButton(closeButtonX(), closeButtonY(), 16,
+                InventorySortModalIconButton.CLOSE, Component.literal("Close"), button -> closeToParent()));
 
         if (detailMode && selectedReport != null) {
-            this.addRenderableWidget(new InventorySortHitboxButton(backButtonX(), backButtonY(), BACK_W, BACK_H,
-                    Component.literal("Back"), button -> openBrowser()));
+            InventorySortTextButton back = new InventorySortTextButton(panelX + PAD, panelY + 7, 80, 18,
+                    Component.literal("< Reports"), button -> openBrowser());
+            back.setTooltip(Tooltip.create(Component.literal("Back to the list of saved reports.")));
+            this.addRenderableWidget(back);
 
-            int boxX = gridX;
-            int boxY = panelY + 40;
-            int boxW = gridW;
-            this.searchBox = new EditBox(this.font, boxX + 8, boxY + 6, boxW - 16, 14,
-                    Component.literal("Search"));
+            this.searchBox = new EditBox(this.font, gridX + 6, bandY + 5, gridW - 12, 14, Component.literal("Search"));
             this.searchBox.setMaxLength(64);
             this.searchBox.setBordered(false);
-            this.searchBox.setTextColor(TEXT_MAIN);
+            this.searchBox.setTextColor(InvUi.TEXT);
             this.searchBox.setValue(lastQuery);
             this.addRenderableWidget(searchBox);
             updateFilteredItems();
@@ -139,99 +125,98 @@ public class CatalogReportBrowserScreen extends Screen {
 
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-        g.fill(0, 0, this.width, this.height, OVERLAY);
-        drawFrame(g);
+        InventorySortDrawContext ui = InventorySortDrawContexts.wrap(g);
+        InvUi.scrim(ui, this.width, this.height);
+        InvUi.window(ui, panelX, panelY, panelW, panelH, ACCENT);
 
         if (detailMode && selectedReport != null) {
-            renderDetail(g, mouseX, mouseY);
+            renderDetail(g, ui, mouseX, mouseY);
         } else {
-            renderBrowser(g, mouseX, mouseY);
-        }
-
-        drawCloseControl(g, mouseX, mouseY);
-        if (detailMode && selectedReport != null) {
-            drawBackControl(g, mouseX, mouseY);
+            renderBrowser(g, ui, mouseX, mouseY);
         }
 
         super.render(g, mouseX, mouseY, partialTick);
     }
 
-    private void renderBrowser(GuiGraphics g, int mouseX, int mouseY) {
-        text(g, "Inventory Catalogue Reports", panelX + PAD, panelY + 10, TEXT_MAIN);
-        text(g, "Saved reports grouped by world", panelX + PAD, panelY + 25, TEXT_MUTED);
+    private void renderBrowser(GuiGraphics g, InventorySortDrawContext ui, int mouseX, int mouseY) {
+        text(g, "Catalogue Reports", panelX + PAD, panelY + 9, InvUi.TEXT);
+        text(g, "Saved snapshots grouped by world", panelX + PAD, panelY + 24, InvUi.TEXT_MUTED);
 
-        drawPanel(g, listX, listY, listW, listH);
-        g.enableScissor(listX + 1, listY + 1, listX + listW - 1, listY + listH - 1);
+        InvUi.inset(ui, listX, listY, listW, listH);
+        g.enableScissor(listX + 2, listY + 2, listX + listW - 2, listY + listH - 2);
 
         if (reportRows.isEmpty()) {
-            text(g, "No saved catalogue reports yet.", listX + 10, listY + 12, TEXT_MUTED);
+            text(g, "No saved catalogue reports yet.", listX + 12, listY + 12, InvUi.TEXT_MUTED);
+            text(g, "Run /inventorycatalogue start, then stop to capture one.", listX + 12, listY + 26, InvUi.TEXT_DIM);
         } else {
             updateReportHitboxes(mouseX, mouseY);
-            int y = listY + 4 - reportScroll;
+            int y = listY + 6 - reportScroll;
             for (ReportRow row : reportRows) {
                 int rowH = row.header ? HEADER_H : REPORT_ROW_H;
-                if (y + rowH < listY) {
+                if (y + rowH < listY || y > listY + listH) {
                     y += rowH;
                     continue;
                 }
-                if (y > listY + listH) {
-                    break;
-                }
-
                 if (row.header) {
-                    g.fill(listX + 6, y + 2, listX + listW - 6, y + HEADER_H - 2, 0xFF202720);
-                    g.fill(listX + 6, y + 2, listX + 9, y + HEADER_H - 2, ACCENT_GREEN);
-                    text(g, displayNamespace(row.namespace), listX + 14, y + 6, TEXT_MAIN);
+                    InvUi.sectionBand(ui, this.font, displayNamespace(row.namespace),
+                            listX + 6, y + 2, listW - 12, HEADER_H - 4, ACCENT);
                 } else {
-                    boolean hovered = mouseX >= listX + 4 && mouseX <= listX + listW - 4
-                            && mouseY >= y && mouseY <= y + REPORT_ROW_H - 3;
-                    int bg = hovered ? 0xFF2C2C2C : PANEL_ALT;
-                    drawPanel(g, listX + 6, y, listW - 12, REPORT_ROW_H - 4, bg);
-                    g.fill(listX + 9, y + 4, listX + 11, y + REPORT_ROW_H - 8, ACCENT);
-                    text(g, row.report.displayTime(), listX + 16, y + 6, TEXT_MAIN);
-                    String summary = String.format(Locale.ROOT, "%,d items  |  %,d types  |  %,d locations",
-                            row.report.getTotalItems(), row.report.getUniqueItems(), row.report.getLocationCount());
-                    text(g, truncate(summary, listW - 44), listX + 16, y + 20, TEXT_MUTED);
-                    text(g, ">", listX + listW - 18, y + 12, hovered ? ACCENT : TEXT_DIM);
+                    boolean hovered = mouseX >= listX + 6 && mouseX <= listX + listW - 6
+                            && mouseY >= y && mouseY <= y + REPORT_ROW_H - 4;
+                    InvUi.row(ui, listX + 6, y, listW - 12, REPORT_ROW_H - 4, hovered, false, ACCENT);
+                    text(g, row.report.displayTime(), listX + 14, y + 6, InvUi.TEXT);
+                    String items = String.format(Locale.ROOT, "%,d", row.report.getTotalItems());
+                    text(g, items, listX + 14, y + 20, ACCENT);
+                    String rest = String.format(Locale.ROOT, " items  -  %,d types  -  %,d locations",
+                            row.report.getUniqueItems(), row.report.getLocationCount());
+                    text(g, truncate(rest, listW - 64 - this.font.width(items)),
+                            listX + 14 + this.font.width(items), y + 20, InvUi.TEXT_MUTED);
+                    text(g, ">", listX + listW - 20, y + 13, hovered ? ACCENT : InvUi.TEXT_DIM);
                 }
                 y += rowH;
             }
         }
-
         g.disableScissor();
+        InvUi.scrollbar(ui, listX + listW - 7, listY + 5, listH - 10, browserContentHeight(), listH, reportScroll, ACCENT);
     }
 
-    private void renderDetail(GuiGraphics g, int mouseX, int mouseY) {
-        text(g, "Catalogue Report", panelX + 104, panelY + 10, TEXT_MAIN);
-        text(g, truncate(displayNamespace(selectedReport.getNamespace()), panelW - 238), panelX + 104, panelY + 25, TEXT_MUTED);
+    private void renderDetail(GuiGraphics g, InventorySortDrawContext ui, int mouseX, int mouseY) {
+        text(g, "Catalogue Report", panelX + PAD + 90, panelY + 9, InvUi.TEXT);
+        text(g, truncate(displayNamespace(selectedReport.getNamespace()), panelW - 230),
+                panelX + PAD + 90 + this.font.width("Catalogue Report ") + 4, panelY + 9, InvUi.TEXT_MUTED);
 
-        drawPanel(g, gridX, panelY + 40, gridW, SEARCH_H);
+        // Search field above the grid.
+        InvUi.field(ui, gridX, bandY, gridW, 18, searchBox != null && searchBox.isFocused(), ACCENT);
+        if (searchBox != null && searchBox.getValue().isEmpty()) {
+            text(g, "Filter items...", gridX + 6, bandY + 5, InvUi.TEXT_DIM);
+        }
 
-        int summaryY = panelY + 40;
-        text(g, truncate(selectedReport.displayTime(), detailW - 4), detailX, summaryY, TEXT_MAIN);
-        text(g, truncate(String.format(Locale.ROOT, "%,d total items", selectedReport.getTotalItems()), detailW - 4),
-                detailX, summaryY + 14, ACCENT);
-        text(g, truncate(String.format(Locale.ROOT, "%,d item types, %,d locations",
-                selectedReport.getUniqueItems(), selectedReport.getLocationCount()), detailW - 4),
-                detailX, summaryY + 28, TEXT_MUTED);
+        // Summary above the sidebar.
+        text(g, truncate(selectedReport.displayTime(), detailW), detailX, bandY + 1, InvUi.TEXT);
+        String total = String.format(Locale.ROOT, "%,d", selectedReport.getTotalItems());
+        text(g, total, detailX, bandY + 14, ACCENT);
+        text(g, truncate(String.format(Locale.ROOT, " items  -  %,d types", selectedReport.getUniqueItems()),
+                detailW - this.font.width(total)), detailX + this.font.width(total), bandY + 14, InvUi.TEXT_MUTED);
 
-        drawPanel(g, gridX, gridY, gridW, gridH);
+        // Item grid.
+        InvUi.inset(ui, gridX, gridY, gridW, gridH);
         updateItemHitboxes(mouseX, mouseY);
-        renderItemGrid(g, mouseX, mouseY);
-        drawPanelBorder(g, gridX, gridY, gridW, gridH);
+        renderItemGrid(g, ui, mouseX, mouseY);
+        InvUi.insetBorder(ui, gridX, gridY, gridW, gridH);
 
-        drawPanel(g, detailX, detailY, detailW, detailH);
-        renderSelectedItemDetails(g);
-        drawPanelBorder(g, detailX, detailY, detailW, detailH);
+        // Selected-item sidebar.
+        InvUi.inset(ui, detailX, detailY, detailW, detailH);
+        renderSelectedItemDetails(g, ui);
+        InvUi.insetBorder(ui, detailX, detailY, detailW, detailH);
     }
 
-    private void renderItemGrid(GuiGraphics g, int mouseX, int mouseY) {
-        g.enableScissor(gridX + 4, gridY + 4, gridX + gridW - 4, gridY + gridH - 4);
+    private void renderItemGrid(GuiGraphics g, InventorySortDrawContext ui, int mouseX, int mouseY) {
+        g.enableScissor(gridX + 2, gridY + 2, gridX + gridW - 2, gridY + gridH - 2);
         int columns = gridColumns();
         int yStart = gridY + GRID_INSET - itemScroll;
 
         if (filteredItems.isEmpty()) {
-            text(g, "No items match this report filter.", gridX + GRID_INSET, gridY + GRID_INSET, TEXT_MUTED);
+            text(g, "No items match this filter.", gridX + GRID_INSET, gridY + GRID_INSET, InvUi.TEXT_MUTED);
         } else {
             for (int i = 0; i < filteredItems.size(); i++) {
                 int col = i % columns;
@@ -247,80 +232,81 @@ public class CatalogReportBrowserScreen extends Screen {
 
                 CatalogReportSnapshot.ItemCount item = filteredItems.get(i);
                 boolean selected = item.itemId().equals(selectedItemId);
-                boolean hovered = mouseX >= x && mouseX <= x + CELL - 3
-                        && mouseY >= y && mouseY <= y + CELL - 3;
-                drawSlot(g, x, y, CELL - 3, selected, hovered);
+                boolean hovered = mouseX >= x && mouseX <= x + TILE && mouseY >= y && mouseY <= y + TILE;
+                InvUi.slot(ui, x, y, TILE, hovered, selected, ACCENT);
 
                 ItemEntry entry = itemEntry(item.itemId());
                 if (!entry.icon.isEmpty()) {
-                    g.renderItem(entry.icon, x + 5, y + 4);
-                    g.renderItemDecorations(this.font, entry.icon, x + 5, y + 4);
+                    g.renderItem(entry.icon, x + (TILE - 16) / 2, y + (TILE - 16) / 2);
+                    g.renderItemDecorations(this.font, entry.icon, x + (TILE - 16) / 2, y + (TILE - 16) / 2);
                 } else {
-                    text(g, "?", x + 10, y + 8, 0xFF1F1F1F);
+                    text(g, "?", x + 9, y + 8, InvUi.TEXT_DIM);
                 }
 
                 String count = compactCount(item.count());
-                int countW = this.font.width(count);
-                g.fill(x + CELL - 6 - countW, y + CELL - 13, x + CELL - 1, y + CELL - 3, 0xCC101010);
-                text(g, count, x + CELL - 4 - countW, y + CELL - 12, ACCENT);
+                InvUi.countBadge(ui, this.font, count, x + TILE, y + TILE + 1, ACCENT);
             }
         }
-
         g.disableScissor();
+        InvUi.scrollbar(ui, gridX + gridW - 6, gridY + 4, gridH - 8, gridContentHeight(), gridH, itemScroll, ACCENT);
     }
 
-    private void renderSelectedItemDetails(GuiGraphics g) {
-        int clipX = detailX + 4;
-        int clipY = detailY + 4;
-        int clipW = Math.max(1, detailW - 8);
-        int clipH = Math.max(1, detailH - 8);
+    private void renderSelectedItemDetails(GuiGraphics g, InventorySortDrawContext ui) {
+        int clipX = detailX + 3;
+        int clipY = detailY + 3;
+        int clipW = Math.max(1, detailW - 6);
+        int clipH = Math.max(1, detailH - 6);
         g.enableScissor(clipX, clipY, clipX + clipW, clipY + clipH);
         try {
             int contentY = detailY + DETAIL_INSET - detailScroll;
-            if (selectedItemId == null) {
-                text(g, "No item selected", detailX + DETAIL_INSET, contentY, TEXT_MUTED);
-                return;
-            }
-
-            CatalogReportSnapshot.ItemCount selected = findFilteredItem(selectedItemId);
+            CatalogReportSnapshot.ItemCount selected = selectedItemId == null ? null : findFilteredItem(selectedItemId);
             if (selected == null) {
-                text(g, "No item selected", detailX + DETAIL_INSET, contentY, TEXT_MUTED);
+                text(g, "Select an item", detailX + DETAIL_INSET, contentY, InvUi.TEXT_MUTED);
+                text(g, "Click a tile to see its totals.", detailX + DETAIL_INSET, contentY + 13, InvUi.TEXT_DIM);
                 return;
             }
 
             ItemEntry entry = itemEntry(selected.itemId());
-            int iconX = detailX + DETAIL_INSET + 2;
-            int iconY = contentY + 4;
-            drawSlot(g, iconX - 4, iconY - 4, 25, false, false);
+            int iconX = detailX + DETAIL_INSET;
+            int iconY = contentY;
+            InvUi.slot(ui, iconX, iconY, 22, false, false, ACCENT);
             if (!entry.icon.isEmpty()) {
-                g.renderItem(entry.icon, iconX, iconY);
-                g.renderItemDecorations(this.font, entry.icon, iconX, iconY);
+                g.renderItem(entry.icon, iconX + 3, iconY + 3);
+                g.renderItemDecorations(this.font, entry.icon, iconX + 3, iconY + 3);
             }
 
-            int textX = detailX + DETAIL_INSET + 32;
-            int fullTextW = detailW - DETAIL_INSET * 2;
-            text(g, truncate(entry.displayName, detailW - DETAIL_INSET * 2 - 32), textX, contentY + 2, TEXT_MAIN);
-            text(g, truncate(selected.itemId(), fullTextW), detailX + DETAIL_INSET, contentY + 42, TEXT_MUTED);
-            text(g, String.format(Locale.ROOT, "%,d total", selected.count()),
-                    detailX + DETAIL_INSET, contentY + 64, ACCENT);
-            text(g, truncate(stackSummary(entry.icon, selected.count()), fullTextW),
-                    detailX + DETAIL_INSET, contentY + 78, TEXT_MAIN);
+            int textX = iconX + 30;
+            int fullW = detailW - DETAIL_INSET * 2;
+            text(g, truncate(entry.displayName, fullW - 30), textX, contentY + 2, InvUi.TEXT);
+            text(g, truncate(selected.itemId(), fullW - 30), textX, contentY + 13, InvUi.TEXT_DIM);
+
+            String total = String.format(Locale.ROOT, "%,d", selected.count());
+            text(g, total, detailX + DETAIL_INSET, contentY + 34, ACCENT);
+            text(g, " total in this report", detailX + DETAIL_INSET + this.font.width(total), contentY + 34, InvUi.TEXT_MUTED);
+            text(g, truncate(stackSummary(entry.icon, selected.count()), fullW), detailX + DETAIL_INSET, contentY + 48, InvUi.TEXT);
 
             int share = selectedReport.getTotalItems() <= 0
                     ? 0
                     : Math.round((selected.count() * 100.0f) / selectedReport.getTotalItems());
-            text(g, share + "% of report total", detailX + DETAIL_INSET, contentY + 92, TEXT_MUTED);
+            renderShareBar(ui, detailX + DETAIL_INSET, contentY + 64, fullW, share);
+            text(g, share + "% of report total", detailX + DETAIL_INSET, contentY + 74, InvUi.TEXT_MUTED);
 
-            int dividerY = contentY + 116;
-            g.fill(detailX + DETAIL_INSET, dividerY, detailX + detailW - DETAIL_INSET, dividerY + 1, PANEL_EDGE);
-            text(g, "Report file", detailX + DETAIL_INSET, contentY + 128, TEXT_DIM);
-            text(g, truncate(selectedReport.getReportFileName(), fullTextW),
-                    detailX + DETAIL_INSET, contentY + 140, TEXT_MAIN);
+            int dividerY = contentY + 92;
+            ui.fill(detailX + DETAIL_INSET, dividerY, detailX + detailW - DETAIL_INSET, dividerY + 1, InvUi.DIVIDER);
+            text(g, "Report file", detailX + DETAIL_INSET, contentY + 100, InvUi.TEXT_DIM);
+            text(g, truncate(selectedReport.getReportFileName(), fullW), detailX + DETAIL_INSET, contentY + 112, InvUi.TEXT_MUTED);
         } finally {
             g.disableScissor();
         }
 
-        drawDetailScrollBar(g);
+        InvUi.scrollbar(ui, detailX + detailW - 6, detailY + 5, detailH - 10, DETAIL_CONTENT_H,
+                detailH - DETAIL_INSET, detailScroll, ACCENT);
+    }
+
+    private void renderShareBar(InventorySortDrawContext ui, int x, int y, int w, int share) {
+        ui.fill(x, y, x + w, y + 4, InvUi.WELL);
+        int fill = Math.max(1, Math.min(w, w * share / 100));
+        ui.fill(x, y, x + fill, y + 4, ACCENT);
     }
 
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
@@ -422,7 +408,7 @@ public class CatalogReportBrowserScreen extends Screen {
         itemButtons.clear();
         int maxVisibleItems = Math.max(24, gridColumns() * ((gridH / CELL) + 3));
         for (int i = 0; i < maxVisibleItems; i++) {
-            InventorySortHitboxButton button = new InventorySortHitboxButton(0, 0, CELL - 3, CELL - 3, Component.literal("Item"), hitbox -> {
+            InventorySortHitboxButton button = new InventorySortHitboxButton(0, 0, TILE, TILE, Component.literal("Item"), hitbox -> {
                 String targetId = ((InventorySortHitboxButton) hitbox).getTargetId();
                 if (targetId != null) {
                     selectedItemId = targetId;
@@ -445,7 +431,7 @@ public class CatalogReportBrowserScreen extends Screen {
         }
 
         int index = 0;
-        int y = listY + 4 - reportScroll;
+        int y = listY + 6 - reportScroll;
         for (ReportRow row : reportRows) {
             int rowH = row.header ? HEADER_H : REPORT_ROW_H;
             if (!row.header && y + REPORT_ROW_H > listY && y < listY + listH && index < reportButtons.size()) {
@@ -481,7 +467,7 @@ public class CatalogReportBrowserScreen extends Screen {
                 break;
             }
             InventorySortHitboxButton button = itemButtons.get(buttonIndex++);
-            button.setBounds(x, y, CELL - 3, CELL - 3);
+            button.setBounds(x, y, TILE, TILE);
             button.setTargetId(filteredItems.get(i).itemId());
             button.visible = true;
             button.active = true;
@@ -535,14 +521,15 @@ public class CatalogReportBrowserScreen extends Screen {
         panelY = (this.height - panelH) / 2;
 
         listX = panelX + PAD;
-        listY = panelY + 48;
+        listY = panelY + 42;
         listW = panelW - PAD * 2;
-        listH = panelH - 64;
+        listH = panelH - 42 - PAD;
 
+        bandY = panelY + 40;
         gridX = panelX + PAD;
-        gridY = panelY + DETAIL_TOP_H;
+        gridY = panelY + 70;
         gridW = Math.max(210, (panelW - PAD * 3) * 3 / 5);
-        gridH = panelH - DETAIL_TOP_H - PAD;
+        gridH = panelY + panelH - PAD - gridY;
         detailX = gridX + gridW + PAD;
         detailY = gridY;
         detailW = panelX + panelW - PAD - detailX;
@@ -553,13 +540,24 @@ public class CatalogReportBrowserScreen extends Screen {
         return Math.max(1, (gridW - GRID_INSET * 2) / CELL);
     }
 
-    private int maxItemScroll() {
+    private int gridContentHeight() {
         if (filteredItems.isEmpty()) {
             return 0;
         }
         int rows = (filteredItems.size() + gridColumns() - 1) / gridColumns();
-        int contentH = rows * CELL + GRID_INSET * 2;
-        return Math.max(0, contentH - gridH);
+        return rows * CELL + GRID_INSET * 2;
+    }
+
+    private int browserContentHeight() {
+        int contentH = 12;
+        for (ReportRow row : reportRows) {
+            contentH += row.header ? HEADER_H : REPORT_ROW_H;
+        }
+        return contentH;
+    }
+
+    private int maxItemScroll() {
+        return Math.max(0, gridContentHeight() - gridH);
     }
 
     private int maxDetailScroll() {
@@ -568,108 +566,19 @@ public class CatalogReportBrowserScreen extends Screen {
     }
 
     private int maxReportScroll() {
-        int contentH = 8;
-        for (ReportRow row : reportRows) {
-            contentH += row.header ? HEADER_H : REPORT_ROW_H;
-        }
-        return Math.max(0, contentH - listH);
+        return Math.max(0, browserContentHeight() - listH);
     }
 
     private void closeToParent() {
         MinecraftApiCompat.setScreen(Minecraft.getInstance(), parent);
     }
 
-    private void drawFrame(GuiGraphics g) {
-        g.fill(panelX + 4, panelY + 4, panelX + panelW + 4, panelY + panelH + 4, 0x66000000);
-        g.fill(panelX, panelY, panelX + panelW, panelY + panelH, FRAME_BORDER);
-        g.fill(panelX + 1, panelY + 1, panelX + panelW - 1, panelY + panelH - 1, FRAME_SHADOW);
-        g.fill(panelX + 2, panelY + 2, panelX + panelW - 2, panelY + panelH - 2, FRAME_BG);
-        g.fill(panelX + 2, panelY + 2, panelX + panelW - 2, panelY + 34, FRAME_HEADER);
-        g.fill(panelX + 2, panelY + 34, panelX + panelW - 2, panelY + 35, 0xFF4C5249);
-        g.fill(panelX + PAD, panelY + 38, panelX + panelW - PAD, panelY + 39, 0x55101010);
-    }
-
-    private void drawPanel(GuiGraphics g, int x, int y, int w, int h) {
-        drawPanel(g, x, y, w, h, PANEL_BG);
-    }
-
-    private void drawPanel(GuiGraphics g, int x, int y, int w, int h, int fill) {
-        g.fill(x, y, x + w, y + h, FRAME_SHADOW);
-        g.fill(x + 1, y + 1, x + w - 1, y + h - 1, PANEL_EDGE);
-        g.fill(x + 2, y + 2, x + w - 2, y + h - 2, fill);
-        g.fill(x + 2, y + 2, x + w - 2, y + 3, PANEL_EDGE_LIGHT);
-        g.fill(x + 2, y + 2, x + 3, y + h - 2, PANEL_EDGE_LIGHT);
-    }
-
-    private void drawPanelBorder(GuiGraphics g, int x, int y, int w, int h) {
-        g.fill(x, y, x + w, y + 1, FRAME_SHADOW);
-        g.fill(x, y + h - 1, x + w, y + h, FRAME_SHADOW);
-        g.fill(x, y, x + 1, y + h, FRAME_SHADOW);
-        g.fill(x + w - 1, y, x + w, y + h, FRAME_SHADOW);
-        g.fill(x + 1, y + 1, x + w - 1, y + 2, PANEL_EDGE_LIGHT);
-        g.fill(x + 1, y + 1, x + 2, y + h - 1, PANEL_EDGE_LIGHT);
-        g.fill(x + 1, y + h - 2, x + w - 1, y + h - 1, PANEL_EDGE);
-        g.fill(x + w - 2, y + 1, x + w - 1, y + h - 1, PANEL_EDGE);
-    }
-
-    private void drawDetailScrollBar(GuiGraphics g) {
-        int maxScroll = maxDetailScroll();
-        if (maxScroll <= 0) {
-            return;
-        }
-
-        int trackX = detailX + detailW - 7;
-        int trackY = detailY + 7;
-        int trackH = Math.max(12, detailH - 14);
-        int thumbH = Math.max(10, trackH * Math.max(1, detailH - DETAIL_INSET * 2) / DETAIL_CONTENT_H);
-        int thumbY = trackY + (trackH - thumbH) * detailScroll / maxScroll;
-        g.fill(trackX, trackY, trackX + 2, trackY + trackH, 0xAA000000);
-        g.fill(trackX, thumbY, trackX + 2, thumbY + thumbH, PANEL_EDGE_LIGHT);
-    }
-
-    private void drawSlot(GuiGraphics g, int x, int y, int size, boolean selected, boolean hovered) {
-        int fill = selected ? SLOT_SELECTED : hovered ? SLOT_HOVER : SLOT_BG;
-        int edge = selected ? 0xFFB79D47 : 0xFF4B4B4B;
-        g.fill(x, y, x + size, y + size, FRAME_SHADOW);
-        g.fill(x + 1, y + 1, x + size - 1, y + size - 1, edge);
-        g.fill(x + 2, y + 2, x + size - 2, y + size - 2, fill);
-        g.fill(x + 2, y + 2, x + size - 2, y + 3, 0xFFD8D8D8);
-        g.fill(x + 2, y + 2, x + 3, y + size - 2, 0xFFD8D8D8);
-        g.fill(x + 2, y + size - 3, x + size - 2, y + size - 2, 0xFF555555);
-        g.fill(x + size - 3, y + 2, x + size - 2, y + size - 2, 0xFF555555);
-    }
-
-    private void drawCloseControl(GuiGraphics g, int mouseX, int mouseY) {
-        int x = closeButtonX();
-        int y = closeButtonY();
-        boolean hovered = isInside(mouseX, mouseY, x, y, CLOSE_SIZE, CLOSE_SIZE);
-        drawPanel(g, x, y, CLOSE_SIZE, CLOSE_SIZE, hovered ? 0xFF3A2A2A : PANEL_ALT);
-        int color = hovered ? 0xFFFF8A8A : TEXT_MAIN;
-        text(g, "x", x + 6, y + 5, color);
-    }
-
-    private void drawBackControl(GuiGraphics g, int mouseX, int mouseY) {
-        int x = backButtonX();
-        int y = backButtonY();
-        boolean hovered = isInside(mouseX, mouseY, x, y, BACK_W, BACK_H);
-        drawPanel(g, x, y, BACK_W, BACK_H, hovered ? 0xFF2D342B : PANEL_ALT);
-        text(g, "< Reports", x + 8, y + 5, hovered ? ACCENT_GREEN : TEXT_MAIN);
-    }
-
     private int closeButtonX() {
-        return panelX + panelW - PAD - CLOSE_SIZE;
+        return panelX + panelW - PAD - 16;
     }
 
     private int closeButtonY() {
-        return panelY + 8;
-    }
-
-    private int backButtonX() {
-        return panelX + PAD;
-    }
-
-    private int backButtonY() {
-        return panelY + 8;
+        return panelY + 7;
     }
 
     @Override
