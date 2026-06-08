@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: 3.1.3 icon refresh GitHub release created
+Current checkpoint: split-mod bug report intake prepared for user repro notes
 
 ## Project Workflow
 
@@ -35,6 +35,109 @@ Current checkpoint: 3.1.3 icon refresh GitHub release created
 - Inventory Search exposes shared world-profile commands as
   `/inventorysearch world list|use|default|current`.
 - Core no longer registers a public `/inventorysort` command root.
+
+## Bug Report Intake (2026-06-08)
+
+Purpose: first-pass bug queue for the current split-mod architecture before
+implementing the next fixes or additions. User-reported reproduction notes should
+be added here first, then promoted into focused implementation checkpoints.
+
+Architecture checkpoint:
+
+- The repo builds four Gradle modules: private shared `inventorysort-core` plus
+  the three public feature mods `inventorysort`, `inventorysearch`, and
+  `inventorycatalogue`.
+- Each public feature jar embeds the shared Core jar, so players can install
+  InvSort, InvSearch, or InvCatalogue on its own without downloading a separate
+  Core mod.
+- Core owns shared identity capture, namespace/world-profile state, common UI
+  widgets, smoke-test startup, and the container/player snapshot event bus.
+- InvSort owns sorting behavior plus its sort/transfer screen mixin.
+- InvSearch owns the search button, search modal, item-location tracker, and
+  inventory sampler.
+- InvCatalogue owns catalogue commands, session lifecycle, reports, and the
+  catalogue store. It records through Core snapshot events rather than its own
+  feature mixin.
+- Version shims are selected by `minecraft_version_profile` through
+  `compat_group`. Shared code stays in `src/client/java`, while API drift lives
+  in `src/compat/<compat_group>/client/java`. The `26.x` lane uses the
+  non-remapping Loom path and Java 25, while `1.20.x`/`1.21.x` use remapped
+  builds with Java 17 or Java 21 as declared by the profile.
+
+### InvSort Bug Report
+
+Status: open for user reproduction details.
+
+Code-audit leads already in the backlog:
+
+1. Sorting and transfer actions can still issue many synchronous slot-click
+   packets in one burst. Risk to reproduce: ghost items, server rollback, or
+   kicks on rate-limited servers when sorting large containers or moving many
+   stacks.
+2. "Sort container" currently tops up partial hotbar stacks from the main
+   inventory before sorting the container. This is intentional in the README
+   wording, but it is a user-visible side effect to revisit if it felt like a
+   bug during play.
+3. Container slot detection still has a latent `"Crafting"` name-match trap in
+   `InventorySorter`; if buttons are ever exposed on a crafting-like screen, the
+   result slot could be treated as sortable.
+4. Dead or misleading helper code remains around `fillPlayerStacksFromContainer`,
+   `findFirstEmptyNonBundle`, and unreachable bundle-skip branches in
+   `ensureCursorEmpty`. Treat this as cleanup unless it connects to a real
+   gameplay repro.
+
+Next needed from user: exact screen/container, install set, Minecraft profile,
+button pressed, and observed item movement/desync.
+
+### InvSearch Bug Report
+
+Status: open for user reproduction details.
+
+Code-audit leads already in or added to the backlog:
+
+1. Item-location persistence writes the tracker JSON directly with `FileWriter`
+   and does not use an atomic temp-file swap or `.bak` fallback. A crash or
+   interrupted write can corrupt search history.
+2. Unlike `CatalogStore`, `ItemLocationTracker.load()` only catches
+   `IOException`; malformed JSON can throw a runtime parse exception and leave
+   the tracker repeatedly failing after a corrupted save file.
+3. Inventory sampling runs every client tick and saves the full tracker file on
+   every inventory-total signature change. Busy sessions can cause avoidable
+   disk churn.
+4. Portable shulker tracking still uses a weak contents-derived identity, so
+   identical or similarly seeded shulkers can collide and appear as one known
+   location.
+5. Search identity is still base-item oriented for many cases. Potion,
+   enchantment, custom-name, and component/NBT distinctions remain an accuracy
+   backlog item.
+6. Shared Core world-confirmation input still polls raw Enter/Backspace rather
+   than user keybinds. This can surface while using Search world-profile flows.
+
+Next needed from user: search query, expected count/location, actual result,
+whether the item had components/custom data, world profile state, and whether
+the issue survived a client restart.
+
+### InvCatalogue Bug Report
+
+Status: open for user reproduction details.
+
+Code-audit leads already in the backlog:
+
+1. Empty containers are recorded as zero-item snapshots, so "locations
+   catalogued" can increase without adding any counted items. Decide whether
+   this is useful audit history or noisy report inflation.
+2. Catalogue inherits the same portable-shulker collision risk from Core's
+   contents-derived portable shulker id; two identically filled portable
+   shulkers can count as one.
+3. `CatalogStore.save()` writes the catalogue JSON directly without an atomic
+   temp-file swap or `.bak` fallback. A crash during write can lose that
+   namespace's catalogue, though load failure is caught and starts fresh.
+4. Shared Core world-confirmation input still uses raw Enter/Backspace polling,
+   which can affect catalogue sessions on multiplayer profile confirmation.
+
+Next needed from user: command used, whether `includeInventory` was active,
+container type, whether the count was added/updated/skipped in chat, report
+totals, and whether the issue involved portable shulkers or empty storage.
 
 ## Recently Fixed
 

@@ -23,6 +23,9 @@ All notable project changes will be documented here.
 
 ### Changed
 
+- Added a split-mod bug report intake checkpoint to `TODO.md`, covering
+  InvSort, InvSearch, and InvCatalogue ownership, Core/shim boundaries, and
+  first-pass code-audit leads for the next user-reported fixes.
 - Created the GitHub `v3.1.3` tag and release for the icon refresh, pointing
   downloads to the published Modrinth versions.
 - Published the `3.1.3` icon refresh release through the guarded GitHub
