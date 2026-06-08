@@ -22,9 +22,11 @@ accent: the InvSort rules screen is now tab-based (Slots/Order) with a scope
 selector and a selection panel, the InvSearch modal uses card rows with
 held-vs-tracked counts plus a restyled tracked-world picker, and the
 InvCatalogue browser/detail views are restyled to match. The UI redesign builds
-clean on every supported 1.x profile (`1.20-1.20.4` through `1.21.11`); the
-`26.x` profiles still require the GitHub Java 25 toolchain to compile locally.
-Full smoke/CI validation is deferred until the feature set is complete.
+clean on every supported 1.x and 26.x profile. The 26.x screen overlays have
+been synced to the shared `InvUi` screens, including the Sort rules screen,
+Search modal, tracked-world picker, and Catalogue browser/detail views; the
+`26.2-pre-3` all-public install also passes a focused launch smoke test. Full
+smoke/CI validation is deferred until the feature set is complete.
 
 ## Project Workflow
 
@@ -270,6 +272,26 @@ Requested capabilities:
 
 ## Recently Fixed
 
+-58. Minecraft 26.x UI shim sync for `3.2.0` minor release (unreleased):
+   - Regenerated the `26.1.2` and `26.2-pre-3` screen overlays for the InvSort
+     rules screen, InvSearch modal, tracked-world picker, and InvCatalogue
+     report browser from the shared `InvUi` redesign.
+   - Kept the 26.x overlays on the `GuiGraphicsExtractor` render-state
+     lifecycle while matching the shared modern dark theme and per-mod accents.
+   - Fixed the regenerated 26.x Search modal to route screen changes through
+     `MinecraftApiCompat.setScreen`, preserving the `26.2-pre-3`
+     `client.gui.setScreen(...)` API path.
+   - Verified `.\gradlew.bat buildAllMods --no-daemon --console=plain`.
+   - Verified
+     `.\gradlew.bat buildAllMods "-Pminecraft_version_profile=26.1.2" --no-daemon --console=plain`.
+   - Verified
+     `.\gradlew.bat buildAllMods "-Pminecraft_version_profile=26.2-pre-3" --no-daemon --console=plain`.
+   - Verified `.\gradlew.bat buildAllVersions --no-daemon --console=plain`.
+   - Verified
+     `.\gradlew.bat smokeTestSelectedClients "-Pinventorysort_smoke_profiles=26.2-pre-3" "-Pinventorysort_smoke_game_versions=26.2-pre-3" "-Pinventorysort_smoke_install_sets=all-public" --no-daemon --console=plain`.
+   - Full smoke/CI validation remains deferred until the rest of the `3.2.0`
+     minor-release work is complete.
+
 -57. Cohesive in-game UI redesign for `3.2.0` minor release (unreleased):
    - Added a shared `InvUi` theme helper in `src/client/java` (registered in the
      Core client source set) that draws the modern dark window, panels, slot
@@ -298,8 +320,8 @@ Requested capabilities:
      default `1.21.11` profile.
    - Verified `buildAllMods` directly on every supported 1.x profile:
      `1.20-1.20.4`, `1.20.5-1.20.6`, `1.21-1.21.5`, `1.21.6-1.21.8`,
-     `1.21.9-1.21.10`, and `1.21.11`. The `26.x` profiles remain gated on the
-     GitHub Java 25 toolchain and are not locally buildable on this machine.
+     `1.21.9-1.21.10`, and `1.21.11`. The 26.x profile verification is
+     recorded in the follow-up shim-sync checkpoint above.
    - Full smoke/CI validation remains deferred until the rest of the `3.2.0`
      minor-release work is complete.
 

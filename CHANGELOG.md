@@ -46,9 +46,15 @@ All notable project changes will be documented here.
 - Restyled the InvCatalogue browser report cards and world section bands plus
   the detail item grid and selected-item sidebar, adding a share bar for an
   item's portion of the report total.
+- Synchronized the Minecraft 26.x screen overlays with the shared `InvUi`
+  redesign so InvSort, InvSearch, the tracked-world picker, and InvCatalogue
+  use the same refreshed UI across the 1.x and 26.x rendering lanes.
 
 ### Fixed
 
+- Fixed the regenerated 26.x InvSearch screen overlay to use
+  `MinecraftApiCompat.setScreen`, preserving the `26.2-pre-3`
+  `client.gui.setScreen(...)` path after Minecraft removed `Minecraft#setScreen`.
 - Fixed InvCatalogue report-browser layout overflow by clipping and scrolling
   the selected-item detail pane, reserving more top summary space, and keeping
   scrolled item-grid tiles inside the grid frame.
