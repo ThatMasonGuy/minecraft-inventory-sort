@@ -25,8 +25,11 @@ InvCatalogue browser/detail views are restyled to match. The UI redesign builds
 clean on every supported 1.x and 26.x profile. The 26.x screen overlays have
 been synced to the shared `InvUi` screens, including the Sort rules screen,
 Search modal, tracked-world picker, and Catalogue browser/detail views; the
-`26.2-pre-3` all-public install also passes a focused launch smoke test. Full
-smoke/CI validation is deferred until the feature set is complete.
+`26.2-pre-3` all-public install also passes a focused launch smoke test.
+InvSearch and the InvCatalogue report-browser filter now accept `:category`
+queries such as `:wood`, `:stone`, and `:tools`, backed by the shared Core copy
+of the InvSort category vocabulary and aliases. Full smoke/CI validation is
+deferred until the feature set is complete.
 
 ## Project Workflow
 
@@ -179,6 +182,31 @@ Dropped from active bugs by user decision:
 
 ## Feature Requests (2026-06-08)
 
+### InvSearch And InvCatalogue Category Search
+
+Goal: let players search by practical InvSort categories in both InvSearch and
+the InvCatalogue report item grid.
+
+Status: implemented locally for the queued `3.2.0` minor release.
+
+Requested capabilities:
+
+1. Category query syntax:
+   - DONE (3.2.0 queued): InvSearch treats queries starting with `:` as
+     category searches instead of normal fuzzy name/id searches.
+   - DONE (3.2.0 queued): InvCatalogue's saved-report item filter accepts the
+     same `:category` syntax while keeping existing text/id filtering for
+     normal queries and legacy report ids.
+2. Category source and aliases:
+   - DONE (3.2.0 queued): Added a shared Core category helper based on the
+     existing InvSort category order so Search and Catalogue can use categories
+     without requiring the public InvSort feature jar.
+   - DONE (3.2.0 queued): Added broad and friendly aliases such as `:wood`,
+     `:stone`, `:terrain`, `:tools`, `:gear`, `:food`, `:storage`, and the
+     individual category names/keys.
+   - DONE (3.2.0 queued): InvSort's active comparator now reads category keys
+     from the same shared helper.
+
 ### InvSort Custom Sorting And Slot Rules
 
 Goal: add an in-game configuration menu for user-defined sorting behavior across
@@ -271,6 +299,27 @@ Requested capabilities:
      history data model needed for comparisons.
 
 ## Recently Fixed
+
+-59. Category search for InvSearch and InvCatalogue for `3.2.0` minor release
+     (unreleased):
+   - Added `InventorySortCategories` to shared Core with the existing InvSort
+     category order, category-key matcher, and friendly aliases for broad
+     queries such as `:wood`, `:stone`, `:tools`, `:gear`, `:food`, and
+     `:storage`.
+   - Updated InvSearch so leading-colon queries use category matching across
+     live registry results, with category results grouped by category order and
+     then item name.
+   - Updated the InvCatalogue report-browser item-grid filter to use the same
+     category queries for known registry item ids while preserving existing
+     name/id filtering for normal queries and legacy report entries.
+   - Regenerated the `26.1.2` and `26.2-pre-3` InvSearch and InvCatalogue
+     screen overlays from the shared screens, keeping the 26.x
+     `GuiGraphicsExtractor` lifecycle and `MinecraftApiCompat.setScreen`
+     shims intact.
+   - Verified `.\gradlew.bat buildAllMods --no-daemon --console=plain`.
+   - Verified `.\gradlew.bat buildAllVersions --no-daemon --console=plain`.
+   - Full smoke/CI validation remains deferred until the rest of the `3.2.0`
+     minor-release work is complete.
 
 -58. Minecraft 26.x UI shim sync for `3.2.0` minor release (unreleased):
    - Regenerated the `26.1.2` and `26.2-pre-3` screen overlays for the InvSort

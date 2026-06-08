@@ -22,6 +22,9 @@ All notable project changes will be documented here.
   `InventorySortDrawContext` abstraction) that centralizes the modern dark
   window, panel, slot, row, field, tab, chip, and scrollbar drawing for all
   three feature screens across the 1.x and 26.x rendering lanes.
+- Added `:category` search syntax to InvSearch and the InvCatalogue saved-report
+  item filter, so queries such as `:wood`, `:stone`, `:tools`, `:gear`, and
+  `:storage` match the corresponding practical item categories.
 
 ### Changed
 
@@ -49,6 +52,9 @@ All notable project changes will be documented here.
 - Synchronized the Minecraft 26.x screen overlays with the shared `InvUi`
   redesign so InvSort, InvSearch, the tracked-world picker, and InvCatalogue
   use the same refreshed UI across the 1.x and 26.x rendering lanes.
+- Shared the InvSort category vocabulary through Core so standalone InvSearch
+  and InvCatalogue jars can use category matching without depending on the
+  public InvSort feature jar.
 
 ### Fixed
 

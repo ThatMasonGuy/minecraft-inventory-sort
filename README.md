@@ -28,6 +28,8 @@ A lightweight **client-side** Minecraft mod that adds robust sorting capabilitie
 - **Known-current Item Location Tracking:** Remembers where you last saw an item, acting as an intelligent memory aid for your storage systems.
 - **Per-location Counts:** Displays exact quantities of searched items at each specific location.
 - **Live Inventory Results:** Real-time search updating as you type.
+- **Category Shortcuts:** Prefix a query with `:` to search practical groups
+  such as `:wood`, `:stone`, `:tools`, `:gear`, or `:storage`.
 - **Expanded Location/Details View:** View detailed context about where your items are stored to easily locate them in a massive base.
 
 ### 3. Tracked Storage & Known Locations
@@ -44,7 +46,7 @@ A lightweight **client-side** Minecraft mod that adds robust sorting capabilitie
 - **Cataloguing Sessions:** Start a session with `/inventorycatalogue start` (use `/inventorycatalogue start includeInventory` to also count your own inventory), then walk your base opening every chest, shulker, ender chest, minecart, and other storage. Finish with `/inventorycatalogue stop` to get a deduplicated tally of everything you own.
 - **Identity-Based Deduplication:** Built on the same container-identity system as Tracked Storage, so single vs. double chests, individual shulkers, per-player ender chests, and minecarts are each counted once. Reopening a container refreshes its snapshot instead of double-counting it.
 - **Per-World & Persistent:** Catalogue data is scoped per server/world profile and saved to disk, so a tally accumulates across play sessions and survives restarts - perfect for seeing exactly how much of everything you hoarded by the end of a world. Reset a world's catalogue with `/inventorycatalogue clear`.
-- **Reports:** `/inventorycatalogue status` and `/inventorycatalogue report` show running totals in chat; `/inventorycatalogue reports` opens an in-game browser for saved reports with item icons and counts; `/inventorycatalogue stop` also writes a full plain-text report to `.minecraft/inventorysort/catalog/`.
+- **Reports:** `/inventorycatalogue status` and `/inventorycatalogue report` show running totals in chat; `/inventorycatalogue reports` opens an in-game browser for saved reports with item icons, counts, and `:category` filters; `/inventorycatalogue stop` also writes a full plain-text report to `.minecraft/inventorysort/catalog/`.
 
 ## Compatibility & Scope
 

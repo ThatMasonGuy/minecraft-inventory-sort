@@ -188,7 +188,7 @@ public class CatalogReportBrowserScreen extends Screen {
         // Search field above the grid.
         InvUi.field(ui, gridX, bandY, gridW, 18, searchBox != null && searchBox.isFocused(), ACCENT);
         if (searchBox != null && searchBox.getValue().isEmpty()) {
-            text(g, "Filter items...", gridX + 6, bandY + 5, InvUi.TEXT_DIM);
+            text(g, "Filter items or :category...", gridX + 6, bandY + 5, InvUi.TEXT_DIM);
         }
 
         // Summary above the sidebar.
@@ -366,11 +366,15 @@ public class CatalogReportBrowserScreen extends Screen {
 
         String query = searchBox == null ? lastQuery : searchBox.getValue();
         String normalizedQuery = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
+        InventorySortCategories.CategoryQuery categoryQuery = InventorySortCategories.categoryQuery(query);
         for (CatalogReportSnapshot.ItemCount item : selectedReport.sortedItems()) {
             ItemEntry entry = itemEntry(item.itemId());
-            if (normalizedQuery.isEmpty()
-                    || item.itemId().toLowerCase(Locale.ROOT).contains(normalizedQuery)
-                    || entry.searchName.contains(normalizedQuery)) {
+            boolean matches = normalizedQuery.isEmpty()
+                    || (categoryQuery != null
+                            ? categoryQuery.matches(entry.item)
+                            : item.itemId().toLowerCase(Locale.ROOT).contains(normalizedQuery)
+                                    || entry.searchName.contains(normalizedQuery));
+            if (matches) {
                 filteredItems.add(item);
             }
         }
@@ -672,7 +676,7 @@ public class CatalogReportBrowserScreen extends Screen {
             String id = BuiltInRegistries.ITEM.getKey(item).toString();
             ItemStack icon = new ItemStack(item);
             String displayName = icon.getHoverName().getString();
-            ITEM_CACHE.put(id, new ItemEntry(id, displayName, icon));
+            ITEM_CACHE.put(id, new ItemEntry(id, displayName, icon, item));
         }
         itemCacheLoaded = true;
     }
@@ -680,7 +684,7 @@ public class CatalogReportBrowserScreen extends Screen {
     private static ItemEntry itemEntry(String itemId) {
         ensureItemCache();
         ItemEntry entry = ITEM_CACHE.get(itemId);
-        return entry != null ? entry : new ItemEntry(itemId, formatItemName(itemId), ItemStack.EMPTY);
+        return entry != null ? entry : new ItemEntry(itemId, formatItemName(itemId), ItemStack.EMPTY, null);
     }
 
     private static String formatItemName(String itemId) {
@@ -709,12 +713,14 @@ public class CatalogReportBrowserScreen extends Screen {
         final String itemId;
         final String displayName;
         final ItemStack icon;
+        final Item item;
         final String searchName;
 
-        ItemEntry(String itemId, String displayName, ItemStack icon) {
+        ItemEntry(String itemId, String displayName, ItemStack icon, Item item) {
             this.itemId = itemId;
             this.displayName = displayName;
             this.icon = icon;
+            this.item = item;
             this.searchName = (displayName + " " + itemId).toLowerCase(Locale.ROOT);
         }
     }

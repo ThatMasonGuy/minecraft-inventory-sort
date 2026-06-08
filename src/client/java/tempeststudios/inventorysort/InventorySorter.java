@@ -579,50 +579,14 @@ public class InventorySorter {
 	public record CategoryDefinition(String key, String label) {
 	}
 
-	public static final List<CategoryDefinition> DEFAULT_CATEGORIES = List.of(
-			new CategoryDefinition("00_storage_bundle", "Bundles"),
-			new CategoryDefinition("00_storage_ender_chest", "Ender Chests"),
-			new CategoryDefinition("00_storage_shulker", "Shulker Boxes"),
-			new CategoryDefinition("01_wood_logs", "Logs"),
-			new CategoryDefinition("02_wood_planks", "Planks"),
-			new CategoryDefinition("03_wood_items", "Wood Items"),
-			new CategoryDefinition("04_wood_leaves", "Leaves"),
-			new CategoryDefinition("05_wood_saplings", "Saplings"),
-			new CategoryDefinition("10_terrain_dirt", "Dirt"),
-			new CategoryDefinition("11_terrain_stone", "Stone"),
-			new CategoryDefinition("12_terrain_sand", "Sand"),
-			new CategoryDefinition("20_minerals_ores", "Ores"),
-			new CategoryDefinition("21_minerals_gems", "Gems"),
-			new CategoryDefinition("22_minerals_ingots", "Ingots"),
-			new CategoryDefinition("23_minerals_nuggets", "Nuggets"),
-			new CategoryDefinition("24_minerals_dusts", "Dusts"),
-			new CategoryDefinition("30_redstone", "Redstone"),
-			new CategoryDefinition("40_build_slabs", "Slabs"),
-			new CategoryDefinition("41_build_stairs", "Stairs"),
-			new CategoryDefinition("42_build_edges", "Fences/Walls"),
-			new CategoryDefinition("43_build_doors", "Doors"),
-			new CategoryDefinition("44_build_glass", "Glass"),
-			new CategoryDefinition("45_build_wool", "Wool"),
-			new CategoryDefinition("46_build_concrete", "Concrete"),
-			new CategoryDefinition("50_food_raw_meat", "Raw Meat"),
-			new CategoryDefinition("51_food_cooked_meat", "Cooked Meat"),
-			new CategoryDefinition("52_food_crops", "Crops"),
-			new CategoryDefinition("53_food_prepared", "Prepared Food"),
-			new CategoryDefinition("54_food_fruits", "Fruit"),
-			new CategoryDefinition("60_combat_weapons", "Weapons"),
-			new CategoryDefinition("61_tools", "Tools"),
-			new CategoryDefinition("62_armor", "Armor"),
-			new CategoryDefinition("70_potions_brewing", "Potions/Brewing"),
-			new CategoryDefinition("80_misc_storage", "Storage"),
-			new CategoryDefinition("81_misc_books", "Books"),
-			new CategoryDefinition("82_misc_mob_drops", "Mob Drops"),
-			new CategoryDefinition("90_misc", "Misc")
-	);
+	public static final List<CategoryDefinition> DEFAULT_CATEGORIES = InventorySortCategories.DEFAULT_CATEGORIES.stream()
+			.map(category -> new CategoryDefinition(category.key(), category.label()))
+			.toList();
 
 	// 64-stack items first, then smaller. Within that, group by category. Then alphabetical.
 	private static final Comparator<ItemStack> STACK_COMPARATOR = Comparator
 			.comparingInt((ItemStack s) -> -s.getMaxStackSize())
-			.thenComparing(InventorySorter::categoryKey)
+			.thenComparing(InventorySortCategories::categoryKey)
 			.thenComparing(s -> BuiltInRegistries.ITEM.getKey(s.getItem()).toString())
 			.thenComparingInt(ItemStackCompat::identityHash)
 			.thenComparingInt(s -> -s.getCount());
@@ -645,8 +609,8 @@ public class InventorySorter {
 				}
 			}
 
-			int aCategoryRank = rules.categoryRank(categoryKey(a));
-			int bCategoryRank = rules.categoryRank(categoryKey(b));
+			int aCategoryRank = rules.categoryRank(InventorySortCategories.categoryKey(a));
+			int bCategoryRank = rules.categoryRank(InventorySortCategories.categoryKey(b));
 			if (aCategoryRank >= 0 || bCategoryRank >= 0) {
 				int cmp = compareRank(aCategoryRank, bCategoryRank);
 				if (cmp != 0) {

@@ -242,12 +242,13 @@ public class SearchModalScreen extends Screen {
         boolean focused = searchBox != null && searchBox.isFocused();
         InvUi.field(ui, boxX, searchY, boxW, 18, focused, ACCENT);
         if (searchBox != null && searchBox.getValue().isEmpty()) {
-            g.drawString(this.font, "Search items by name or id...", boxX + 6, searchY + 5, InvUi.TEXT_DIM, false);
+            g.drawString(this.font, "Search items, ids, or :category...", boxX + 6, searchY + 5, InvUi.TEXT_DIM, false);
         }
 
         // Context label for the list.
         boolean searching = lastQuery != null && !lastQuery.trim().isEmpty();
-        String context = searching ? "Results" : "Recently seen";
+        InventorySortCategories.CategoryQuery categoryQuery = InventorySortCategories.categoryQuery(lastQuery);
+        String context = categoryQuery != null ? "Category Results" : (searching ? "Results" : "Recently seen");
         g.drawString(this.font, context, listX, listTopY - 11, InvUi.TEXT_DIM, false);
         g.drawString(this.font, "count", countRightX - this.font.width("count"), listTopY - 11, InvUi.TEXT_DIM, false);
 
@@ -261,7 +262,8 @@ public class SearchModalScreen extends Screen {
         g.enableScissor(clipLeft, clipTop, clipRight, clipBottom);
 
         if (results.isEmpty()) {
-            String msg = searching ? "No items match that search." : "No recent items yet.";
+            String msg = categoryQuery != null ? "No items match that category."
+                    : (searching ? "No items match that search." : "No recent items yet.");
             g.drawString(this.font, msg, listX + 4, listTopY + 6, InvUi.TEXT_MUTED, false);
         } else {
             int y = listTopY - scrollOffsetPixels;
@@ -431,6 +433,7 @@ public class SearchModalScreen extends Screen {
         if (mc == null || mc.player == null) return;
 
         String q = (queryRaw == null ? "" : queryRaw.trim().toLowerCase(Locale.ROOT));
+        InventorySortCategories.CategoryQuery categoryQuery = InventorySortCategories.categoryQuery(queryRaw);
         results.clear();
 
         if (q.isEmpty()) {
@@ -443,6 +446,15 @@ public class SearchModalScreen extends Screen {
                 added++;
                 if (added >= 10) break;
             }
+        } else if (categoryQuery != null) {
+            for (RegistryEntry e : REGISTRY_CACHE) {
+                if (categoryQuery.matches(e.item)) {
+                    results.add(buildRowForEntry(e));
+                    if (results.size() >= 400) break;
+                }
+            }
+
+            results.sort((a, b) -> compareCategoryResults(categoryQuery, a, b));
         } else {
             for (RegistryEntry e : REGISTRY_CACHE) {
                 if (e.searchName.contains(q) || e.searchId.contains(q)) {
@@ -465,6 +477,22 @@ public class SearchModalScreen extends Screen {
         }
 
         expanded.retainAll(idsOf(results));
+    }
+
+    private static int compareCategoryResults(InventorySortCategories.CategoryQuery query, ResultRow a, ResultRow b) {
+        int categoryCompare = Integer.compare(
+                query.rank(InventorySortCategories.categoryKey(a.item)),
+                query.rank(InventorySortCategories.categoryKey(b.item))
+        );
+        if (categoryCompare != 0) {
+            return categoryCompare;
+        }
+
+        int nameCompare = a.name.compareToIgnoreCase(b.name);
+        if (nameCompare != 0) {
+            return nameCompare;
+        }
+        return a.id.compareToIgnoreCase(b.id);
     }
 
     private static int relevanceScore(String q, String name, String id) {
