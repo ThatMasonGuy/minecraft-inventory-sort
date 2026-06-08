@@ -1,0 +1,35 @@
+name: modrinth project pages
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Validate gallery metadata without writing to Modrinth'
+        required: true
+        type: boolean
+        default: true
+      replace_gallery:
+        description: 'Delete existing gallery images before uploading local gallery'
+        required: true
+        type: boolean
+        default: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v4
+      - name: sync project pages
+        shell: pwsh
+        env:
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+        run: |
+          $args = @()
+          if ('${{ inputs.dry_run }}' -eq 'true') {
+            $args += '-DryRun'
+          }
+          if ('${{ inputs.replace_gallery }}' -eq 'true') {
+            $args += '-ReplaceGallery'
+          }
+          ./scripts/sync-modrinth-project-pages.ps1 @args

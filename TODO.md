@@ -37,7 +37,11 @@ release jars clean of project docs, source files, source images, and extra publi
 assets; `verifyReleaseJars` now also fails if those non-runtime files appear in
 either a public feature jar or its embedded Core jar. `mod_version` is now
 bumped to `3.2.0` for the release jars and the guarded GitHub validation/publish
-workflow.
+workflow. Root `gallery/` assets are now managed as Modrinth project-page
+gallery sources, with banner and description-image selector folders documented
+for each public mod. The live Modrinth project pages were synced from the repo
+source copy after uploading 9 InvSort, 5 InvSearch, and 7 InvCatalogue gallery
+images.
 
 ## Project Workflow
 
@@ -307,6 +311,28 @@ Requested capabilities:
      history data model needed for comparisons.
 
 ## Recently Fixed
+
+-60. Modrinth gallery and project-page source sync for `3.2.0` minor release
+     (unreleased):
+   - Added root `gallery/` source folders for InvSort, InvSearch, and
+     InvCatalogue, with ordered root gallery images plus selector-only
+     `banner/` and `description_images/` folders.
+   - Added `gallery/metadata.json` for gallery image titles/descriptions and
+     `gallery/README.md` for the maintained folder convention.
+   - Updated `gradle/modrinth-project-pages.md` so each public mod description
+     mentions its new in-game systems and embeds selected gallery images as
+     separate Markdown sections instead of side-by-side stacks.
+   - Added `scripts/sync-modrinth-project-pages.ps1` plus the manual
+     `modrinth project pages` GitHub workflow for repeatable project summary,
+     long-description, and gallery syncing.
+   - Updated `AGENTS.md` and `gradle/modrinth-publishing.md` so future agents
+     manage gallery assets and page-level Modrinth syncs separately from jar
+     publishing.
+   - Verified `.\scripts\sync-modrinth-project-pages.ps1 -DryRun`.
+   - Synced the live Modrinth pages with `.\scripts\sync-modrinth-project-pages.ps1 -ReplaceGallery`;
+     readback confirmed InvSort has 9 gallery images with `Rules: Inventory
+     Slots` featured, InvSearch has 5 with `Search UI` featured, and
+     InvCatalogue has 7 with `Catalogue Report` featured.
 
 -59. Category search for InvSearch and InvCatalogue for `3.2.0` minor release
      (unreleased):

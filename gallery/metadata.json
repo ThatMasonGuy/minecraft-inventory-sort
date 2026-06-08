@@ -1,0 +1,119 @@
+{
+  "InvSort": {
+    "images": [
+      {
+        "file": "01_InvSort_Rules_Inventory_Slots.png",
+        "title": "Rules: Inventory Slots",
+        "description": "Protect slots or assign exact items before sorting runs."
+      },
+      {
+        "file": "02_InvSort_Rules_Inventory_Order.png",
+        "title": "Rules: Inventory Order",
+        "description": "Set category and exact-item order for your inventory."
+      },
+      {
+        "file": "03_InvSort_Rules_Chest.png",
+        "title": "Chest Rules",
+        "description": "Apply protected slots and custom order rules to containers."
+      },
+      {
+        "file": "04_InvSort_Inventory_Button_Sort_Before.png",
+        "title": "Inventory Sort Button: Before",
+        "description": "A messy player inventory before pressing the sort button."
+      },
+      {
+        "file": "05_InvSort_Inventory_Button_Sort_After.png",
+        "title": "Inventory Sort Button: After",
+        "description": "The same inventory after InvSort restacks and orders items."
+      },
+      {
+        "file": "06_InvSort_Chest_Button_Sort_Before.png",
+        "title": "Chest Sort Button: Before",
+        "description": "A mixed chest before container sorting."
+      },
+      {
+        "file": "07_InvSort_Chest_Button_Sort_After.png",
+        "title": "Chest Sort Button: After",
+        "description": "The chest after InvSort compacts and sorts it."
+      },
+      {
+        "file": "08_InvSort_Chest_Button_Move-Matching.png",
+        "title": "Move Matching",
+        "description": "Move matching stacks into a container with one button."
+      },
+      {
+        "file": "09_InvSort_Chest_Button_Move-All.png",
+        "title": "Move All",
+        "description": "Move all compatible items into a container quickly."
+      }
+    ]
+  },
+  "InvSearch": {
+    "images": [
+      {
+        "file": "01_InvSearch_Search.png",
+        "title": "Search UI",
+        "description": "Search known storage and your held inventory from an in-game modal."
+      },
+      {
+        "file": "02_InvSearch_Search_Result.png",
+        "title": "Search Results",
+        "description": "Results show counts and exact known locations for the selected item."
+      },
+      {
+        "file": "03_InvSearch_Button_Search.png",
+        "title": "Inventory Search Button",
+        "description": "Open InvSearch from inventory and container screens."
+      },
+      {
+        "file": "04_InvSearch_Search_Filtered.png",
+        "title": "Category Search",
+        "description": "Use filters such as :wood, :stone, or :tools to find whole categories."
+      },
+      {
+        "file": "05_InvSearch_World_Select.png",
+        "title": "World Selection",
+        "description": "Keep tracked storage separated by singleplayer world or multiplayer server."
+      }
+    ]
+  },
+  "InvCatalogue": {
+    "images": [
+      {
+        "file": "01_InvCatalogue_Report.png",
+        "title": "Catalogue Report",
+        "description": "Browse a saved catalogue report as an icon grid with exact item counts."
+      },
+      {
+        "file": "02_InvCatalogue_Report_Filtered.png",
+        "title": "Filtered Report",
+        "description": "Filter report items by text or category, including :wood, :stone, and :tools."
+      },
+      {
+        "file": "03_InvCatalogue_Reports_Select.png",
+        "title": "Report Selection",
+        "description": "Choose previous catalogue snapshots from the in-game reports browser."
+      },
+      {
+        "file": "04_InvCatalogue_Command_Report_Start.png",
+        "title": "Start Command",
+        "description": "Start a catalogue session before walking through storage."
+      },
+      {
+        "file": "05_InvCatalogue_Command_Report_Result_Start.png",
+        "title": "Report Result: Start",
+        "description": "Generate a report from counted containers when a session is ready to finish."
+      },
+      {
+        "file": "06_InvCatalogue_Command_Report_Result_End.png",
+        "title": "Report Result: End",
+        "description": "See report totals after the catalogue command completes."
+      },
+      {
+        "file": "07_InvCatalogue_Command_Report_Ongoing.png",
+        "title": "Ongoing Session",
+        "description": "Check an active catalogue session while you are still counting storage."
+      }
+    ]
+  }
+}

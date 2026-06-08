@@ -25,6 +25,10 @@ All notable project changes will be documented here.
 - Added `:category` search syntax to InvSearch and the InvCatalogue saved-report
   item filter, so queries such as `:wood`, `:stone`, `:tools`, `:gear`, and
   `:storage` match the corresponding practical item categories.
+- Added source-controlled Modrinth gallery assets for InvSort, InvSearch, and
+  InvCatalogue, including image metadata, banner selectors, description-image
+  selectors, and a repeatable project-page/gallery sync script plus manual
+  GitHub workflow.
 
 ### Changed
 
@@ -56,6 +60,11 @@ All notable project changes will be documented here.
   and InvCatalogue jars can use category matching without depending on the
   public InvSort feature jar.
 - Bumped the queued minor release to `3.2.0` for validation and publishing.
+- Refreshed the source-of-truth Modrinth project descriptions to explain the
+  new InvSort rules screen, InvSearch category search, and InvCatalogue report
+  browser, with selected gallery images embedded as separate page sections.
+- Synced the live Modrinth project pages and galleries from the repo copy,
+  uploading 9 InvSort images, 5 InvSearch images, and 7 InvCatalogue images.
 
 ### Fixed
 

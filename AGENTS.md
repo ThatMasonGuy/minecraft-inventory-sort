@@ -15,7 +15,9 @@ Read these files before making changes:
    guarded publishing.
 8. `gradle/modrinth-project-pages.md` for Modrinth project summaries and
    description-page source copy.
-9. `gradle/compatibility-release-playbook.md` for the portable compatibility
+9. `gallery/README.md` for Modrinth gallery assets, banner selectors, and
+   description image selectors.
+10. `gradle/compatibility-release-playbook.md` for the portable compatibility
    and CI plan that can be adapted to other mods.
 
 After reading the docs, run `git status --short` before editing. Preserve any
@@ -52,6 +54,14 @@ unrelated user changes.
   user-facing changes accumulate for that Modrinth release. Put internal build,
   shim, CI, docs, and migration details in `CHANGELOG.md` and `TODO.md`
   instead.
+- Keep Modrinth project-page copy and gallery assets source-controlled. Long
+  descriptions live in `gradle/modrinth-project-pages.md`; uploadable gallery
+  images and metadata live under `gallery/`. Root images in each mod folder are
+  uploaded to that mod's gallery, while `banner/` and `description_images/`
+  contain selector copies only and must not be uploaded as extra images.
+- Use `.\scripts\sync-modrinth-project-pages.ps1 -DryRun` before live
+  Modrinth project-page or gallery updates. Use `-ReplaceGallery` only when the
+  local `gallery/` folders should become the complete live gallery set.
 - If multiple major changes happen in one session, stop between each major boundary to update `TODO.md`, update `CHANGELOG.md`, verify, and commit.
 - Keep commits focused. Do not bundle unrelated split, cleanup, publishing, or version-migration work into one commit.
 - Before editing or committing, check `git status --short` and preserve any user changes that are unrelated to the current task.

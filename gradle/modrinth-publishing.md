@@ -80,10 +80,39 @@ Modrinth project summaries and long descriptions are tracked in:
 gradle/modrinth-project-pages.md
 ```
 
+Modrinth gallery assets are tracked in:
+
+```text
+gallery/
+```
+
 Update this file before changing live Modrinth project metadata. The publishing
 tasks upload version files and per-version changelogs only; they do not update
 the project summary, project body, gallery, categories, or other page-level
 metadata.
+
+The `gallery/<mod>/banner` and `gallery/<mod>/description_images` folders are
+selectors made of copies of root gallery images. Do not upload those selector
+copies separately. The leading number in each root gallery file name controls
+the Modrinth gallery ordering, and `gallery/metadata.json` supplies the image
+title and description.
+
+Project-page and gallery updates are synced separately from version uploads:
+
+```powershell
+.\scripts\sync-modrinth-project-pages.ps1 -DryRun
+.\scripts\sync-modrinth-project-pages.ps1 -ReplaceGallery
+```
+
+The script reads `MODRINTH_TOKEN` from the process environment or `.env`. It
+updates project summaries, long descriptions, gallery image metadata, and
+gallery images. Description Markdown may reference selected gallery images with
+`modrinth-gallery://<mod>/<file>`, and the sync script resolves those
+placeholders to the uploaded Modrinth CDN URLs before patching the live page.
+
+GitHub Actions also has a manual `modrinth project pages` workflow for this
+page-level sync. Its dry-run mode validates the source metadata without writing
+to Modrinth; the live mode uses the repository `MODRINTH_TOKEN` secret.
 
 ## Project IDs
 
