@@ -65,6 +65,10 @@ All notable project changes will be documented here.
   browser, with selected gallery images embedded as separate page sections.
 - Synced the live Modrinth project pages and galleries from the repo copy,
   uploading 9 InvSort images, 5 InvSearch images, and 7 InvCatalogue images.
+- Published `3.2.0` through guarded GitHub Actions workflow `27131728812`,
+  uploaded all 24 Modrinth compatibility-group versions, and created the
+  annotated `v3.2.0` GitHub Release on the exact source commit used for the
+  jars.
 
 ### Fixed
 

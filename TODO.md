@@ -41,7 +41,10 @@ workflow. Root `gallery/` assets are now managed as Modrinth project-page
 gallery sources, with banner and description-image selector folders documented
 for each public mod. The live Modrinth project pages were synced from the repo
 source copy after uploading 9 InvSort, 5 InvSearch, and 7 InvCatalogue gallery
-images.
+images. The guarded GitHub Actions Modrinth publish workflow completed
+successfully for `3.2.0`, uploaded all 24 compatibility-group versions, and the
+annotated `v3.2.0` GitHub Release now points users to the canonical Modrinth
+downloads.
 
 ## Project Workflow
 
@@ -312,8 +315,53 @@ Requested capabilities:
 
 ## Recently Fixed
 
+-61. `3.2.0` minor release publish (released):
+   - Release source commit: `8bed48a786f89a74d9c912ea55c78ff9f1adf96c`
+     (`8bed48a`, `Bump inventory mods to 3.2.0`).
+   - Guarded GitHub Actions Modrinth publish workflow `27131728812` completed
+     successfully on 2026-06-08, after running the supported smoke matrix and
+     uploading all 24 listed compatibility-group versions.
+   - Created annotated tag `v3.2.0` on the release source commit and pushed it
+     to GitHub without moving the tag onto later gallery/page-sync docs work.
+   - Created GitHub Release `v3.2.0`:
+     `https://github.com/ThatMasonGuy/minecraft-inventory-sort/releases/tag/v3.2.0`.
+   - Download surface remains Modrinth only; no GitHub jar assets were attached.
+   - Uploaded Modrinth versions:
+     - InvSort:
+       - `1.20-1.20.4`: `dQ6JHDcw`
+       - `1.20.5-1.20.6`: `oK3sV7gr`
+       - `1.21-1.21.5`: `mmJAaa63`
+       - `1.21.6-1.21.8`: `HI972pdE`
+       - `1.21.9-1.21.10`: `HBCeGqks`
+       - `1.21.11`: `2BnAOcIz`
+       - `26.1-26.1.2`: `gcc89gCe`
+       - `26.2-pre-3`: `UfCp6WSQ`
+     - InvSearch:
+       - `1.20-1.20.4`: `BlAL0YJf`
+       - `1.20.5-1.20.6`: `QwJiqhJR`
+       - `1.21-1.21.5`: `ame5KYab`
+       - `1.21.6-1.21.8`: `qhDIPdtI`
+       - `1.21.9-1.21.10`: `MH1vnbi9`
+       - `1.21.11`: `EpRVszCi`
+       - `26.1-26.1.2`: `cBjqkdhr`
+       - `26.2-pre-3`: `Ceic8pnh`
+     - InvCatalogue:
+       - `1.20-1.20.4`: `mFBjMLi9`
+       - `1.20.5-1.20.6`: `UmiPhyDj`
+       - `1.21-1.21.5`: `q3CXaaPQ`
+       - `1.21.6-1.21.8`: `q1PJJd6Z`
+       - `1.21.9-1.21.10`: `6iHqgAKS`
+       - `1.21.11`: `NHoMRjpi`
+       - `26.1-26.1.2`: `dnNmDDO1`
+       - `26.2-pre-3`: `q5wDMTLj`
+   - Captured the workflow artifact locally with the Modrinth upload plan and
+     published release jars under `build/github-artifacts/27131728812/`.
+   - While the workflow was running, repeated focused local launch checks for
+     `1.21-1.21.5` on Minecraft `1.21.5` and `26.1.2` on Minecraft `26.1` with
+     the `all-public` install set; both passed.
+
 -60. Modrinth gallery and project-page source sync for `3.2.0` minor release
-     (unreleased):
+     (released):
    - Added root `gallery/` source folders for InvSort, InvSearch, and
      InvCatalogue, with ordered root gallery images plus selector-only
      `banner/` and `description_images/` folders.
