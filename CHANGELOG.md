@@ -4,6 +4,16 @@ All notable project changes will be documented here.
 
 ## Unreleased
 
+### Added
+
+- Added `/inventorycatalogue reports`, an in-game InvCatalogue report browser
+  that groups saved reports by world/profile, opens a visual item-count grid
+  with icons and search filtering, and writes structured JSON report snapshots
+  alongside the existing plain-text reports.
+- Added per-version hitbox-only button shims and 26.x
+  `GuiGraphicsExtractor` overlays so the new Catalogue report browser follows
+  the existing GUI lifecycle boundaries across supported profile groups.
+
 ### Fixed
 
 - Hardened InvSearch and InvCatalogue persistence by writing tracker/catalogue

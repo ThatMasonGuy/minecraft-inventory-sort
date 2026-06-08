@@ -21,6 +21,7 @@ sourceSets {
 			include "tempeststudios/inventorysort/ContainerPositionCapture.java"
 			include "tempeststudios/inventorysort/InventorySortDrawContext.java"
 			include "tempeststudios/inventorysort/InventorySortDrawContexts.java"
+			include "tempeststudios/inventorysort/InventorySortHitboxButton.java"
 			include "tempeststudios/inventorysort/InventorySortCoreClient.java"
 			include "tempeststudios/inventorysort/InventorySortSmokeTest.java"
 			include "tempeststudios/inventorysort/InventorySortIconButton.java"

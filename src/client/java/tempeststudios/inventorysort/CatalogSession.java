@@ -14,6 +14,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -226,8 +227,8 @@ public final class CatalogSession {
                                  int locationCount,
                                  long durationSeconds) {
         String stamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
-        Path file = CatalogStore.getInstance().catalogDirectory()
-                .resolve("report_" + TrackingNamespace.fileNameSafe(namespace) + "_" + stamp + ".txt");
+        String reportId = "report_" + TrackingNamespace.fileNameSafe(namespace) + "_" + stamp;
+        Path file = CatalogStore.getInstance().catalogDirectory().resolve(reportId + ".txt");
         try (Writer writer = Files.newBufferedWriter(file)) {
             writer.write("Inventory Catalogue Report\n");
             writer.write("World: " + namespace + "\n");
@@ -241,11 +242,22 @@ public final class CatalogSession {
                 writer.write(String.format("%,d\t%s\t(%s)%n",
                         entry.getValue(), formatItemName(entry.getKey()), entry.getKey()));
             }
+            CatalogReportHistory.save(CatalogReportSnapshot.create(reportId, namespace,
+                    System.currentTimeMillis(), durationSeconds, locationCount, totalItems,
+                    file.getFileName().toString(), itemCountMap(sortedItems)));
         } catch (IOException e) {
             tempeststudios.inventorysort.core.InventorySortCore.LOGGER.error("Failed to write catalog report file", e);
             return null;
         }
         return file;
+    }
+
+    private Map<String, Integer> itemCountMap(List<Map.Entry<String, Integer>> sortedItems) {
+        Map<String, Integer> itemCounts = new LinkedHashMap<>();
+        for (Map.Entry<String, Integer> entry : sortedItems) {
+            itemCounts.put(entry.getKey(), entry.getValue());
+        }
+        return itemCounts;
     }
 
     /** minecraft:iron_ingot -> Iron Ingot */

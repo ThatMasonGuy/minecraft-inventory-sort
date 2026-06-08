@@ -1,8 +1,10 @@
 # Inventory Search TODO
 
 Current checkpoint: queued `3.2.0` bug-fix hardening is implemented locally for
-InvSort, InvSearch, InvCatalogue, and shared Core; full smoke/CI validation is
-deferred until the feature set is complete.
+InvSort, InvSearch, InvCatalogue, and shared Core. InvCatalogue now also has a
+local report-history browser for saved catalogue reports, and the full
+supported profile build passes. Full smoke/CI validation is deferred until the
+feature set is complete.
 
 ## Project Workflow
 
@@ -31,7 +33,8 @@ deferred until the feature set is complete.
 
 ## Current Command Roots
 
-- Inventory Catalogue owns `/inventorycatalogue start|stop|status|report|clear`.
+- Inventory Catalogue owns
+  `/inventorycatalogue start|stop|status|report|reports|clear`.
 - Inventory Catalogue also exposes shared world-profile commands as
   `/inventorycatalogue world list|use|default|current`.
 - Inventory Search exposes shared world-profile commands as
@@ -193,12 +196,16 @@ comparing current totals against older catalogue snapshots.
 Requested capabilities:
 
 1. Catalogue browser modal:
-   - Open an in-game GUI from Inventory Catalogue commands or a button.
-   - Show catalogued item counts in a grid with item icons and readable counts.
-   - Include search/filter/sort controls if the grid becomes large.
+   - DONE (3.2.0 queued): `/inventorycatalogue reports` opens an in-game
+     browser for saved catalogue reports.
+   - DONE (3.2.0 queued): selected reports show catalogued item counts in a
+     scrollable grid with item icons and readable counts.
+   - DONE (3.2.0 queued): selected reports include a search filter for large
+     grids.
 2. Snapshot history:
-   - Save named or timestamped catalogue snapshots, likely when a session stops
-     and/or from an explicit snapshot action.
+   - DONE (3.2.0 queued): stopping or reporting a session now writes a
+     timestamped structured report snapshot alongside the existing plain-text
+     report.
    - Keep the existing persistent current catalogue behavior while adding
      historical snapshots for comparison.
 3. Snapshot comparison:
@@ -211,6 +218,37 @@ Requested capabilities:
      history data model needed for comparisons.
 
 ## Recently Fixed
+
+-52. InvCatalogue report-history browser for `3.2.0` minor release
+     (unreleased):
+   - Added `/inventorycatalogue reports`, opening a Catalogue-styled in-game
+     modal for saved reports grouped by world/profile.
+   - Added structured JSON report snapshots beside the existing plain-text
+     report files, and kept old text reports visible in the browser through a
+     fallback parser.
+   - Added a scrollable item-icon grid with readable count badges, a search
+     filter, and a selected-item detail panel.
+   - Kept the new browser behind version shims: shared `GuiGraphics` rendering
+     remains in the 1.x lane, 26.x uses `GuiGraphicsExtractor` overlays, and
+     hitbox-only buttons avoid mouse-click signature drift.
+   - Updated the user-facing README and `3.2.0` release notes.
+   - Verified `.\gradlew.bat buildAllMods --no-daemon --console=plain` after
+     the report browser, release-doc, and shim-overlay updates.
+   - Verified
+     `.\gradlew.bat buildAllMods "-Pminecraft_version_profile=1.20-1.20.4" --no-daemon --console=plain`.
+   - Verified
+     `.\gradlew.bat buildAllMods "-Pminecraft_version_profile=26.1.2" --no-daemon --console=plain`.
+   - Verified
+     `.\gradlew.bat buildAllMods "-Pminecraft_version_profile=26.2-pre-3" --no-daemon --console=plain`.
+   - `.\gradlew.bat buildAllVersions --no-daemon --console=plain` initially
+     caught a `1.21.9-1.21.10` hitbox-button render override mismatch; the
+     shim was corrected to follow that profile's `renderWidget` API.
+   - Verified
+     `.\gradlew.bat buildAllMods "-Pminecraft_version_profile=1.21.9-1.21.10" --no-daemon --console=plain`.
+   - Verified
+     `.\gradlew.bat buildAllVersions --no-daemon --console=plain`.
+   - Full smoke/CI validation remains deferred until the rest of the `3.2.0`
+     minor-release work is complete.
 
 -51. InvSort bundle partitioning fix for `3.2.0` minor release (unreleased):
    - Fixed the user-reported case where bundles in a sortable inventory or

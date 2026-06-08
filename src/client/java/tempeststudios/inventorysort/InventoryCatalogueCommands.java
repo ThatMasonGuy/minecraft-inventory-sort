@@ -4,8 +4,10 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import tempeststudios.inventorysort.compat.core.ClientCommandCompat;
+import tempeststudios.inventorysort.compat.core.MinecraftApiCompat;
 
 import java.util.List;
 
@@ -30,6 +32,9 @@ public final class InventoryCatalogueCommands {
                 )
                 .then(ClientCommandCompat.literal("report")
                         .executes(InventoryCatalogueCommands::catalogReport)
+                )
+                .then(ClientCommandCompat.literal("reports")
+                        .executes(InventoryCatalogueCommands::openReports)
                 )
                 .then(ClientCommandCompat.literal("clear")
                         .executes(InventoryCatalogueCommands::clearCatalog)
@@ -106,6 +111,16 @@ public final class InventoryCatalogueCommands {
         for (Component line : CatalogSession.getActive().buildReport(false)) {
             context.getSource().sendFeedback(line);
         }
+        return 1;
+    }
+
+    private static int openReports(CommandContext<FabricClientCommandSource> context) {
+        Minecraft client = Minecraft.getInstance();
+        if (client == null) {
+            context.getSource().sendError(Component.literal("Minecraft client is not ready yet."));
+            return 0;
+        }
+        MinecraftApiCompat.setScreen(client, new CatalogReportBrowserScreen(null));
         return 1;
     }
 
