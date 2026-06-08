@@ -20,6 +20,9 @@ All notable project changes will be documented here.
   keybinding shim by removing named Minecraft class-string reflection from the
   `KeyMapping.Category` path and discovering the live runtime constructor
   signatures instead.
+- Fixed the InvCatalogue report browser command so opening it from chat is
+  queued after the chat screen closes, and `/inventorycatalogue report` with no
+  active session now opens saved reports instead of dead-ending on an error.
 - Hardened InvSearch and InvCatalogue persistence by writing tracker/catalogue
   JSON through temp-file swaps, keeping `.bak` copies, and recovering from
   malformed primary files without crashing client startup.

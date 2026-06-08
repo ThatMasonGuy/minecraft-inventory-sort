@@ -5,8 +5,9 @@ InvSort, InvSearch, InvCatalogue, and shared Core. InvCatalogue now also has a
 local report-history browser for saved catalogue reports, and the full
 supported profile build passes. A user-reported Minecraft `1.21.11` launch
 crash in the shared Core keybinding shim is fixed locally and covered by a
-focused all-public smoke launch. Full smoke/CI validation is deferred until the
-feature set is complete.
+focused all-public smoke launch. The report browser command now queues the GUI
+open so chat closing does not immediately hide it. Full smoke/CI validation is
+deferred until the feature set is complete.
 
 ## Project Workflow
 
@@ -219,6 +220,27 @@ Requested capabilities:
      history data model needed for comparisons.
 
 ## Recently Fixed
+
+-54. InvCatalogue report browser command follow-up for `3.2.0` minor release
+     (unreleased):
+   - Confirmed backwards compatibility for existing plain-text catalogue
+     reports: the browser loads legacy `report_*.txt` files by parsing the
+     existing `World:`, `Generated:`, totals, and tab-separated item rows, while
+     newer JSON snapshots win when both files exist for the same report id.
+   - Fixed the real-client command flow where opening the browser directly from
+     chat could be immediately overwritten by the chat screen closing.
+     `/inventorycatalogue reports` now queues the screen open on the client
+     task queue.
+   - Made `/inventorycatalogue report` with no active session open the saved
+     report browser instead of returning `No active catalog session`, so users
+     who hit the singular command or a command matching edge case still land in
+     the useful GUI.
+   - Verified `.\gradlew.bat buildAllMods --no-daemon --console=plain`.
+   - Verified
+     `.\gradlew.bat smokeTestSelectedClients "-Pinventorysort_smoke_profiles=1.21.11" "-Pinventorysort_smoke_game_versions=1.21.11" "-Pinventorysort_smoke_install_sets=all-public" --no-daemon --console=plain`.
+   - Verified `.\gradlew.bat buildAllVersions --no-daemon --console=plain`.
+   - Full smoke/CI validation remains deferred until the rest of the `3.2.0`
+     minor-release work is complete.
 
 -53. Shared Core `1.21.11` keybinding launch crash for `3.2.0` minor release
      (unreleased):

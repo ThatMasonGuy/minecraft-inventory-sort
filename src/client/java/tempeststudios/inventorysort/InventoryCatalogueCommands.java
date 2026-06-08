@@ -104,8 +104,7 @@ public final class InventoryCatalogueCommands {
 
     private static int catalogReport(CommandContext<FabricClientCommandSource> context) {
         if (!CatalogSession.isActive()) {
-            context.getSource().sendError(Component.literal("No active catalog session! Use /inventorycatalogue start to begin."));
-            return 0;
+            return openReports(context);
         }
 
         for (Component line : CatalogSession.getActive().buildReport(false)) {
@@ -120,7 +119,7 @@ public final class InventoryCatalogueCommands {
             context.getSource().sendError(Component.literal("Minecraft client is not ready yet."));
             return 0;
         }
-        MinecraftApiCompat.setScreen(client, new CatalogReportBrowserScreen(null));
+        client.execute(() -> MinecraftApiCompat.setScreen(client, new CatalogReportBrowserScreen(null)));
         return 1;
     }
 
