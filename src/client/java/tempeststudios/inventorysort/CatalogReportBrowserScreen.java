@@ -23,7 +23,11 @@ public class CatalogReportBrowserScreen extends Screen {
     private static final int REPORT_ROW_H = 36;
     private static final int CELL = 28;
     private static final int SEARCH_H = 20;
-    private static final int DETAIL_TOP_H = 66;
+    private static final int DETAIL_TOP_H = 78;
+    private static final int GRID_INSET = 8;
+    private static final int DETAIL_INSET = 10;
+    private static final int DETAIL_SCROLL_STEP = 18;
+    private static final int DETAIL_CONTENT_H = 164;
     private static final int CLOSE_SIZE = 18;
     private static final int BACK_W = 74;
     private static final int BACK_H = 18;
@@ -79,6 +83,7 @@ public class CatalogReportBrowserScreen extends Screen {
     private int detailH;
     private int reportScroll;
     private int itemScroll;
+    private int detailScroll;
     private boolean detailMode;
 
     public CatalogReportBrowserScreen(Screen parent) {
@@ -203,31 +208,35 @@ public class CatalogReportBrowserScreen extends Screen {
         drawPanel(g, gridX, panelY + 40, gridW, SEARCH_H);
 
         int summaryY = panelY + 40;
-        text(g, selectedReport.displayTime(), detailX, summaryY, TEXT_MAIN);
-        text(g, String.format(Locale.ROOT, "%,d total items", selectedReport.getTotalItems()), detailX, summaryY + 12, ACCENT);
-        text(g, String.format(Locale.ROOT, "%,d item types, %,d locations",
-                selectedReport.getUniqueItems(), selectedReport.getLocationCount()), detailX, summaryY + 24, TEXT_MUTED);
+        text(g, truncate(selectedReport.displayTime(), detailW - 4), detailX, summaryY, TEXT_MAIN);
+        text(g, truncate(String.format(Locale.ROOT, "%,d total items", selectedReport.getTotalItems()), detailW - 4),
+                detailX, summaryY + 14, ACCENT);
+        text(g, truncate(String.format(Locale.ROOT, "%,d item types, %,d locations",
+                selectedReport.getUniqueItems(), selectedReport.getLocationCount()), detailW - 4),
+                detailX, summaryY + 28, TEXT_MUTED);
 
         drawPanel(g, gridX, gridY, gridW, gridH);
         updateItemHitboxes(mouseX, mouseY);
         renderItemGrid(g, mouseX, mouseY);
+        drawPanelBorder(g, gridX, gridY, gridW, gridH);
 
         drawPanel(g, detailX, detailY, detailW, detailH);
         renderSelectedItemDetails(g);
+        drawPanelBorder(g, detailX, detailY, detailW, detailH);
     }
 
     private void renderItemGrid(GuiGraphics g, int mouseX, int mouseY) {
-        g.enableScissor(gridX + 1, gridY + 1, gridX + gridW - 1, gridY + gridH - 1);
+        g.enableScissor(gridX + 4, gridY + 4, gridX + gridW - 4, gridY + gridH - 4);
         int columns = gridColumns();
-        int yStart = gridY + 6 - itemScroll;
+        int yStart = gridY + GRID_INSET - itemScroll;
 
         if (filteredItems.isEmpty()) {
-            text(g, "No items match this report filter.", gridX + 10, gridY + 12, TEXT_MUTED);
+            text(g, "No items match this report filter.", gridX + GRID_INSET, gridY + GRID_INSET, TEXT_MUTED);
         } else {
             for (int i = 0; i < filteredItems.size(); i++) {
                 int col = i % columns;
                 int row = i / columns;
-                int x = gridX + 6 + col * CELL;
+                int x = gridX + GRID_INSET + col * CELL;
                 int y = yStart + row * CELL;
                 if (y + CELL < gridY) {
                     continue;
@@ -261,40 +270,57 @@ public class CatalogReportBrowserScreen extends Screen {
     }
 
     private void renderSelectedItemDetails(GuiGraphics g) {
-        if (selectedItemId == null) {
-            text(g, "No item selected", detailX + 10, detailY + 10, TEXT_MUTED);
-            return;
+        int clipX = detailX + 4;
+        int clipY = detailY + 4;
+        int clipW = Math.max(1, detailW - 8);
+        int clipH = Math.max(1, detailH - 8);
+        g.enableScissor(clipX, clipY, clipX + clipW, clipY + clipH);
+        try {
+            int contentY = detailY + DETAIL_INSET - detailScroll;
+            if (selectedItemId == null) {
+                text(g, "No item selected", detailX + DETAIL_INSET, contentY, TEXT_MUTED);
+                return;
+            }
+
+            CatalogReportSnapshot.ItemCount selected = findFilteredItem(selectedItemId);
+            if (selected == null) {
+                text(g, "No item selected", detailX + DETAIL_INSET, contentY, TEXT_MUTED);
+                return;
+            }
+
+            ItemEntry entry = itemEntry(selected.itemId());
+            int iconX = detailX + DETAIL_INSET + 2;
+            int iconY = contentY + 4;
+            drawSlot(g, iconX - 4, iconY - 4, 25, false, false);
+            if (!entry.icon.isEmpty()) {
+                g.renderItem(entry.icon, iconX, iconY);
+                g.renderItemDecorations(this.font, entry.icon, iconX, iconY);
+            }
+
+            int textX = detailX + DETAIL_INSET + 32;
+            int fullTextW = detailW - DETAIL_INSET * 2;
+            text(g, truncate(entry.displayName, detailW - DETAIL_INSET * 2 - 32), textX, contentY + 2, TEXT_MAIN);
+            text(g, truncate(selected.itemId(), fullTextW), detailX + DETAIL_INSET, contentY + 42, TEXT_MUTED);
+            text(g, String.format(Locale.ROOT, "%,d total", selected.count()),
+                    detailX + DETAIL_INSET, contentY + 64, ACCENT);
+            text(g, truncate(stackSummary(entry.icon, selected.count()), fullTextW),
+                    detailX + DETAIL_INSET, contentY + 78, TEXT_MAIN);
+
+            int share = selectedReport.getTotalItems() <= 0
+                    ? 0
+                    : Math.round((selected.count() * 100.0f) / selectedReport.getTotalItems());
+            text(g, share + "% of report total", detailX + DETAIL_INSET, contentY + 92, TEXT_MUTED);
+
+            int dividerY = contentY + 116;
+            g.fill(detailX + DETAIL_INSET, dividerY, detailX + detailW - DETAIL_INSET, dividerY + 1, PANEL_EDGE);
+            text(g, "Report file", detailX + DETAIL_INSET, contentY + 128, TEXT_DIM);
+            text(g, truncate(selectedReport.getReportFileName(), fullTextW),
+                    detailX + DETAIL_INSET, contentY + 140, TEXT_MAIN);
+        } finally {
+            g.disableScissor();
         }
 
-        CatalogReportSnapshot.ItemCount selected = findFilteredItem(selectedItemId);
-        if (selected == null) {
-            text(g, "No item selected", detailX + 10, detailY + 10, TEXT_MUTED);
-            return;
-        }
-
-        ItemEntry entry = itemEntry(selected.itemId());
-        int iconX = detailX + 12;
-        int iconY = detailY + 12;
-        drawSlot(g, iconX - 4, iconY - 4, 25, false, false);
-        if (!entry.icon.isEmpty()) {
-            g.renderItem(entry.icon, iconX, iconY);
-            g.renderItemDecorations(this.font, entry.icon, iconX, iconY);
-        }
-
-        text(g, truncate(entry.displayName, detailW - 54), detailX + 42, detailY + 10, TEXT_MAIN);
-        text(g, truncate(selected.itemId(), detailW - 28), detailX + 12, detailY + 42, TEXT_MUTED);
-        text(g, String.format(Locale.ROOT, "%,d total", selected.count()), detailX + 12, detailY + 64, ACCENT);
-        text(g, stackSummary(entry.icon, selected.count()), detailX + 12, detailY + 78, TEXT_MAIN);
-
-        int share = selectedReport.getTotalItems() <= 0
-                ? 0
-                : Math.round((selected.count() * 100.0f) / selectedReport.getTotalItems());
-        text(g, share + "% of report total", detailX + 12, detailY + 92, TEXT_MUTED);
-
-        g.fill(detailX + 10, detailY + 116, detailX + detailW - 10, detailY + 117, PANEL_EDGE);
-        text(g, "Report file", detailX + 12, detailY + 128, TEXT_DIM);
-        text(g, truncate(selectedReport.getReportFileName(), detailW - 24),
-                detailX + 12, detailY + 140, TEXT_MAIN);
+        drawDetailScrollBar(g);
     }
 
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
@@ -309,6 +335,10 @@ public class CatalogReportBrowserScreen extends Screen {
         int delta = (int) Math.signum(-verticalAmount);
         if (delta == 0) {
             return false;
+        }
+        if (detailMode && isInside(mouseX, mouseY, detailX, detailY, detailW, detailH)) {
+            detailScroll = clamp(detailScroll + delta * DETAIL_SCROLL_STEP, 0, maxDetailScroll());
+            return true;
         }
         if (detailMode && isInside(mouseX, mouseY, gridX, gridY, gridW, gridH)) {
             itemScroll = clamp(itemScroll + delta * CELL, 0, maxItemScroll());
@@ -364,6 +394,7 @@ public class CatalogReportBrowserScreen extends Screen {
         } else if (selectedItemId == null || findFilteredItem(selectedItemId) == null) {
             selectedItemId = filteredItems.get(0).itemId();
         }
+        detailScroll = clamp(detailScroll, 0, maxDetailScroll());
         itemScroll = clamp(itemScroll, 0, maxItemScroll());
         updateItemHitboxes(0, 0);
     }
@@ -395,6 +426,7 @@ public class CatalogReportBrowserScreen extends Screen {
                 String targetId = ((InventorySortHitboxButton) hitbox).getTargetId();
                 if (targetId != null) {
                     selectedItemId = targetId;
+                    detailScroll = 0;
                 }
             });
             button.visible = false;
@@ -435,12 +467,12 @@ public class CatalogReportBrowserScreen extends Screen {
         }
 
         int columns = gridColumns();
-        int yStart = gridY + 6 - itemScroll;
+        int yStart = gridY + GRID_INSET - itemScroll;
         int buttonIndex = 0;
         for (int i = 0; i < filteredItems.size(); i++) {
             int col = i % columns;
             int row = i / columns;
-            int x = gridX + 6 + col * CELL;
+            int x = gridX + GRID_INSET + col * CELL;
             int y = yStart + row * CELL;
             if (y + CELL < gridY) {
                 continue;
@@ -482,6 +514,7 @@ public class CatalogReportBrowserScreen extends Screen {
         detailMode = true;
         selectedItemId = null;
         itemScroll = 0;
+        detailScroll = 0;
         lastQuery = "";
         this.rebuildWidgets();
     }
@@ -490,6 +523,7 @@ public class CatalogReportBrowserScreen extends Screen {
         detailMode = false;
         selectedReport = null;
         selectedItemId = null;
+        detailScroll = 0;
         lastQuery = "";
         this.rebuildWidgets();
     }
@@ -516,7 +550,7 @@ public class CatalogReportBrowserScreen extends Screen {
     }
 
     private int gridColumns() {
-        return Math.max(1, (gridW - 12) / CELL);
+        return Math.max(1, (gridW - GRID_INSET * 2) / CELL);
     }
 
     private int maxItemScroll() {
@@ -524,8 +558,13 @@ public class CatalogReportBrowserScreen extends Screen {
             return 0;
         }
         int rows = (filteredItems.size() + gridColumns() - 1) / gridColumns();
-        int contentH = rows * CELL + 12;
+        int contentH = rows * CELL + GRID_INSET * 2;
         return Math.max(0, contentH - gridH);
+    }
+
+    private int maxDetailScroll() {
+        int visibleH = Math.max(1, detailH - DETAIL_INSET * 2);
+        return Math.max(0, DETAIL_CONTENT_H - visibleH);
     }
 
     private int maxReportScroll() {
@@ -560,6 +599,32 @@ public class CatalogReportBrowserScreen extends Screen {
         g.fill(x + 2, y + 2, x + w - 2, y + h - 2, fill);
         g.fill(x + 2, y + 2, x + w - 2, y + 3, PANEL_EDGE_LIGHT);
         g.fill(x + 2, y + 2, x + 3, y + h - 2, PANEL_EDGE_LIGHT);
+    }
+
+    private void drawPanelBorder(GuiGraphics g, int x, int y, int w, int h) {
+        g.fill(x, y, x + w, y + 1, FRAME_SHADOW);
+        g.fill(x, y + h - 1, x + w, y + h, FRAME_SHADOW);
+        g.fill(x, y, x + 1, y + h, FRAME_SHADOW);
+        g.fill(x + w - 1, y, x + w, y + h, FRAME_SHADOW);
+        g.fill(x + 1, y + 1, x + w - 1, y + 2, PANEL_EDGE_LIGHT);
+        g.fill(x + 1, y + 1, x + 2, y + h - 1, PANEL_EDGE_LIGHT);
+        g.fill(x + 1, y + h - 2, x + w - 1, y + h - 1, PANEL_EDGE);
+        g.fill(x + w - 2, y + 1, x + w - 1, y + h - 1, PANEL_EDGE);
+    }
+
+    private void drawDetailScrollBar(GuiGraphics g) {
+        int maxScroll = maxDetailScroll();
+        if (maxScroll <= 0) {
+            return;
+        }
+
+        int trackX = detailX + detailW - 7;
+        int trackY = detailY + 7;
+        int trackH = Math.max(12, detailH - 14);
+        int thumbH = Math.max(10, trackH * Math.max(1, detailH - DETAIL_INSET * 2) / DETAIL_CONTENT_H);
+        int thumbY = trackY + (trackH - thumbH) * detailScroll / maxScroll;
+        g.fill(trackX, trackY, trackX + 2, trackY + trackH, 0xAA000000);
+        g.fill(trackX, thumbY, trackX + 2, thumbY + thumbH, PANEL_EDGE_LIGHT);
     }
 
     private void drawSlot(GuiGraphics g, int x, int y, int size, boolean selected, boolean hovered) {

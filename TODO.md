@@ -8,8 +8,10 @@ crash in the shared Core keybinding shim is fixed locally and covered by a
 focused all-public smoke launch. The report browser command now queues the GUI
 open so chat closing does not immediately hide it, and the report browser now
 uses a darker modern-Minecraft-style layout instead of the old InvSearch-like
-grey panel treatment. Full smoke/CI validation is deferred until the feature
-set is complete.
+grey panel treatment. Follow-up sizing fixes keep the selected-item sidebar
+clipped and scrollable, prevent top summary text from running behind the
+sidebar, and keep scrolled item tiles inside the grid frame. Full smoke/CI
+validation is deferred until the feature set is complete.
 
 ## Project Workflow
 
@@ -210,6 +212,10 @@ Requested capabilities:
    - DONE (3.2.0 queued): the report browser and selected-report detail screen
      now use darker modern-Minecraft-style chrome, slot-style item tiles, and
      local Catalogue controls instead of the older InvSearch-like bevel theme.
+   - DONE (3.2.0 queued): selected-report layout now reserves enough top space,
+     clips and scrolls the selected-item sidebar, and redraws grid/detail
+     borders above their clipped contents so oversized report details and
+     scrolled items stay visually contained.
 2. Snapshot history:
    - DONE (3.2.0 queued): stopping a session now writes a timestamped
      structured report snapshot alongside the existing plain-text report.

@@ -16,6 +16,9 @@ All notable project changes will be documented here.
 
 ### Fixed
 
+- Fixed InvCatalogue report-browser layout overflow by clipping and scrolling
+  the selected-item detail pane, reserving more top summary space, and keeping
+  scrolled item-grid tiles inside the grid frame.
 - Fixed a Minecraft `1.21.11` launch crash in the shared Core world-profile
   keybinding shim by removing named Minecraft class-string reflection from the
   `KeyMapping.Category` path and discovering the live runtime constructor
