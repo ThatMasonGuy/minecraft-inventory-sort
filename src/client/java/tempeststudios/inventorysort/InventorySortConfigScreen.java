@@ -2,6 +2,7 @@ package tempeststudios.inventorysort;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
@@ -16,14 +17,27 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * In-game InvSort rules editor. The controls are split into two tabs - a
+ * spatial "Slots" editor for protected / item-specific slots and an "Order"
+ * editor for category and item priority - so each view stays readable. A scope
+ * selector at the top keeps the player / container / per-container choice in
+ * one obvious place.
+ */
 public class InventorySortConfigScreen extends Screen {
-    private static final int MAX_PANEL_W = 520;
-    private static final int MAX_PANEL_H = 306;
-    private static final int MIN_PANEL_W = 320;
-    private static final int MIN_PANEL_H = 236;
-    private static final int PAD = 10;
-    private static final int ROW_H = 14;
-    private static final int BUTTON_H = 18;
+    private static final int MAX_PANEL_W = 480;
+    private static final int MAX_PANEL_H = 290;
+    private static final int MIN_PANEL_W = 318;
+    private static final int MIN_PANEL_H = 232;
+    private static final int PAD = 12;
+    private static final int ROW_H = 16;
+
+    private static final int TAB_SLOTS = 0;
+    private static final int TAB_ORDER = 1;
+
+    private static final int ACCENT = InvUi.ACCENT_SORT;
+    private static final int MARK_PROTECTED = 0xFFD15B4A;
+    private static final int MARK_PROTECTED_SOFT = 0x66D15B4A;
 
     private final AbstractContainerScreen<?> parent;
     private final Player player;
@@ -33,30 +47,45 @@ public class InventorySortConfigScreen extends Screen {
     private final String screenClassName;
     private final String containerType;
     private final List<InventorySortHitboxButton> slotButtons = new ArrayList<>();
-    private final List<InventorySortHitboxButton> categoryButtons = new ArrayList<>();
-    private final List<InventorySortHitboxButton> itemButtons = new ArrayList<>();
+    private final List<InventorySortHitboxButton> rowButtons = new ArrayList<>();
     private final Set<Integer> selectedSlots = new LinkedHashSet<>();
     private boolean editingOverride;
     private boolean showingItems;
+    private int tab = TAB_SLOTS;
 
     private int panelW;
     private int panelH;
     private int panelX;
     private int panelY;
-    private int leftW;
-    private int rightX;
-    private int rightY;
-    private int rightW;
-    private int rightH;
-    private int slotGridX;
-    private int slotGridY;
+    private int contentTop;
+    private int scopeRowY;
+    private int tabRowY;
+
+    // Slots tab geometry.
+    private int gridX;
+    private int gridY;
+    private int gridW;
+    private int gridH;
     private int slotSize;
-    private int detailY;
+    private int actionsY;
+    private int infoX;
+    private int infoY;
+    private int infoW;
+    private int infoH;
+
+    // Order tab geometry.
+    private int subTabY;
+    private int listX;
+    private int listY;
+    private int listW;
+    private int listH;
+    private int ctrlX;
+    private int ctrlW;
+
     private int anchorSlot = -1;
     private int categoryIndex = 0;
     private int itemIndex = 0;
-    private int categoryScroll = 0;
-    private int itemScroll = 0;
+    private int rowScroll = 0;
 
     public InventorySortConfigScreen(AbstractContainerScreen<?> parent, Player player, boolean containerTarget) {
         super(Component.literal("InvSort Rules"));
@@ -81,189 +110,292 @@ public class InventorySortConfigScreen extends Screen {
         sanitizeSelection();
         this.clearWidgets();
 
-        this.addRenderableWidget(new InventorySortTextButton(panelX + panelW - 62, panelY + 8, 52, BUTTON_H,
-                Component.literal("Done"), button -> closeToParent()));
+        this.addRenderableWidget(new InventorySortModalIconButton(panelX + panelW - PAD - 16, panelY + 7, 16,
+                InventorySortModalIconButton.CLOSE, Component.literal("Close"), button -> closeToParent()));
 
-        int topButtonY = panelY + 48;
-        int scopeW = Math.min(116, Math.max(90, leftW / 2 - 4));
-        this.addRenderableWidget(new InventorySortTextButton(slotGridX, topButtonY, scopeW, BUTTON_H,
-                Component.literal(scopeButtonLabel()), button -> toggleScope()));
-        this.addRenderableWidget(new InventorySortTextButton(slotGridX + scopeW + 6, topButtonY, 76, BUTTON_H,
-                Component.literal("Clear All"), button -> clearCurrentRules()));
+        if (containerTarget) {
+            addChromeHit(scopeRect(0), () -> setScope(false));
+            addChromeHit(scopeRect(1), () -> setScope(true));
+        }
+        addChromeHit(tabRect(0), () -> setTab(TAB_SLOTS));
+        addChromeHit(tabRect(1), () -> setTab(TAB_ORDER));
 
-        int modeW = Math.max(48, (rightW - 4) / 2);
-        this.addRenderableWidget(new InventorySortTextButton(rightX, topButtonY, modeW, BUTTON_H,
-                Component.literal("Category"), button -> setListMode(false)));
-        this.addRenderableWidget(new InventorySortTextButton(rightX + modeW + 4, topButtonY, rightW - modeW - 4, BUTTON_H,
-                Component.literal("Items"), button -> setListMode(true)));
-
-        int slotActionY = panelY + panelH - 24;
-        this.addRenderableWidget(new InventorySortTextButton(slotGridX, slotActionY, 58, BUTTON_H,
-                Component.literal("Protect"), button -> protectSelectedSlots()));
-        this.addRenderableWidget(new InventorySortTextButton(slotGridX + 64, slotActionY, 66, BUTTON_H,
-                Component.literal("Item Slot"), button -> reserveSelectedSlots()));
-        this.addRenderableWidget(new InventorySortTextButton(slotGridX + 136, slotActionY, 46, BUTTON_H,
-                Component.literal("Clear"), button -> clearSelectedSlots()));
-
-        addRightControls();
+        if (tab == TAB_SLOTS) {
+            addSlotsTabWidgets();
+        } else {
+            addChromeHit(subTabRect(0), () -> setListMode(false));
+            addChromeHit(subTabRect(1), () -> setListMode(true));
+            addOrderTabWidgets();
+        }
         buildHitboxes();
+    }
+
+    private void addChromeHit(int[] r, Runnable action) {
+        this.addRenderableWidget(new InventorySortHitboxButton(r[0], r[1], r[2], r[3],
+                Component.empty(), button -> action.run()));
     }
 
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-        g.fill(0, 0, this.width, this.height, 0x99000000);
-        drawPanel(g, panelX, panelY, panelW, panelH);
-        text(g, "InvSort Rules", panelX + PAD, panelY + 10, 0xFFE8E8E8);
-        text(g, truncate(scopeLabel(), panelW - 86), panelX + PAD, panelY + 24, 0xFFB9B9B9);
-        text(g, truncate("Ctrl-click adds. Shift-click selects a range.", panelW - 86), panelX + PAD, panelY + 36, 0xFF8F958A);
+        InventorySortDrawContext ui = InventorySortDrawContexts.wrap(g);
+        InvUi.scrim(ui, this.width, this.height);
+        InvUi.window(ui, panelX, panelY, panelW, panelH, ACCENT);
 
-        renderSlotGrid(g, mouseX, mouseY);
-        renderSlotDetails(g);
-        renderRuleList(g, mouseX, mouseY);
+        text(g, "Sorting Rules", panelX + PAD, panelY + 9, InvUi.TEXT);
+
+        renderScopeRow(g, ui, mouseX, mouseY);
+        renderTabRow(g, ui, mouseX, mouseY);
+        InvUi.divider(ui, panelX + PAD, tabRowY + 21, panelW - PAD * 2);
+
+        if (tab == TAB_SLOTS) {
+            renderSlotsTab(g, ui, mouseX, mouseY);
+        } else {
+            renderOrderTab(g, ui, mouseX, mouseY);
+        }
 
         updateHitboxes();
         super.render(g, mouseX, mouseY, partialTick);
     }
 
-    private void addRightControls() {
-        if (showingItems) {
-            int rowOneY = panelY + panelH - 44;
-            int rowTwoY = panelY + panelH - 24;
-            int halfW = (rightW - 4) / 2;
-            this.addRenderableWidget(new InventorySortTextButton(rightX, rowOneY, halfW, BUTTON_H,
-                    Component.literal("Add Item"), button -> addSelectedItemOrder()));
-            this.addRenderableWidget(new InventorySortTextButton(rightX + halfW + 4, rowOneY, rightW - halfW - 4, BUTTON_H,
-                    Component.literal("Remove"), button -> removeItem()));
+    // --------------------------------------------------------------- chrome
 
-            this.addRenderableWidget(new InventorySortTextButton(rightX, rowTwoY, 30, BUTTON_H,
-                    Component.literal("Up"), button -> moveItem(-1)));
-            this.addRenderableWidget(new InventorySortTextButton(rightX + 34, rowTwoY, 40, BUTTON_H,
-                    Component.literal("Down"), button -> moveItem(1)));
-            this.addRenderableWidget(new InventorySortTextButton(rightX + 78, rowTwoY, rightW - 78, BUTTON_H,
-                    Component.literal("Exact"), button -> toggleAbsoluteItemOrder()));
+    private void renderScopeRow(GuiGraphics g, InventorySortDrawContext ui, int mouseX, int mouseY) {
+        if (!containerTarget) {
+            text(g, "Player inventory", panelX + PAD, scopeRowY + 4, InvUi.TEXT_MUTED);
+            return;
+        }
+        text(g, "Applies to", panelX + PAD, scopeRowY + 4, InvUi.TEXT_DIM);
+        for (int i = 0; i < 2; i++) {
+            int[] r = scopeRect(i);
+            boolean selected = (i == 1) == editingOverride;
+            boolean hovered = isInside(mouseX, mouseY, r[0], r[1], r[2], r[3]);
+            int color = InvUi.segment(ui, r[0], r[1], r[2], r[3], hovered, selected, ACCENT);
+            String label = i == 0 ? "All Containers" : "This Container";
+            centeredText(g, label, r[0], r[2], r[1] + 4, color);
+        }
+    }
+
+    private void renderTabRow(GuiGraphics g, InventorySortDrawContext ui, int mouseX, int mouseY) {
+        String[] labels = {"Slots", "Order"};
+        for (int i = 0; i < 2; i++) {
+            int[] r = tabRect(i);
+            boolean hovered = isInside(mouseX, mouseY, r[0], r[1], r[2], r[3]);
+            int color = InvUi.segment(ui, r[0], r[1], r[2], r[3], hovered, tab == i, ACCENT);
+            centeredText(g, labels[i], r[0], r[2], r[1] + 5, color);
+        }
+    }
+
+    // ----------------------------------------------------------- slots tab
+
+    private void addSlotsTabWidgets() {
+        int bw = (gridW - 8) / 3;
+        InventorySortTextButton protect = new InventorySortTextButton(gridX, actionsY, bw, 18,
+                Component.literal("Protect"), button -> protectSelectedSlots());
+        protect.setTooltip(Tooltip.create(Component.literal(
+                "Sorting will not move items into or out of the selected slots.")));
+        this.addRenderableWidget(protect);
+
+        InventorySortTextButton assign = new InventorySortTextButton(gridX + bw + 4, actionsY, bw, 18,
+                Component.literal("Assign Item"), button -> reserveSelectedSlots());
+        assign.setTooltip(Tooltip.create(Component.literal(
+                "Reserve the selected slots for the held or selected item type.")));
+        this.addRenderableWidget(assign);
+
+        InventorySortTextButton clear = new InventorySortTextButton(gridX + (bw + 4) * 2, actionsY,
+                gridW - (bw + 4) * 2, 18, Component.literal("Clear"), button -> clearSelectedSlots());
+        clear.setTooltip(Tooltip.create(Component.literal("Remove any rule from the selected slots.")));
+        this.addRenderableWidget(clear);
+
+        InventorySortTextButton clearAll = new InventorySortTextButton(panelX + panelW - PAD - 78, tabRowY, 78, 18,
+                Component.literal("Reset Scope"), button -> clearCurrentRules());
+        clearAll.setTooltip(Tooltip.create(Component.literal("Clear every rule for the current scope.")));
+        this.addRenderableWidget(clearAll);
+    }
+
+    private void renderSlotsTab(GuiGraphics g, InventorySortDrawContext ui, int mouseX, int mouseY) {
+        List<Slot> slots = targetSlots();
+        InvUi.inset(ui, gridX - 5, gridY - 5, gridW, gridH);
+
+        for (int i = 0; i < slots.size(); i++) {
+            int x = gridX + (i % 9) * slotSize;
+            int y = gridY + (i / 9) * slotSize;
+            int draw = slotSize - 2;
+            boolean hovered = isInside(mouseX, mouseY, x, y, draw, draw);
+            boolean selected = selectedSlots.contains(i);
+            SortRuleStore.SlotRule rule = currentRules().ruleFor(i);
+
+            InvUi.slot(ui, x, y, draw, hovered, selected, ACCENT);
+
+            ItemStack stack = slots.get(i).getItem();
+            if (!stack.isEmpty()) {
+                g.renderItem(stack, x + (draw - 16) / 2, y + (draw - 16) / 2);
+                g.renderItemDecorations(this.font, stack, x + (draw - 16) / 2, y + (draw - 16) / 2);
+            }
+
+            if (rule.restricted) {
+                ui.fill(x + 1, y + 1, x + draw - 1, y + 2, MARK_PROTECTED);
+                ui.fill(x + 1, y + draw - 5, x + 5, y + draw - 1, MARK_PROTECTED);
+            } else if (rule.hasReservation()) {
+                ui.fill(x + 1, y + 1, x + 6, y + 3, ACCENT);
+                ui.fill(x + 1, y + 1, x + 3, y + 6, ACCENT);
+            }
+        }
+
+        renderSelectionInfo(g, ui);
+    }
+
+    private void renderSelectionInfo(GuiGraphics g, InventorySortDrawContext ui) {
+        InvUi.inset(ui, infoX, infoY, infoW, infoH);
+        int tx = infoX + 9;
+        int ty = infoY + 9;
+        int maxW = infoW - 18;
+        int count = selectedSlots.size();
+
+        if (count == 0) {
+            text(g, "No slots selected", tx, ty, InvUi.TEXT);
+            wrapText(g, "Click a slot to begin. Hold Ctrl to add slots, Shift to pick a range.",
+                    tx, ty + 14, maxW, InvUi.TEXT_MUTED, 3);
+        } else if (count == 1) {
+            int slotIndex = primarySelectedSlot();
+            SortRuleStore.SlotRule rule = currentRules().ruleFor(slotIndex);
+            ItemStack stack = slotIndex >= 0 && slotIndex < targetSlots().size()
+                    ? targetSlots().get(slotIndex).getItem() : ItemStack.EMPTY;
+            String item = stack.isEmpty() ? "empty" : InventorySorter.itemId(stack);
+            text(g, "Slot " + slotIndex, tx, ty, InvUi.TEXT);
+            text(g, truncate("Holds: " + shortItemId(item), maxW), tx, ty + 13, InvUi.TEXT_MUTED);
+            String state = rule.restricted ? "Protected from sorting"
+                    : rule.hasReservation() ? "Reserved: " + shortItemId(rule.reservedItemId)
+                    : "Normal sort slot";
+            int color = rule.restricted ? MARK_PROTECTED : rule.hasReservation() ? ACCENT : InvUi.TEXT_DIM;
+            text(g, truncate(state, maxW), tx, ty + 26, color);
         } else {
-            int y = panelY + panelH - 24;
-            int halfW = (rightW - 4) / 2;
-            this.addRenderableWidget(new InventorySortTextButton(rightX, y, halfW, BUTTON_H,
+            text(g, count + " slots selected", tx, ty, InvUi.TEXT);
+            wrapText(g, "Protect, Assign Item, or Clear will apply to all of them.",
+                    tx, ty + 14, maxW, InvUi.TEXT_MUTED, 2);
+        }
+
+        // Legend pinned to the bottom of the info panel.
+        int ly = infoY + infoH - 30;
+        ui.fill(tx, ly, tx + 9, ly + 9, MARK_PROTECTED);
+        text(g, "Protected slot", tx + 15, ly + 1, InvUi.TEXT_MUTED);
+        int ly2 = ly + 14;
+        ui.fill(tx, ly2, tx + 6, ly2 + 2, ACCENT);
+        ui.fill(tx, ly2, tx + 2, ly2 + 6, ACCENT);
+        text(g, "Item-specific slot", tx + 15, ly2 + 1, InvUi.TEXT_MUTED);
+    }
+
+    // ----------------------------------------------------------- order tab
+
+    private void addOrderTabWidgets() {
+        InventorySortTextButton clearAll = new InventorySortTextButton(panelX + panelW - PAD - 78, tabRowY, 78, 18,
+                Component.literal("Reset Scope"), button -> clearCurrentRules());
+        clearAll.setTooltip(Tooltip.create(Component.literal("Clear every rule for the current scope.")));
+        this.addRenderableWidget(clearAll);
+
+        if (showingItems) {
+            int half = (ctrlW - 4) / 2;
+            InventorySortTextButton add = new InventorySortTextButton(ctrlX, listY, ctrlW, 18,
+                    Component.literal("Add Selected Item"), button -> addSelectedItemOrder());
+            add.setTooltip(Tooltip.create(Component.literal(
+                    "Add the held or slot-selected item to the priority list.")));
+            this.addRenderableWidget(add);
+            this.addRenderableWidget(new InventorySortTextButton(ctrlX, listY + 22, half, 18,
+                    Component.literal("Up"), button -> moveItem(-1)));
+            this.addRenderableWidget(new InventorySortTextButton(ctrlX + half + 4, listY + 22, ctrlW - half - 4, 18,
+                    Component.literal("Down"), button -> moveItem(1)));
+            this.addRenderableWidget(new InventorySortTextButton(ctrlX, listY + 44, ctrlW, 18,
+                    Component.literal("Remove"), button -> removeItem()));
+            InventorySortTextButton exact = new InventorySortTextButton(ctrlX, listY + 70, ctrlW, 18,
+                    Component.literal(currentRules().absoluteItemOrder ? "Exact order: On" : "Exact order: Off"),
+                    button -> toggleAbsoluteItemOrder());
+            exact.setTooltip(Tooltip.create(Component.literal(
+                    "Exact order sorts strictly by this list. Off keeps it as a soft priority.")));
+            this.addRenderableWidget(exact);
+        } else {
+            int half = (ctrlW - 4) / 2;
+            this.addRenderableWidget(new InventorySortTextButton(ctrlX, listY, half, 18,
                     Component.literal("Up"), button -> moveCategory(-1)));
-            this.addRenderableWidget(new InventorySortTextButton(rightX + halfW + 4, y, rightW - halfW - 4, BUTTON_H,
+            this.addRenderableWidget(new InventorySortTextButton(ctrlX + half + 4, listY, ctrlW - half - 4, 18,
                     Component.literal("Down"), button -> moveCategory(1)));
         }
     }
 
-    private void renderSlotGrid(GuiGraphics g, int mouseX, int mouseY) {
-        List<Slot> slots = targetSlots();
-        int rows = targetRows();
-        drawPanel(g, slotGridX - 6, slotGridY - 6, 9 * slotSize + 12, rows * slotSize + 12, 0xFF111111);
-
-        for (int i = 0; i < slots.size(); i++) {
-            int x = slotGridX + (i % 9) * slotSize;
-            int y = slotGridY + (i / 9) * slotSize;
-            boolean hovered = isInside(mouseX, mouseY, x, y, slotSize - 2, slotSize - 2);
-            boolean selected = selectedSlots.contains(i);
-            SortRuleStore.SlotRule rule = currentRules().ruleFor(i);
-            int fill = selected ? 0xFFE3D48A : hovered ? 0xFFA7A7A7 : 0xFF858585;
-            g.fill(x, y, x + slotSize - 2, y + slotSize - 2, 0xFF070707);
-            g.fill(x + 1, y + 1, x + slotSize - 3, y + slotSize - 3, fill);
-
-            ItemStack stack = slots.get(i).getItem();
-            if (!stack.isEmpty()) {
-                g.renderItem(stack, x + 1, y + 1);
-                g.renderItemDecorations(this.font, stack, x + 1, y + 1);
-            }
-
-            if (rule.restricted) {
-                g.fill(x + 1, y + 1, x + slotSize - 3, y + slotSize - 3, 0x88AA2020);
-                text(g, "P", x + 6, y + 5, 0xFFFFFFFF);
-            } else if (rule.hasReservation()) {
-                g.fill(x, y, x + slotSize - 2, y + 2, 0xFFFFD95A);
-                g.fill(x, y, x + 2, y + slotSize - 2, 0xFFFFD95A);
-                text(g, "I", x + 7, y + 5, 0xFFFFD95A);
-            }
-        }
-    }
-
-    private void renderSlotDetails(GuiGraphics g) {
-        int x = slotGridX;
-        int y = Math.min(detailY, panelY + panelH - 58);
-        int maxW = Math.max(120, rightX - slotGridX - PAD);
-        int selectedCount = selectedSlots.size();
-        if (selectedCount == 0) {
-            text(g, "No slot selected", x, y, 0xFFE8E8E8);
-            text(g, truncate("Protect keeps slots untouched. Item Slot reserves an item.", maxW), x, y + 13, 0xFFB9B9B9);
-            return;
-        }
-        if (selectedCount > 1) {
-            text(g, selectedCount + " slots selected", x, y, 0xFFE8E8E8);
-            text(g, truncate("Protect, Item Slot, or Clear applies to all selected slots.", maxW), x, y + 13, 0xFFB9B9B9);
-            return;
+    private void renderOrderTab(GuiGraphics g, InventorySortDrawContext ui, int mouseX, int mouseY) {
+        String[] labels = {"Categories", "Exact Items"};
+        for (int i = 0; i < 2; i++) {
+            int[] r = subTabRect(i);
+            boolean hovered = isInside(mouseX, mouseY, r[0], r[1], r[2], r[3]);
+            boolean selected = (i == 1) == showingItems;
+            int color = InvUi.segment(ui, r[0], r[1], r[2], r[3], hovered, selected, ACCENT);
+            centeredText(g, labels[i], r[0], r[2], r[1] + 4, color);
         }
 
-        int slotIndex = primarySelectedSlot();
-        if (slotIndex < 0 || slotIndex >= targetSlots().size()) {
-            return;
-        }
-        SortRuleStore.SlotRule rule = currentRules().ruleFor(slotIndex);
-        Slot slot = targetSlots().get(slotIndex);
-        String item = slot.getItem().isEmpty() ? "empty" : InventorySorter.itemId(slot.getItem());
-        text(g, "Slot " + slotIndex, x, y, 0xFFE8E8E8);
-        text(g, truncate("Current: " + item, maxW), x, y + 13, 0xFFB9B9B9);
-        String state = rule.restricted
-                ? "Protected from sorting"
-                : rule.hasReservation() ? "Item Slot: " + rule.reservedItemId : "Normal sort slot";
-        int color = rule.restricted ? 0xFFFF8A8A : rule.hasReservation() ? 0xFFFFD95A : 0xFFB9B9B9;
-        text(g, truncate(state, maxW), x, y + 26, color);
-    }
-
-    private void renderRuleList(GuiGraphics g, int mouseX, int mouseY) {
-        String title = showingItems
-                ? currentRules().absoluteItemOrder ? "Items - Exact" : "Items - Flexible"
-                : "Categories";
-        text(g, title, rightX, rightY - 14, 0xFFE8E8E8);
-        drawPanel(g, rightX - 4, rightY - 4, rightW + 8, rightH + 8, 0xFF111111);
+        InvUi.inset(ui, listX, listY, listW, listH);
+        g.enableScissor(listX + 1, listY + 1, listX + listW - 1, listY + listH - 1);
         if (showingItems) {
-            renderItemOrderList(g, mouseX, mouseY);
+            renderItemList(g, ui, mouseX, mouseY);
         } else {
-            renderCategoryList(g, mouseX, mouseY);
+            renderCategoryList(g, ui, mouseX, mouseY);
         }
+        g.disableScissor();
+        InvUi.insetBorder(ui, listX, listY, listW, listH);
+
+        renderOrderHelp(g);
     }
 
-    private void renderCategoryList(GuiGraphics g, int mouseX, int mouseY) {
+    private void renderCategoryList(GuiGraphics g, InventorySortDrawContext ui, int mouseX, int mouseY) {
         List<String> order = categoryOrderView();
         int visible = listVisibleRows();
-        categoryScroll = clamp(categoryScroll, 0, Math.max(0, order.size() - visible));
-        for (int i = 0; i < visible && i + categoryScroll < order.size(); i++) {
-            int index = i + categoryScroll;
-            int rowY = rightY + i * ROW_H;
+        rowScroll = clamp(rowScroll, 0, Math.max(0, order.size() - visible));
+        for (int i = 0; i < visible && i + rowScroll < order.size(); i++) {
+            int index = i + rowScroll;
+            int y = listY + 5 + i * ROW_H;
             boolean selected = index == categoryIndex;
-            if (selected || isInside(mouseX, mouseY, rightX, rowY, rightW, ROW_H)) {
-                g.fill(rightX, rowY, rightX + rightW, rowY + ROW_H - 1, selected ? 0xFF3A3520 : 0xFF242424);
-            }
-            text(g, truncate(categoryLabel(order.get(index)), rightW - 6), rightX + 3, rowY + 3,
-                    selected ? 0xFFFFD95A : 0xFFB9B9B9);
+            boolean hovered = isInside(mouseX, mouseY, listX + 4, y, listW - 8, ROW_H - 1);
+            InvUi.row(ui, listX + 4, y, listW - 8, ROW_H - 1, hovered, selected, ACCENT);
+            text(g, truncate(categoryLabel(order.get(index)), listW - 20), listX + 12, y + 4,
+                    selected ? InvUi.TEXT : InvUi.TEXT_MUTED);
+        }
+        InvUi.scrollbar(ui, listX + listW - 6, listY + 4, listH - 8, order.size() * ROW_H,
+                visible * ROW_H, rowScroll * ROW_H, ACCENT);
+    }
+
+    private void renderItemList(GuiGraphics g, InventorySortDrawContext ui, int mouseX, int mouseY) {
+        List<String> order = currentRules().itemOrder;
+        if (order.isEmpty()) {
+            text(g, "No pinned items yet", listX + 10, listY + 10, InvUi.TEXT_MUTED);
+            wrapText(g, "Select a slot or hold an item, then Add Selected Item.",
+                    listX + 10, listY + 24, listW - 20, InvUi.TEXT_DIM, 2);
+            return;
+        }
+        int visible = listVisibleRows();
+        rowScroll = clamp(rowScroll, 0, Math.max(0, order.size() - visible));
+        for (int i = 0; i < visible && i + rowScroll < order.size(); i++) {
+            int index = i + rowScroll;
+            int y = listY + 5 + i * ROW_H;
+            boolean selected = index == itemIndex;
+            boolean hovered = isInside(mouseX, mouseY, listX + 4, y, listW - 8, ROW_H - 1);
+            InvUi.row(ui, listX + 4, y, listW - 8, ROW_H - 1, hovered, selected, ACCENT);
+            text(g, truncate((index + 1) + ". " + shortItemId(order.get(index)), listW - 20), listX + 12, y + 4,
+                    selected ? InvUi.TEXT : InvUi.TEXT_MUTED);
+        }
+        InvUi.scrollbar(ui, listX + listW - 6, listY + 4, listH - 8, order.size() * ROW_H,
+                visible * ROW_H, rowScroll * ROW_H, ACCENT);
+    }
+
+    private void renderOrderHelp(GuiGraphics g) {
+        int hx = ctrlX;
+        int hy = showingItems ? listY + 94 : listY + 28;
+        if (showingItems) {
+            wrapText(g, "Pinned items sort to the front in this order. Turn on Exact order for a strict layout.",
+                    hx, hy, ctrlW, InvUi.TEXT_DIM, 5);
+        } else {
+            wrapText(g, "Reorder the categories items are grouped into when sorting. Switch to Exact Items to pin individual items first.",
+                    hx, hy, ctrlW, InvUi.TEXT_DIM, 6);
         }
     }
 
-    private void renderItemOrderList(GuiGraphics g, int mouseX, int mouseY) {
-        List<String> order = currentRules().itemOrder;
-        int visible = listVisibleRows();
-        itemScroll = clamp(itemScroll, 0, Math.max(0, order.size() - visible));
-        if (order.isEmpty()) {
-            text(g, "No custom items", rightX + 3, rightY + 3, 0xFF8E8E8E);
-            text(g, truncate("Select a slot, then Add Item.", rightW - 6), rightX + 3, rightY + 16, 0xFF8E8E8E);
-            return;
-        }
-        for (int i = 0; i < visible && i + itemScroll < order.size(); i++) {
-            int index = i + itemScroll;
-            int rowY = rightY + i * ROW_H;
-            boolean selected = index == itemIndex;
-            if (selected || isInside(mouseX, mouseY, rightX, rowY, rightW, ROW_H)) {
-                g.fill(rightX, rowY, rightX + rightW, rowY + ROW_H - 1, selected ? 0xFF3A3520 : 0xFF242424);
-            }
-            text(g, truncate(shortItemId(order.get(index)), rightW - 6), rightX + 3, rowY + 3,
-                    selected ? 0xFFFFD95A : 0xFFB9B9B9);
-        }
-    }
+    // -------------------------------------------------------------- input
 
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
         return handleMouseScrolled(mouseX, mouseY, verticalAmount);
@@ -274,119 +406,105 @@ public class InventorySortConfigScreen extends Screen {
     }
 
     private boolean handleMouseScrolled(double mouseX, double mouseY, double verticalAmount) {
-        int delta = (int) Math.signum(-verticalAmount);
-        if (delta == 0 || !isInside(mouseX, mouseY, rightX - 4, rightY - 4, rightW + 8, rightH + 8)) {
+        if (tab != TAB_ORDER) {
             return false;
         }
-        int visible = listVisibleRows();
-        if (showingItems) {
-            itemScroll = clamp(itemScroll + delta, 0, Math.max(0, currentRules().itemOrder.size() - visible));
-        } else {
-            categoryScroll = clamp(categoryScroll + delta, 0, Math.max(0, categoryOrderView().size() - visible));
+        int delta = (int) Math.signum(-verticalAmount);
+        if (delta == 0 || !isInside(mouseX, mouseY, listX, listY, listW, listH)) {
+            return false;
         }
+        int size = showingItems ? currentRules().itemOrder.size() : categoryOrderView().size();
+        rowScroll = clamp(rowScroll + delta, 0, Math.max(0, size - listVisibleRows()));
         return true;
     }
 
+    // ----------------------------------------------------------- hitboxes
+
     private void buildHitboxes() {
         slotButtons.clear();
+        rowButtons.clear();
+
         for (int i = 0; i < targetSlots().size(); i++) {
-            InventorySortHitboxButton button = new InventorySortHitboxButton(0, 0, slotSize - 2, slotSize - 2,
-                    Component.literal("Slot"), hitbox -> {
-                String targetId = ((InventorySortHitboxButton) hitbox).getTargetId();
-                if (targetId != null) {
-                    selectSlot(Integer.parseInt(targetId));
+            InventorySortHitboxButton b = new InventorySortHitboxButton(0, 0, 1, 1, Component.literal("Slot"), hitbox -> {
+                String id = ((InventorySortHitboxButton) hitbox).getTargetId();
+                if (id != null) {
+                    selectSlot(Integer.parseInt(id));
                 }
             });
-            slotButtons.add(button);
-            this.addRenderableWidget(button);
+            slotButtons.add(b);
+            this.addRenderableWidget(b);
         }
 
-        int visibleRows = listVisibleRows();
-        categoryButtons.clear();
-        for (int i = 0; i < visibleRows; i++) {
-            InventorySortHitboxButton button = new InventorySortHitboxButton(0, 0, rightW, ROW_H,
-                    Component.literal("Category"), hitbox -> {
-                String targetId = ((InventorySortHitboxButton) hitbox).getTargetId();
-                if (targetId != null) {
-                    categoryIndex = Integer.parseInt(targetId);
+        int rows = Math.max(1, listVisibleRows()) + 2;
+        for (int i = 0; i < rows; i++) {
+            InventorySortHitboxButton b = new InventorySortHitboxButton(0, 0, 1, 1, Component.literal("Row"), hitbox -> {
+                String id = ((InventorySortHitboxButton) hitbox).getTargetId();
+                if (id != null) {
+                    selectRow(Integer.parseInt(id));
                 }
             });
-            categoryButtons.add(button);
-            this.addRenderableWidget(button);
+            b.visible = false;
+            b.active = false;
+            rowButtons.add(b);
+            this.addRenderableWidget(b);
         }
-
-        itemButtons.clear();
-        for (int i = 0; i < visibleRows; i++) {
-            InventorySortHitboxButton button = new InventorySortHitboxButton(0, 0, rightW, ROW_H,
-                    Component.literal("Item"), hitbox -> {
-                String targetId = ((InventorySortHitboxButton) hitbox).getTargetId();
-                if (targetId != null) {
-                    itemIndex = Integer.parseInt(targetId);
-                }
-            });
-            itemButtons.add(button);
-            this.addRenderableWidget(button);
-        }
-
         updateHitboxes();
     }
 
     private void updateHitboxes() {
         List<Slot> slots = targetSlots();
         for (int i = 0; i < slotButtons.size(); i++) {
-            InventorySortHitboxButton button = slotButtons.get(i);
-            if (i >= slots.size()) {
-                hideButton(button);
+            InventorySortHitboxButton b = slotButtons.get(i);
+            if (tab != TAB_SLOTS || i >= slots.size()) {
+                hide(b);
                 continue;
             }
-            int x = slotGridX + (i % 9) * slotSize;
-            int y = slotGridY + (i / 9) * slotSize;
-            button.setBounds(x, y, slotSize - 2, slotSize - 2);
-            button.setTargetId(String.valueOf(i));
-            button.visible = true;
-            button.active = true;
+            int x = gridX + (i % 9) * slotSize;
+            int y = gridY + (i / 9) * slotSize;
+            b.setBounds(x, y, slotSize - 2, slotSize - 2);
+            b.setTargetId(String.valueOf(i));
+            b.visible = true;
+            b.active = true;
         }
 
-        List<String> categoryOrder = categoryOrderView();
-        for (int i = 0; i < categoryButtons.size(); i++) {
-            InventorySortHitboxButton button = categoryButtons.get(i);
-            int index = i + categoryScroll;
-            if (showingItems || index >= categoryOrder.size()) {
-                hideButton(button);
+        int listSize = tab == TAB_ORDER
+                ? (showingItems ? currentRules().itemOrder.size() : categoryOrderView().size())
+                : 0;
+        int visible = listVisibleRows();
+        for (int i = 0; i < rowButtons.size(); i++) {
+            InventorySortHitboxButton b = rowButtons.get(i);
+            int index = i + rowScroll;
+            if (tab != TAB_ORDER || i >= visible || index >= listSize) {
+                hide(b);
                 continue;
             }
-            button.setBounds(rightX, rightY + i * ROW_H, rightW, ROW_H);
-            button.setTargetId(String.valueOf(index));
-            button.visible = true;
-            button.active = true;
-        }
-
-        List<String> itemOrder = currentRules().itemOrder;
-        for (int i = 0; i < itemButtons.size(); i++) {
-            InventorySortHitboxButton button = itemButtons.get(i);
-            int index = i + itemScroll;
-            if (!showingItems || index >= itemOrder.size()) {
-                hideButton(button);
-                continue;
-            }
-            button.setBounds(rightX, rightY + i * ROW_H, rightW, ROW_H);
-            button.setTargetId(String.valueOf(index));
-            button.visible = true;
-            button.active = true;
+            b.setBounds(listX + 4, listY + 5 + i * ROW_H, listW - 8, ROW_H - 1);
+            b.setTargetId(String.valueOf(index));
+            b.visible = true;
+            b.active = true;
         }
     }
 
-    private void hideButton(InventorySortHitboxButton button) {
-        button.visible = false;
-        button.active = false;
-        button.setTargetId(null);
+    private void hide(InventorySortHitboxButton b) {
+        b.visible = false;
+        b.active = false;
+        b.setTargetId(null);
     }
+
+    private void selectRow(int index) {
+        if (showingItems) {
+            itemIndex = index;
+        } else {
+            categoryIndex = index;
+        }
+    }
+
+    // ------------------------------------------------------------- actions
 
     private void selectSlot(int slotIndex) {
         if (slotIndex < 0 || slotIndex >= targetSlots().size()) {
             return;
         }
-
         boolean ctrl = isControlDown();
         boolean shift = isShiftDown();
         if (shift && anchorSlot >= 0) {
@@ -400,20 +518,25 @@ public class InventorySortConfigScreen extends Screen {
             }
             return;
         }
-
         if (ctrl) {
-            if (selectedSlots.contains(slotIndex)) {
+            if (!selectedSlots.add(slotIndex)) {
                 selectedSlots.remove(slotIndex);
-            } else {
-                selectedSlots.add(slotIndex);
             }
             anchorSlot = slotIndex;
             return;
         }
-
         selectedSlots.clear();
         selectedSlots.add(slotIndex);
         anchorSlot = slotIndex;
+    }
+
+    private void setTab(int next) {
+        if (tab == next) {
+            return;
+        }
+        tab = next;
+        rowScroll = 0;
+        this.rebuildWidgets();
     }
 
     private void setListMode(boolean items) {
@@ -421,14 +544,15 @@ public class InventorySortConfigScreen extends Screen {
             return;
         }
         showingItems = items;
+        rowScroll = 0;
         this.rebuildWidgets();
     }
 
-    private void toggleScope() {
-        if (!containerTarget) {
+    private void setScope(boolean override) {
+        if (!containerTarget || editingOverride == override) {
             return;
         }
-        editingOverride = !editingOverride;
+        editingOverride = override;
         this.rebuildWidgets();
     }
 
@@ -492,13 +616,14 @@ public class InventorySortConfigScreen extends Screen {
         String value = order.remove(categoryIndex);
         order.add(next, value);
         categoryIndex = next;
-        categoryScroll = keepVisible(categoryIndex, categoryScroll, listVisibleRows());
+        rowScroll = keepVisible(categoryIndex, rowScroll, listVisibleRows());
         store.save();
     }
 
     private void toggleAbsoluteItemOrder() {
         currentRules().absoluteItemOrder = !currentRules().absoluteItemOrder;
         store.save();
+        this.rebuildWidgets();
     }
 
     private void addSelectedItemOrder() {
@@ -510,7 +635,7 @@ public class InventorySortConfigScreen extends Screen {
         order.remove(itemId);
         order.add(itemId);
         itemIndex = order.size() - 1;
-        itemScroll = keepVisible(itemIndex, itemScroll, listVisibleRows());
+        rowScroll = keepVisible(itemIndex, rowScroll, listVisibleRows());
         store.save();
     }
 
@@ -527,7 +652,7 @@ public class InventorySortConfigScreen extends Screen {
         String value = order.remove(itemIndex);
         order.add(next, value);
         itemIndex = next;
-        itemScroll = keepVisible(itemIndex, itemScroll, listVisibleRows());
+        rowScroll = keepVisible(itemIndex, rowScroll, listVisibleRows());
         store.save();
     }
 
@@ -539,7 +664,7 @@ public class InventorySortConfigScreen extends Screen {
         itemIndex = clamp(itemIndex, 0, order.size() - 1);
         order.remove(itemIndex);
         itemIndex = clamp(itemIndex, 0, Math.max(0, order.size() - 1));
-        itemScroll = keepVisible(itemIndex, itemScroll, listVisibleRows());
+        rowScroll = keepVisible(itemIndex, rowScroll, listVisibleRows());
         store.save();
     }
 
@@ -595,23 +720,6 @@ public class InventorySortConfigScreen extends Screen {
                 : store.containerDefaultRules();
     }
 
-    private String scopeLabel() {
-        if (!containerTarget) {
-            return "Global player inventory";
-        }
-        if (editingOverride) {
-            return "This container: " + store.containerOverrideLabel(containerIdentity, screenClassName);
-        }
-        return "All containers" + (containerType == null ? "" : ": " + containerType);
-    }
-
-    private String scopeButtonLabel() {
-        if (!containerTarget) {
-            return "Player Rules";
-        }
-        return editingOverride ? "This Container" : "All Containers";
-    }
-
     private void closeToParent() {
         MinecraftApiCompat.setScreen(Minecraft.getInstance(), parent);
     }
@@ -621,35 +729,49 @@ public class InventorySortConfigScreen extends Screen {
         closeToParent();
     }
 
+    // -------------------------------------------------------------- layout
+
     private void computeLayout() {
-        int availableW = Math.max(1, this.width - 12);
-        int availableH = Math.max(1, this.height - 12);
-        panelW = Math.min(MAX_PANEL_W, Math.max(MIN_PANEL_W, availableW));
-        panelH = Math.min(MAX_PANEL_H, Math.max(MIN_PANEL_H, availableH));
+        int availableW = Math.max(1, this.width - 8);
+        int availableH = Math.max(1, this.height - 8);
+        panelW = clamp(availableW, MIN_PANEL_W, MAX_PANEL_W);
+        panelH = clamp(availableH, MIN_PANEL_H, MAX_PANEL_H);
         panelW = Math.min(panelW, Math.max(1, this.width - 4));
         panelH = Math.min(panelH, Math.max(1, this.height - 4));
         panelX = (this.width - panelW) / 2;
         panelY = (this.height - panelH) / 2;
 
-        rightW = clamp(panelW / 3, 118, 154);
-        leftW = panelW - rightW - PAD * 3;
-        if (leftW < 196) {
-            rightW = Math.max(104, panelW - 196 - PAD * 3);
-            leftW = panelW - rightW - PAD * 3;
-        }
+        scopeRowY = panelY + 25;
+        tabRowY = containerTarget ? panelY + 47 : panelY + 43;
+        contentTop = tabRowY + 27;
 
-        slotGridX = panelX + PAD;
-        slotGridY = panelY + 76;
+        int contentBottom = panelY + panelH - PAD;
         int rows = targetRows();
-        int slotFromWidth = Math.max(18, (leftW - 12) / 9);
-        int slotFromHeight = Math.max(18, (panelH - 138) / Math.max(1, rows));
-        slotSize = clamp(Math.min(slotFromWidth, slotFromHeight), 18, 20);
 
-        rightX = panelX + panelW - PAD - rightW;
-        rightY = slotGridY;
-        int controlsH = showingItems ? 48 : 28;
-        rightH = Math.max(56, panelY + panelH - controlsH - rightY - 8);
-        detailY = slotGridY + rows * slotSize + 10;
+        // Slots tab: responsive slot grid on the left, info panel on the right.
+        int contentW = panelW - PAD * 2;
+        int gridAvailH = contentBottom - (contentTop + 4) - 6 - 18 - 14;
+        int byWidth = (contentW * 9 / 20) / 9;
+        int byHeight = gridAvailH / Math.max(1, rows);
+        slotSize = clamp(Math.min(Math.min(byWidth, byHeight), 20), 18, 20);
+        gridX = panelX + PAD + 5;
+        gridY = contentTop + 4 + 5;
+        gridW = 9 * slotSize + 10;
+        gridH = rows * slotSize + 10;
+        actionsY = gridY - 5 + gridH + 6;
+        infoX = panelX + PAD + gridW + PAD;
+        infoY = contentTop + 4;
+        infoW = panelX + panelW - PAD - infoX;
+        infoH = (actionsY + 18) - infoY;
+
+        // Order tab: list on the left, controls on the right.
+        subTabY = contentTop + 2;
+        listX = panelX + PAD;
+        listY = subTabY + 22;
+        listW = clamp((panelW - PAD * 3) * 11 / 20, 150, 280);
+        listH = contentBottom - listY;
+        ctrlX = listX + listW + PAD;
+        ctrlW = panelX + panelW - PAD - ctrlX;
     }
 
     private int targetRows() {
@@ -657,7 +779,7 @@ public class InventorySortConfigScreen extends Screen {
     }
 
     private int listVisibleRows() {
-        return Math.max(1, rightH / ROW_H);
+        return Math.max(1, (listH - 8) / ROW_H);
     }
 
     private int primarySelectedSlot() {
@@ -683,6 +805,23 @@ public class InventorySortConfigScreen extends Screen {
         return scroll;
     }
 
+    // -------------------------------------------------------------- helpers
+
+    private int[] scopeRect(int i) {
+        int sx = panelX + PAD + 56;
+        int avail = (panelX + panelW - PAD) - sx;
+        int segW = Math.min(118, (avail - 4) / 2);
+        return new int[]{sx + i * (segW + 4), scopeRowY, segW, 16};
+    }
+
+    private int[] tabRect(int i) {
+        return new int[]{panelX + PAD + i * 74, tabRowY, 70, 18};
+    }
+
+    private int[] subTabRect(int i) {
+        return new int[]{panelX + PAD + i * 94, subTabY, 90, 16};
+    }
+
     private static boolean isControlDown() {
         return isKeyDown(GLFW.GLFW_KEY_LEFT_CONTROL) || isKeyDown(GLFW.GLFW_KEY_RIGHT_CONTROL);
     }
@@ -699,18 +838,34 @@ public class InventorySortConfigScreen extends Screen {
         return GLFW.glfwGetKey(MinecraftApiCompat.windowHandle(client), key) == GLFW.GLFW_PRESS;
     }
 
-    private void drawPanel(GuiGraphics g, int x, int y, int w, int h) {
-        drawPanel(g, x, y, w, h, 0xF0202020);
-    }
-
-    private void drawPanel(GuiGraphics g, int x, int y, int w, int h, int fill) {
-        g.fill(x, y, x + w, y + h, 0xFF070707);
-        g.fill(x + 1, y + 1, x + w - 1, y + h - 1, 0xFF777B72);
-        g.fill(x + 2, y + 2, x + w - 2, y + h - 2, fill);
-    }
-
     private void text(GuiGraphics g, String text, int x, int y, int color) {
         g.drawString(this.font, text, x, y, color, false);
+    }
+
+    private void centeredText(GuiGraphics g, String text, int x, int w, int y, int color) {
+        g.drawString(this.font, text, x + (w - this.font.width(text)) / 2, y, color, false);
+    }
+
+    private void wrapText(GuiGraphics g, String text, int x, int y, int maxW, int color, int maxLines) {
+        String[] words = text.split(" ");
+        StringBuilder line = new StringBuilder();
+        int line0 = 0;
+        for (String word : words) {
+            String candidate = line.length() == 0 ? word : line + " " + word;
+            if (this.font.width(candidate) > maxW && line.length() > 0) {
+                text(g, line.toString(), x, y + line0 * 10, color);
+                line0++;
+                line = new StringBuilder(word);
+                if (line0 >= maxLines - 1) {
+                    break;
+                }
+            } else {
+                line = new StringBuilder(candidate);
+            }
+        }
+        if (line0 < maxLines && line.length() > 0) {
+            text(g, truncate(line.toString(), maxW), x, y + line0 * 10, color);
+        }
     }
 
     private String truncate(String text, int maxWidth) {
