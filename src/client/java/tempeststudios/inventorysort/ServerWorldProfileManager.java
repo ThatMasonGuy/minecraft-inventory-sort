@@ -30,6 +30,7 @@ import java.util.Set;
 public final class ServerWorldProfileManager {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final String DEFAULT_PROFILE = "default";
+    private static final long USE_TOUCH_INTERVAL_MILLIS = 60_000L;
     private static ServerWorldProfileManager instance;
     private static KeyMapping confirmWorldKey;
     private static KeyMapping openProfilesKey;
@@ -108,11 +109,38 @@ public final class ServerWorldProfileManager {
         return !needsConfirmation(client);
     }
 
+    /**
+     * Records that the active world is currently being played, so the world
+     * picker can show a real "last used" time. Called every client tick; only
+     * stamps a confirmed/tracked world and persists at most once a minute.
+     */
+    public void markActiveUsed(Minecraft client) {
+        if (client == null || client.player == null || client.level == null) {
+            return;
+        }
+        String serverKey = TrackingNamespace.currentServerKey(client);
+        if (serverKey == null || serverKey.isBlank() || !trackingAllowed(client)) {
+            return;
+        }
+        ServerProfiles serverProfiles = profilesFor(serverKey);
+        String profile = serverProfiles.activeProfile;
+        long now = System.currentTimeMillis();
+        long last = serverProfiles.lastUsed.getOrDefault(profile, 0L);
+        if (now - last < USE_TOUCH_INTERVAL_MILLIS) {
+            return;
+        }
+        serverProfiles.lastUsed.put(profile, now);
+        save();
+    }
+
     public void confirmActiveProfile(String serverKey) {
         if (serverKey == null || serverKey.isBlank()) {
             return;
         }
-        confirmedThisSession.add(confirmationKey(serverKey, getActiveProfile(serverKey)));
+        String active = getActiveProfile(serverKey);
+        confirmedThisSession.add(confirmationKey(serverKey, active));
+        profilesFor(serverKey).lastUsed.put(active, System.currentTimeMillis());
+        save();
     }
 
     public void handleConfirmationInput(Minecraft client) {

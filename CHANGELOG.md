@@ -39,8 +39,10 @@ All notable project changes will be documented here.
   panel, and matched the tracked-world selector to the same theme. The search
   list redraws its frame over scrolled rows so partial rows stay contained, and
   the world selector sizes its list to the available height (no more overlapping
-  controls), records and shows each world's last-used time, and marks the active
-  world.
+  controls), marks the active world, and shows each world's last-used time. The
+  last-used time is recorded from active play (the shared Core stamps the
+  tracked world about once a minute while tracking is confirmed) and on
+  selection, so it fills in for each world as you play or switch to it.
 - Restyled the InvCatalogue browser report cards and world section bands plus
   the detail item grid and selected-item sidebar, adding a share bar for an
   item's portion of the report total.

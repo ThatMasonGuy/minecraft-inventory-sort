@@ -13,7 +13,11 @@ public class InventorySortCoreClient implements ClientModInitializer {
     public void onInitializeClient() {
         LOGGER.info("Initializing Inventory Sort Core");
         ServerWorldProfileManager.registerKeybindings();
-        ClientTickEvents.END_CLIENT_TICK.register(client -> ServerWorldProfileManager.getInstance().handleConfirmationInput(client));
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            ServerWorldProfileManager manager = ServerWorldProfileManager.getInstance();
+            manager.handleConfirmationInput(client);
+            manager.markActiveUsed(client);
+        });
         HudCompat.registerWorldProfileHud();
         InventorySortSmokeTest.registerIfEnabled();
     }
