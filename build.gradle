@@ -110,6 +110,15 @@ def smokeTestRequiredMinecraftVersionProfiles = profileListProperty(
 		supportedMinecraftVersionProfiles.join(',')
 )
 def maxPublicReleaseJarSizeBytes = (findProperty('public_release_max_jar_size_bytes') ?: '199000').toString() as long
+def forbiddenPackagedPathPattern = ~/(?i)(^|\/)(README|CHANGELOG|TODO|AGENTS|COMPATIBILITY)(\.|\/|$)|\.(md|adoc|txt|java|kt|kts|gradle|properties|ps1|bat|sh|xcf|psd|kra|blend|svg)$/
+def allowedPackagedPathPattern = ~/(?i)(^|\/)LICENSE(-GPL-3\.0)?(_[^\/]+)?$/
+def packagedJunkEntries = { Collection<String> entryNames ->
+	entryNames.findAll { name ->
+		!name.endsWith('/')
+				&& (name =~ forbiddenPackagedPathPattern).find()
+				&& !(name =~ allowedPackagedPathPattern).find()
+	}.sort()
+}
 def excludedSharedClientSources = profileProperty('excluded_shared_client_sources', '')
 		.split(',')
 		.collect { it.trim() }
@@ -328,6 +337,7 @@ tasks.register('verifyReleaseJars') {
 			}
 
 			def entries = [] as Set
+			def embeddedCoreEntries = [] as Set
 			def fabricMetadata = null
 			new java.util.zip.ZipFile(releaseJar).withCloseable { zip ->
 				def entryEnumeration = zip.entries()
@@ -342,6 +352,18 @@ tasks.register('verifyReleaseJars') {
 				zip.getInputStream(modJsonEntry).withCloseable { stream ->
 					fabricMetadata = new groovy.json.JsonSlurper().parse(stream)
 				}
+
+				def embeddedCoreEntry = zip.getEntry(expectedCoreJar)
+				if (embeddedCoreEntry != null) {
+					zip.getInputStream(embeddedCoreEntry).withCloseable { stream ->
+						new java.util.zip.ZipInputStream(stream).withCloseable { nestedZip ->
+							def nestedEntry
+							while ((nestedEntry = nestedZip.nextEntry) != null) {
+								embeddedCoreEntries.add(nestedEntry.name)
+							}
+						}
+					}
+				}
 			}
 
 			if (entries.contains(forbiddenDevCoreJar)) {
@@ -349,6 +371,14 @@ tasks.register('verifyReleaseJars') {
 			}
 			if (!entries.contains(expectedCoreJar)) {
 				throw new GradleException("${releaseJar.name} does not embed Core jar ${expectedCoreJar}")
+			}
+			def junkEntries = packagedJunkEntries(entries)
+			if (!junkEntries.isEmpty()) {
+				throw new GradleException("${releaseJar.name} packages non-runtime project files: ${junkEntries.join(', ')}")
+			}
+			def embeddedCoreJunkEntries = packagedJunkEntries(embeddedCoreEntries)
+			if (!embeddedCoreJunkEntries.isEmpty()) {
+				throw new GradleException("${releaseJar.name}!/${expectedCoreJar} packages non-runtime project files: ${embeddedCoreJunkEntries.join(', ')}")
 			}
 			if (fabricMetadata.depends.minecraft != expectedMinecraftDependency) {
 				throw new GradleException("${releaseJar.name} declares Minecraft dependency ${fabricMetadata.depends.minecraft}, expected ${expectedMinecraftDependency}")

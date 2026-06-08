@@ -32,8 +32,11 @@ of the InvSort category vocabulary and aliases. A final pre-CI bug pass tightene
 that shared classifier so redstone items and dusts no longer get swallowed by
 the broad stone category, delegated the stale InvSort legacy classifier to the
 shared helper, and constrained the tracked-world picker mouse wheel to its list
-well across shared and 26.x screens. Full smoke/CI validation is deferred until
-the feature set is complete.
+well across shared and 26.x screens. A final packaging sweep found the generated
+release jars clean of project docs, source files, source images, and extra public
+assets; `verifyReleaseJars` now also fails if those non-runtime files appear in
+either a public feature jar or its embedded Core jar. Full smoke/CI validation
+is deferred until the feature set is complete.
 
 ## Project Workflow
 

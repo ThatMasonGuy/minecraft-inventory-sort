@@ -58,6 +58,9 @@ All notable project changes will be documented here.
 
 ### Fixed
 
+- Hardened `verifyReleaseJars` so public feature jars and their embedded Core
+  jars fail verification if project docs, source files, build scripts, or
+  source-art formats are accidentally packaged.
 - Fixed shared category classification for the new `:category` searches so
   redstone items and redstone dust are matched by `:redstone` instead of being
   swallowed by the broad stone-name terrain rule, while dusts such as
