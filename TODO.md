@@ -203,9 +203,8 @@ Requested capabilities:
    - DONE (3.2.0 queued): selected reports include a search filter for large
      grids.
 2. Snapshot history:
-   - DONE (3.2.0 queued): stopping or reporting a session now writes a
-     timestamped structured report snapshot alongside the existing plain-text
-     report.
+   - DONE (3.2.0 queued): stopping a session now writes a timestamped
+     structured report snapshot alongside the existing plain-text report.
    - Keep the existing persistent current catalogue behavior while adding
      historical snapshots for comparison.
 3. Snapshot comparison:
