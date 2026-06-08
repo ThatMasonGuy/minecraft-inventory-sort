@@ -44,7 +44,9 @@ source copy after uploading 9 InvSort, 5 InvSearch, and 7 InvCatalogue gallery
 images. The guarded GitHub Actions Modrinth publish workflow completed
 successfully for `3.2.0`, uploaded all 24 compatibility-group versions, and the
 annotated `v3.2.0` GitHub Release now points users to the canonical Modrinth
-downloads.
+downloads. A post-release metadata-only correction replaced the InvSort
+`Rules: Inventory Order` gallery/description screenshot on Modrinth after the
+original image included an unwanted nested screenshot icon.
 
 ## Project Workflow
 
@@ -314,6 +316,18 @@ Requested capabilities:
      history data model needed for comparisons.
 
 ## Recently Fixed
+
+-62. InvSort gallery screenshot correction (metadata-only, released):
+   - Replaced `gallery/InvSort/02_InvSort_Rules_Inventory_Order.png` and the
+     matching `description_images` selector copy with the cleaned screenshot.
+   - Verified the two local copies have the same SHA-256 hash.
+   - Ran `.\scripts\sync-modrinth-project-pages.ps1 -DryRun`.
+   - Ran `.\scripts\sync-modrinth-project-pages.ps1 -ReplaceGallery` to refresh
+     the live Modrinth project-page/gallery metadata.
+   - Public Modrinth readback confirmed the InvSort gallery still has 9 images
+     and the long description references the newly uploaded `Rules: Inventory
+     Order` CDN image.
+   - This did not touch mod jars or published version files.
 
 -61. `3.2.0` minor release publish (released):
    - Release source commit: `8bed48a786f89a74d9c912ea55c78ff9f1adf96c`

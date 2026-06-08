@@ -69,6 +69,8 @@ All notable project changes will be documented here.
   uploaded all 24 Modrinth compatibility-group versions, and created the
   annotated `v3.2.0` GitHub Release on the exact source commit used for the
   jars.
+- Corrected the live InvSort `Rules: Inventory Order` Modrinth gallery and
+  description screenshot after replacing the source image in `gallery/`.
 
 ### Fixed
 
