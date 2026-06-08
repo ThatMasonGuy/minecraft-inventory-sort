@@ -22,6 +22,7 @@ sourceSets {
 			include "tempeststudios/inventorysort/InventorySortContainerContext.java"
 			include "tempeststudios/inventorysort/InventorySortDrawContext.java"
 			include "tempeststudios/inventorysort/InventorySortDrawContexts.java"
+			include "tempeststudios/inventorysort/InvUi.java"
 			include "tempeststudios/inventorysort/InventorySortHitboxButton.java"
 			include "tempeststudios/inventorysort/InventorySortCoreClient.java"
 			include "tempeststudios/inventorysort/InventorySortSmokeTest.java"

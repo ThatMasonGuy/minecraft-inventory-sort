@@ -11,9 +11,9 @@ final class InventorySortModalIconButtonRenderer {
     }
 
     static void render(InventorySortDrawContext guiGraphics, int x, int y, int size, int icon, boolean hovered) {
-        InventorySortUIUtils.drawBeveledPanel(guiGraphics, x, y, size, size, hovered);
+        int fg = InvUi.button(guiGraphics, x, y, size, size, hovered, true, false, InvUi.ACCENT_SORT);
 
-        int color = hovered ? 0xFF000000 : 0xFF1C1C1C;
+        int color = (icon == CLOSE && hovered) ? 0xFFFF6B6B : fg;
 
         switch (icon) {
             case UP -> drawUpIcon(guiGraphics, x, y, size, color);

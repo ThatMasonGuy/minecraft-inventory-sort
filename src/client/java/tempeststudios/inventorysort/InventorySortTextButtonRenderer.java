@@ -9,9 +9,7 @@ final class InventorySortTextButtonRenderer {
     }
 
     static void render(InventorySortDrawContext guiGraphics, int x, int y, int width, int height, Component message, boolean active, boolean hovered) {
-        InventorySortUIUtils.drawBeveledPanel(guiGraphics, x, y, width, height, hovered);
-
-        int textColor = active ? (hovered ? 0xFF000000 : 0xFF1C1C1C) : 0xFF777777;
+        int textColor = InvUi.button(guiGraphics, x, y, width, height, hovered, active, false, InvUi.ACCENT_SORT);
 
         Font font = Minecraft.getInstance().font;
         int textX = x + (width - font.width(message)) / 2;
