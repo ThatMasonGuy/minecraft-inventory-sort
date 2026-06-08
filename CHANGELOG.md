@@ -16,6 +16,10 @@ All notable project changes will be documented here.
 
 ### Fixed
 
+- Fixed a Minecraft `1.21.11` launch crash in the shared Core world-profile
+  keybinding shim by removing named Minecraft class-string reflection from the
+  `KeyMapping.Category` path and discovering the live runtime constructor
+  signatures instead.
 - Hardened InvSearch and InvCatalogue persistence by writing tracker/catalogue
   JSON through temp-file swaps, keeping `.bak` copies, and recovering from
   malformed primary files without crashing client startup.

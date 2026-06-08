@@ -5,7 +5,9 @@ import net.minecraft.client.KeyMapping;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 
 public final class KeyBindingCompat {
     private static final String CATEGORY_TRANSLATION_KEY = "key.categories.inventorysort.general";
@@ -71,11 +73,26 @@ public final class KeyBindingCompat {
 
     private static KeyMapping createCategoryKeyMapping(String translationKey, int defaultKeyCode)
             throws ReflectiveOperationException {
-        Class<?> categoryClass = Class.forName("net.minecraft.client.KeyMapping$Category");
+        Class<?> categoryClass = findCategoryClass();
         Object category = createCategory(categoryClass);
         Constructor<KeyMapping> constructor = KeyMapping.class.getConstructor(
                 String.class, InputConstants.Type.class, int.class, categoryClass);
         return constructor.newInstance(translationKey, InputConstants.Type.KEYSYM, defaultKeyCode, category);
+    }
+
+    private static Class<?> findCategoryClass() throws ReflectiveOperationException {
+        for (Constructor<?> constructor : KeyMapping.class.getConstructors()) {
+            Class<?>[] parameterTypes = constructor.getParameterTypes();
+            if (parameterTypes.length >= 4
+                    && parameterTypes[0] == String.class
+                    && parameterTypes[1] == InputConstants.Type.class
+                    && parameterTypes[2] == int.class
+                    && parameterTypes[3] != String.class) {
+                return parameterTypes[3];
+            }
+        }
+
+        throw new NoSuchMethodException("No KeyMapping category constructor found");
     }
 
     private static Object createCategory(Class<?> categoryClass) throws ReflectiveOperationException {
@@ -84,44 +101,140 @@ public final class KeyBindingCompat {
         }
 
         Object category;
-        try {
-            Object categoryId = createIdentifier();
-            Method register = categoryClass.getMethod("register", categoryId.getClass());
-            category = register.invoke(null, categoryId);
-        } catch (ReflectiveOperationException | RuntimeException ignored) {
-            Field misc = categoryClass.getField("MISC");
-            category = misc.get(null);
+        Object categoryId = createIdentifierForCategory(categoryClass);
+        if (categoryId != null) {
+            category = invokeCategoryFactory(categoryClass, categoryId);
+            if (category == null) {
+                category = constructCategory(categoryClass, categoryId);
+            }
+        } else {
+            category = null;
+        }
+        if (category == null) {
+            category = findExistingCategory(categoryClass);
         }
         cachedCategory = category;
         cachedCategoryClass = categoryClass;
         return category;
     }
 
-    private static Object createIdentifier() throws ReflectiveOperationException {
-        ReflectiveOperationException failure = null;
-        for (String className : new String[]{
-                "net.minecraft.resources.ResourceLocation",
-                "net.minecraft.resources.Identifier"
-        }) {
-            try {
-                Class<?> identifierClass = Class.forName(className);
-                return createIdentifier(identifierClass);
-            } catch (ReflectiveOperationException e) {
-                failure = e;
+    private static Object createIdentifierForCategory(Class<?> categoryClass) {
+        for (Method method : categoryClass.getDeclaredMethods()) {
+            if (Modifier.isStatic(method.getModifiers())
+                    && method.getReturnType() == categoryClass
+                    && method.getParameterCount() == 1) {
+                Object identifier = createIdentifier(method.getParameterTypes()[0]);
+                if (identifier != null) {
+                    return identifier;
+                }
             }
         }
 
-        throw failure != null ? failure : new ClassNotFoundException("No Minecraft identifier class found");
+        for (Constructor<?> constructor : categoryClass.getDeclaredConstructors()) {
+            if (constructor.getParameterCount() == 1) {
+                Object identifier = createIdentifier(constructor.getParameterTypes()[0]);
+                if (identifier != null) {
+                    return identifier;
+                }
+            }
+        }
+
+        return null;
     }
 
-    private static Object createIdentifier(Class<?> identifierClass) throws ReflectiveOperationException {
-        try {
-            Method fromNamespaceAndPath = identifierClass.getMethod(
-                    "fromNamespaceAndPath", String.class, String.class);
-            return fromNamespaceAndPath.invoke(null, CATEGORY_NAMESPACE, CATEGORY_PATH);
-        } catch (NoSuchMethodException ignored) {
-            Constructor<?> constructor = identifierClass.getConstructor(String.class, String.class);
-            return constructor.newInstance(CATEGORY_NAMESPACE, CATEGORY_PATH);
+    private static Object invokeCategoryFactory(Class<?> categoryClass, Object categoryId) {
+        for (Method method : categoryClass.getDeclaredMethods()) {
+            if (!Modifier.isStatic(method.getModifiers())
+                    || method.getReturnType() != categoryClass
+                    || method.getParameterCount() != 1
+                    || !method.getParameterTypes()[0].isInstance(categoryId)) {
+                continue;
+            }
+            try {
+                method.setAccessible(true);
+                return method.invoke(null, categoryId);
+            } catch (IllegalAccessException | InvocationTargetException | RuntimeException ignored) {
+            }
         }
+
+        return null;
+    }
+
+    private static Object constructCategory(Class<?> categoryClass, Object categoryId) {
+        for (Constructor<?> constructor : categoryClass.getDeclaredConstructors()) {
+            Class<?>[] parameterTypes = constructor.getParameterTypes();
+            if (parameterTypes.length != 1 || !parameterTypes[0].isInstance(categoryId)) {
+                continue;
+            }
+            try {
+                constructor.setAccessible(true);
+                return constructor.newInstance(categoryId);
+            } catch (InstantiationException | IllegalAccessException | InvocationTargetException | RuntimeException ignored) {
+            }
+        }
+
+        return null;
+    }
+
+    private static Object findExistingCategory(Class<?> categoryClass) throws ReflectiveOperationException {
+        for (Field field : categoryClass.getDeclaredFields()) {
+            if (!Modifier.isStatic(field.getModifiers()) || field.getType() != categoryClass) {
+                continue;
+            }
+            field.setAccessible(true);
+            Object value = field.get(null);
+            if (value != null) {
+                return value;
+            }
+        }
+
+        throw new NoSuchFieldException("No existing KeyMapping category found");
+    }
+
+    private static Object createIdentifier(Class<?> identifierClass) {
+        for (Method method : identifierClass.getDeclaredMethods()) {
+            if (!Modifier.isStatic(method.getModifiers())
+                    || method.getReturnType() != identifierClass
+                    || method.getParameterCount() != 2
+                    || method.getParameterTypes()[0] != String.class
+                    || method.getParameterTypes()[1] != String.class) {
+                continue;
+            }
+            try {
+                method.setAccessible(true);
+                return method.invoke(null, CATEGORY_NAMESPACE, CATEGORY_PATH);
+            } catch (IllegalAccessException | InvocationTargetException | RuntimeException ignored) {
+            }
+        }
+
+        for (Constructor<?> constructor : identifierClass.getDeclaredConstructors()) {
+            Class<?>[] parameterTypes = constructor.getParameterTypes();
+            if (parameterTypes.length != 2
+                    || parameterTypes[0] != String.class
+                    || parameterTypes[1] != String.class) {
+                continue;
+            }
+            try {
+                constructor.setAccessible(true);
+                return constructor.newInstance(CATEGORY_NAMESPACE, CATEGORY_PATH);
+            } catch (InstantiationException | IllegalAccessException | InvocationTargetException | RuntimeException ignored) {
+            }
+        }
+
+        for (Method method : identifierClass.getDeclaredMethods()) {
+            if (!Modifier.isStatic(method.getModifiers())
+                    || method.getReturnType() != identifierClass
+                    || method.getParameterCount() != 1
+                    || method.getParameterTypes()[0] != String.class) {
+                continue;
+            }
+            try {
+                method.setAccessible(true);
+                return method.invoke(null, CATEGORY_NAMESPACE + ":" + CATEGORY_PATH);
+            } catch (IllegalAccessException | InvocationTargetException | RuntimeException ignored) {
+            }
+        }
+
+        return null;
     }
 }

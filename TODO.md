@@ -3,7 +3,9 @@
 Current checkpoint: queued `3.2.0` bug-fix hardening is implemented locally for
 InvSort, InvSearch, InvCatalogue, and shared Core. InvCatalogue now also has a
 local report-history browser for saved catalogue reports, and the full
-supported profile build passes. Full smoke/CI validation is deferred until the
+supported profile build passes. A user-reported Minecraft `1.21.11` launch
+crash in the shared Core keybinding shim is fixed locally and covered by a
+focused all-public smoke launch. Full smoke/CI validation is deferred until the
 feature set is complete.
 
 ## Project Workflow
@@ -217,6 +219,27 @@ Requested capabilities:
      history data model needed for comparisons.
 
 ## Recently Fixed
+
+-53. Shared Core `1.21.11` keybinding launch crash for `3.2.0` minor release
+     (unreleased):
+   - Fixed a user-reported Minecraft `1.21.11` launch crash:
+     `Failed to create keybinding` from `KeyBindingCompat` during
+     `InventorySortCoreClient` startup.
+   - Cause: the remappable world-profile keybinding shim looked up
+     `KeyMapping.Category` and `ResourceLocation` by named string reflection.
+     Those strings are not remapped inside normal `1.x` release jars, so the
+     all-public `1.21.11` launch fell through to an obsolete string-category
+     constructor that no longer exists.
+   - `KeyBindingCompat` now discovers the live `KeyMapping` category
+     constructor from `KeyMapping.class`, creates/registers the category through
+     signature-based reflection, and avoids named Minecraft class or method
+     strings on the runtime path.
+   - Verified `.\gradlew.bat buildAllMods --no-daemon --console=plain`.
+   - Verified
+     `.\gradlew.bat smokeTestSelectedClients "-Pinventorysort_smoke_profiles=1.21.11" "-Pinventorysort_smoke_game_versions=1.21.11" "-Pinventorysort_smoke_install_sets=all-public" --no-daemon --console=plain`.
+   - Verified `.\gradlew.bat buildAllVersions --no-daemon --console=plain`.
+   - Full smoke/CI validation remains deferred until the rest of the `3.2.0`
+     minor-release work is complete.
 
 -52. InvCatalogue report-history browser for `3.2.0` minor release
      (unreleased):
