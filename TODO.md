@@ -1,6 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: split-mod bug report intake prepared for user repro notes
+Current checkpoint: user bug reports and feature roadmap captured
 
 ## Project Workflow
 
@@ -66,32 +66,40 @@ Architecture checkpoint:
 
 ### InvSort Bug Report
 
-Status: open for user reproduction details.
+Status: active user-reported gameplay bug.
 
-Code-audit leads already in the backlog:
+User-reported bug:
 
-1. Sorting and transfer actions can still issue many synchronous slot-click
-   packets in one burst. Risk to reproduce: ghost items, server rollback, or
-   kicks on rate-limited servers when sorting large containers or moving many
-   stacks.
-2. "Sort container" currently tops up partial hotbar stacks from the main
-   inventory before sorting the container. This is intentional in the README
-   wording, but it is a user-visible side effect to revisit if it felt like a
-   bug during play.
-3. Container slot detection still has a latent `"Crafting"` name-match trap in
+1. Bundles in the sortable inventory space can make the rest of the inventory
+   sort incorrectly and turn into a larger mess. Bundle handling is intentionally
+   avoided because bundle contents are complicated, but plain bundle slots still
+   need to stop disrupting non-bundle sorting.
+   - Proposed behavior: move all bundles to the start of the selected sortable
+     space, then sort everything behind them.
+   - Apply to player inventory sorting and container sorting where bundles are
+     present in the selected sortable region.
+   - Verify that bundle stacks are preserved, ordinary stacks still restack and
+     compact correctly, and restricted/future reserved slots are not broken by
+     the bundle partitioning.
+
+Code-audit leads still worth keeping:
+
+1. Container slot detection still has a latent `"Crafting"` name-match trap in
    `InventorySorter`; if buttons are ever exposed on a crafting-like screen, the
    result slot could be treated as sortable.
-4. Dead or misleading helper code remains around `fillPlayerStacksFromContainer`,
+2. Dead or misleading helper code remains around `fillPlayerStacksFromContainer`,
    `findFirstEmptyNonBundle`, and unreachable bundle-skip branches in
-   `ensureCursorEmpty`. Treat this as cleanup unless it connects to a real
-   gameplay repro.
+   `ensureCursorEmpty`. Revisit this while fixing the bundle partitioning bug.
 
-Next needed from user: exact screen/container, install set, Minecraft profile,
-button pressed, and observed item movement/desync.
+Dropped from active bugs by user decision:
+
+- Slot-click burst/rate-limit risk is accepted as a current implementation
+  limitation.
+- Sort-container hotbar top-up is intentional behavior for now.
 
 ### InvSearch Bug Report
 
-Status: open for user reproduction details.
+Status: active hardening backlog, no new user repro reported yet.
 
 Code-audit leads already in or added to the backlog:
 
@@ -104,40 +112,92 @@ Code-audit leads already in or added to the backlog:
 3. Inventory sampling runs every client tick and saves the full tracker file on
    every inventory-total signature change. Busy sessions can cause avoidable
    disk churn.
-4. Portable shulker tracking still uses a weak contents-derived identity, so
-   identical or similarly seeded shulkers can collide and appear as one known
-   location.
-5. Search identity is still base-item oriented for many cases. Potion,
-   enchantment, custom-name, and component/NBT distinctions remain an accuracy
-   backlog item.
-6. Shared Core world-confirmation input still polls raw Enter/Backspace rather
+4. Shared Core world-confirmation input still polls raw Enter/Backspace rather
    than user keybinds. This can surface while using Search world-profile flows.
 
-Next needed from user: search query, expected count/location, actual result,
-whether the item had components/custom data, world profile state, and whether
-the issue survived a client restart.
+Dropped from active bugs by user decision:
+
+- Portable shulker identity collisions are accepted as a current implementation
+  limitation.
+- Component/NBT-aware Search identity is accepted as future accuracy work, not a
+  bug to fix in the current pass.
 
 ### InvCatalogue Bug Report
 
-Status: open for user reproduction details.
+Status: active hardening backlog, no new user repro reported yet.
 
 Code-audit leads already in the backlog:
 
-1. Empty containers are recorded as zero-item snapshots, so "locations
-   catalogued" can increase without adding any counted items. Decide whether
-   this is useful audit history or noisy report inflation.
-2. Catalogue inherits the same portable-shulker collision risk from Core's
-   contents-derived portable shulker id; two identically filled portable
-   shulkers can count as one.
-3. `CatalogStore.save()` writes the catalogue JSON directly without an atomic
+1. `CatalogStore.save()` writes the catalogue JSON directly without an atomic
    temp-file swap or `.bak` fallback. A crash during write can lose that
    namespace's catalogue, though load failure is caught and starts fresh.
-4. Shared Core world-confirmation input still uses raw Enter/Backspace polling,
+2. Shared Core world-confirmation input still uses raw Enter/Backspace polling,
    which can affect catalogue sessions on multiplayer profile confirmation.
 
-Next needed from user: command used, whether `includeInventory` was active,
-container type, whether the count was added/updated/skipped in chat, report
-totals, and whether the issue involved portable shulkers or empty storage.
+Dropped from active bugs by user decision:
+
+- Empty containers counting as zero-item catalogue locations are accepted for
+  now.
+- Portable shulker identity collisions are accepted as a current implementation
+  limitation.
+
+## Feature Requests (2026-06-08)
+
+### InvSort Custom Sorting And Slot Rules
+
+Goal: add an in-game configuration menu for user-defined sorting behavior across
+player inventories and containers.
+
+Requested capabilities:
+
+1. Custom sort order:
+   - Let players define their own sorting order for inventories and chests.
+   - Decide whether the first version supports item ids only, categories only,
+     or both.
+   - Keep default behavior available when no custom order is configured.
+2. Restricted slots:
+   - Let players mark specific inventory/container slots as restricted.
+   - Restricted slots should not receive sorted items.
+   - Decide whether restricted slots are also protected from being moved out of,
+     or only protected from being sorted into.
+3. Reserved item slots:
+   - Let players assign specific items to specific slots, such as logs in the
+     bottom-right inventory slot, planks in the middle-right slot, and sticks in
+     the top-right slot.
+   - Sorting should fill reserved slots with matching items when possible and
+     avoid putting other item types there.
+4. Scope and persistence decisions:
+   - Decide whether rules are global, per screen type, per container identity, or
+     a combination.
+   - Store rules locally under the existing `inventorysort` game directory and
+     keep them client-side only.
+   - Make sure rules work across the supported version-profile matrix and with
+     the future bundle partitioning behavior.
+
+### InvCatalogue In-Game GUI And Snapshot Comparison
+
+Goal: add an in-game Catalogue GUI for browsing item totals visually and
+comparing current totals against older catalogue snapshots.
+
+Requested capabilities:
+
+1. Catalogue browser modal:
+   - Open an in-game GUI from Inventory Catalogue commands or a button.
+   - Show catalogued item counts in a grid with item icons and readable counts.
+   - Include search/filter/sort controls if the grid becomes large.
+2. Snapshot history:
+   - Save named or timestamped catalogue snapshots, likely when a session stops
+     and/or from an explicit snapshot action.
+   - Keep the existing persistent current catalogue behavior while adding
+     historical snapshots for comparison.
+3. Snapshot comparison:
+   - Let players select an old snapshot and compare it against the current
+     catalogue or another snapshot.
+   - Show increases, decreases, new items, and missing items clearly.
+4. Reporting compatibility:
+   - Keep the existing command-based status/report flow working.
+   - Reuse the current catalogue store/session model where possible, but add any
+     history data model needed for comparisons.
 
 ## Recently Fixed
 
@@ -1118,6 +1178,8 @@ totals, and whether the issue involved portable shulkers or empty storage.
 ## P2 Accuracy And Data Hardening
 
 1. Potion/component-aware tracking:
+   - DROPPED FROM ACTIVE BUGS (2026-06-08): accepted as future accuracy work,
+     not a current bug-fix target.
    - Search aliases let `water bottle` find `minecraft:potion`, but item identity is still base item only.
    - Catalog and tracking currently merge component variants such as potions, enchanted books, named items, and filled containers.
    - True variant tracking needs component-aware keys and display names.
@@ -1144,6 +1206,8 @@ totals, and whether the issue involved portable shulkers or empty storage.
 ## UX Polish
 
 1. Portable shulkers:
+   - DROPPED FROM ACTIVE BUGS (2026-06-08): accepted as a current implementation
+     limitation until a deliberate portable-container model exists.
    - Shulkers opened from inventory are still weak/history-ish because identity is based on contents.
    - Decide whether to skip them or build a deliberate portable-container model.
 
@@ -1226,7 +1290,8 @@ implemented yet — this is the backlog backup.
    accepts `DispenserMenu` (dropper/dispenser). Hoppers, furnaces, and brewing
    stands remain excluded on purpose. `InventorySorter`'s existing name-based slot
    detection already handled these once buttons were wired.
-2. 🟠 Click-storm desync risk: sorting/transfers drive hundreds of synchronous
+2. 🟠 DROPPED FROM ACTIVE BUGS (2026-06-08): Click-storm desync risk is an
+   accepted current implementation limitation. Sorting/transfers drive hundreds of synchronous
    `slotClicked` packets (compact→restack→apply→restack→compact; shift-all quick-
    moves every slot). Risk of ghost items / rollback / kicks on rate-limited
    servers. Consider throttling/batching or a known-limitation note.
@@ -1239,8 +1304,8 @@ implemented yet — this is the backlog backup.
      actually skip bundles despite the name.
    - Bundle-skip branches in `ensureCursorEmpty` (`:749`, `:759`) are unreachable
      (sit after an `isEmpty()` early-return).
-5. 🟢 "Sort container" also tops up the hotbar from main inventory first (`:34-40`)
-   — a container action silently reshuffles player inventory.
+5. 🟢 DROPPED FROM ACTIVE BUGS (2026-06-08): "Sort container" also tops up the
+   hotbar from main inventory first (`:34-40`) as intentional behavior.
 
 ### Search segment
 
@@ -1262,11 +1327,14 @@ implemented yet — this is the backlog backup.
 
 ### Catalogue segment (new code, self-review)
 
-1. 🟡 Empty containers are recorded as zero-item snapshots, inflating "locations
-   catalogued" without adding items. Conscious decision needed.
-2. 🟡 Inherits identical-shulker collision: portable shulkers keyed by a 5-slot
+1. 🟡 DROPPED FROM ACTIVE BUGS (2026-06-08): Empty containers are recorded as
+   zero-item snapshots, inflating "locations catalogued" without adding items.
+   This is accepted for now.
+2. 🟡 DROPPED FROM ACTIVE BUGS (2026-06-08): Inherits identical-shulker
+   collision: portable shulkers keyed by a 5-slot
    content hash (`ContainerTrackingMixin.generateContainerHash`), so two identically
-   filled shulkers collide and count once.
+   filled shulkers collide and count once. This is accepted as a current
+   implementation limitation.
 3. 🟢 No atomic/`.bak` write on `CatalogStore.save()`; a crash mid-write loses that
    namespace's catalogue (loader catches and starts fresh — no crash).
 4. 🟢 No in-game catalogue GUI yet (command-only). Natural future feature reusing

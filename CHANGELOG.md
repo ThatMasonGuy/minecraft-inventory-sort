@@ -23,6 +23,9 @@ All notable project changes will be documented here.
 
 ### Changed
 
+- Pruned the split-mod bug intake based on user decisions, added the InvSort
+  bundle sorting bug, and captured the requested InvSort custom sorting/slot
+  rules plus InvCatalogue GUI/snapshot-comparison feature tracks.
 - Added a split-mod bug report intake checkpoint to `TODO.md`, covering
   InvSort, InvSearch, and InvCatalogue ownership, Core/shim boundaries, and
   first-pass code-audit leads for the next user-reported fixes.
