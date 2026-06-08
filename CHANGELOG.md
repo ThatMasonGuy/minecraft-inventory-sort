@@ -54,6 +54,9 @@ All notable project changes will be documented here.
 
 ### Changed
 
+- Restyled the InvCatalogue report browser with darker modern-Minecraft-style
+  chrome, slot-style item tiles, and local Catalogue back/close controls so it
+  no longer visually follows the older InvSearch modal theme.
 - Added Sort compatibility shims for hotbar swap clicks and moved bundle
   detection behind per-profile `ItemStackCompat` overlays, including the 26.x
   `ContainerInput.SWAP` path.
