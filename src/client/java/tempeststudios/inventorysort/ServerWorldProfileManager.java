@@ -4,9 +4,11 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
+import tempeststudios.inventorysort.compat.core.KeyBindingCompat;
 import tempeststudios.inventorysort.compat.core.MinecraftApiCompat;
 import tempeststudios.inventorysort.core.InventorySortEvents;
 
@@ -29,12 +31,12 @@ public final class ServerWorldProfileManager {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final String DEFAULT_PROFILE = "default";
     private static ServerWorldProfileManager instance;
+    private static KeyMapping confirmWorldKey;
+    private static KeyMapping openProfilesKey;
 
     private final Path saveFile;
     private final Map<String, ServerProfiles> profilesByServer = new HashMap<>();
     private final Set<String> confirmedThisSession = new HashSet<>();
-    private boolean confirmKeyWasDown = false;
-    private boolean menuKeyWasDown = false;
 
     private ServerWorldProfileManager() {
         Path modDir = Minecraft.getInstance().gameDirectory.toPath().resolve("inventorysort");
@@ -52,6 +54,19 @@ public final class ServerWorldProfileManager {
             instance = new ServerWorldProfileManager();
         }
         return instance;
+    }
+
+    public static void registerKeybindings() {
+        if (confirmWorldKey != null && openProfilesKey != null) {
+            return;
+        }
+
+        confirmWorldKey = KeyBindingCompat.register(
+                "key.inventorysort.confirm_world_profile",
+                GLFW.GLFW_KEY_ENTER);
+        openProfilesKey = KeyBindingCompat.register(
+                "key.inventorysort.open_world_profiles",
+                GLFW.GLFW_KEY_BACKSPACE);
     }
 
     public String getActiveProfile(String serverKey) {
@@ -93,31 +108,37 @@ public final class ServerWorldProfileManager {
 
     public void handleConfirmationInput(Minecraft client) {
         if (client == null || client.player == null || client.level == null || MinecraftApiCompat.isScreenOpen(client)) {
-            confirmKeyWasDown = false;
-            menuKeyWasDown = false;
+            clearQueuedKeypresses();
             return;
         }
         if (!needsConfirmation(client)) {
-            confirmKeyWasDown = false;
-            menuKeyWasDown = false;
+            clearQueuedKeypresses();
             return;
         }
 
-        long window = MinecraftApiCompat.windowHandle(client);
-        boolean confirmKeyDown = GLFW.glfwGetKey(window, GLFW.GLFW_KEY_ENTER) == GLFW.GLFW_PRESS;
-        boolean menuKeyDown = GLFW.glfwGetKey(window, GLFW.GLFW_KEY_BACKSPACE) == GLFW.GLFW_PRESS;
-
-        if (confirmKeyDown && !confirmKeyWasDown) {
+        if (consumeKeypress(confirmWorldKey)) {
             String serverKey = TrackingNamespace.currentServerKey(client);
             confirmActiveProfile(serverKey);
             MinecraftApiCompat.sendSystemMessage(client, Component.literal("Tracking world confirmed: "
                     + getActiveProfile(serverKey)).withStyle(ChatFormatting.GREEN));
-        } else if (menuKeyDown && !menuKeyWasDown) {
+            clearQueuedKeypresses();
+        } else if (consumeKeypress(openProfilesKey)) {
             MinecraftApiCompat.setScreen(client, new ServerWorldProfileScreen(null, true));
+            clearQueuedKeypresses();
         }
+    }
 
-        confirmKeyWasDown = confirmKeyDown;
-        menuKeyWasDown = menuKeyDown;
+    private static boolean consumeKeypress(KeyMapping key) {
+        boolean clicked = false;
+        while (key != null && key.consumeClick()) {
+            clicked = true;
+        }
+        return clicked;
+    }
+
+    private static void clearQueuedKeypresses() {
+        consumeKeypress(confirmWorldKey);
+        consumeKeypress(openProfilesKey);
     }
 
     public void setActiveProfile(String serverKey, String profileName) {

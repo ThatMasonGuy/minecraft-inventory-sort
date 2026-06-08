@@ -296,8 +296,7 @@ public class InventorySorter {
 				screenName.contains("Dispenser") ||
 				screenName.contains("Dropper") ||
 				screenName.contains("Furnace") ||
-				screenName.contains("Brewing") ||
-				screenName.contains("Crafting");
+				screenName.contains("Brewing");
 
 		if (!(isContainer || isContainerByName)) return Collections.emptyList();
 
@@ -855,8 +854,7 @@ public class InventorySorter {
 				screenName.contains("Dispenser") ||
 				screenName.contains("Dropper") ||
 				screenName.contains("Furnace") ||
-				screenName.contains("Brewing") ||
-				screenName.contains("Crafting");
+				screenName.contains("Brewing");
 
 		if (isContainer || isContainerByName) {
 			int containerSize = totalSlots - 36;

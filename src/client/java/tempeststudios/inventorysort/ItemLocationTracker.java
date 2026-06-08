@@ -11,10 +11,15 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.Writer;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -287,7 +292,9 @@ public class ItemLocationTracker {
      */
     public void clear() {
         trackedLocations.clear();
-        save();
+        if (saveNow()) {
+            deleteBackupAfterClear();
+        }
     }
 
     /**
@@ -301,23 +308,44 @@ public class ItemLocationTracker {
      * Save tracking data to disk
      */
     public void save() {
-        if (saveFile == null) return;
-        try (Writer writer = new FileWriter(saveFile.toFile())) {
-            // Convert to serializable format
-            Map<String, List<SerializableLocationEntry>> serializable = new HashMap<>();
+        saveNow();
+    }
 
-            for (Map.Entry<String, LinkedList<LocationEntry>> entry : trackedLocations.entrySet()) {
-                List<SerializableLocationEntry> serializableList = new ArrayList<>();
-                for (LocationEntry loc : entry.getValue()) {
-                    serializableList.add(SerializableLocationEntry.fromLocationEntry(loc));
-                }
-                serializable.put(entry.getKey(), serializableList);
-            }
-
-            GSON.toJson(serializable, writer);
+    private boolean saveNow() {
+        if (saveFile == null) return false;
+        try {
+            writeJsonAtomically(saveFile, toSerializableLocations());
             tempeststudios.inventorysort.core.InventorySortCore.LOGGER.debug("Saved item location tracking data for {}", activeNamespace);
-        } catch (IOException e) {
+            return true;
+        } catch (Exception e) {
             tempeststudios.inventorysort.core.InventorySortCore.LOGGER.error("Failed to save item location data", e);
+            return false;
+        }
+    }
+
+    private Map<String, List<SerializableLocationEntry>> toSerializableLocations() {
+        Map<String, List<SerializableLocationEntry>> serializable = new HashMap<>();
+
+        for (Map.Entry<String, LinkedList<LocationEntry>> entry : trackedLocations.entrySet()) {
+            List<SerializableLocationEntry> serializableList = new ArrayList<>();
+            for (LocationEntry loc : entry.getValue()) {
+                serializableList.add(SerializableLocationEntry.fromLocationEntry(loc));
+            }
+            serializable.put(entry.getKey(), serializableList);
+        }
+
+        return serializable;
+    }
+
+    private void deleteBackupAfterClear() {
+        if (saveFile == null) {
+            return;
+        }
+        try {
+            Files.deleteIfExists(backupFile(saveFile));
+        } catch (IOException e) {
+            tempeststudios.inventorysort.core.InventorySortCore.LOGGER.error(
+                    "Failed to delete item location backup for {}", activeNamespace, e);
         }
     }
 
@@ -359,24 +387,83 @@ public class ItemLocationTracker {
             return;
         }
 
-        try (Reader reader = new FileReader(saveFile.toFile())) {
-            Type type = new TypeToken<Map<String, List<SerializableLocationEntry>>>(){}.getType();
-            Map<String, List<SerializableLocationEntry>> serializable = GSON.fromJson(reader, type);
-
-            if (serializable != null) {
-                for (Map.Entry<String, List<SerializableLocationEntry>> entry : serializable.entrySet()) {
-                    LinkedList<LocationEntry> locations = new LinkedList<>();
-                    for (SerializableLocationEntry ser : entry.getValue()) {
-                        locations.add(ser.toLocationEntry());
-                    }
-                    trackedLocations.put(entry.getKey(), locations);
+        try {
+            loadFromFile(saveFile);
+        } catch (Exception e) {
+            tempeststudios.inventorysort.core.InventorySortCore.LOGGER.error("Failed to load item location data for {}", activeNamespace, e);
+            Path backup = backupFile(saveFile);
+            if (Files.exists(backup)) {
+                try {
+                    loadFromFile(backup);
+                    tempeststudios.inventorysort.core.InventorySortCore.LOGGER.warn(
+                            "Restored item location data for {} from backup {}", activeNamespace, backup.getFileName());
+                    return;
+                } catch (Exception backupError) {
+                    tempeststudios.inventorysort.core.InventorySortCore.LOGGER.error(
+                            "Failed to load item location backup for {}", activeNamespace, backupError);
                 }
-
-                tempeststudios.inventorysort.core.InventorySortCore.LOGGER.info("Loaded tracking data for {} items in {}", trackedLocations.size(), activeNamespace);
             }
-        } catch (IOException e) {
-            tempeststudios.inventorysort.core.InventorySortCore.LOGGER.error("Failed to load item location data", e);
+            trackedLocations.clear();
+            tempeststudios.inventorysort.core.InventorySortCore.LOGGER.warn(
+                    "Starting with empty item location data for {}", activeNamespace);
         }
+    }
+
+    private void loadFromFile(Path file) throws IOException {
+        Type type = new TypeToken<Map<String, List<SerializableLocationEntry>>>(){}.getType();
+        Map<String, List<SerializableLocationEntry>> serializable;
+        try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
+            serializable = GSON.fromJson(reader, type);
+        }
+
+        Map<String, LinkedList<LocationEntry>> loaded = new HashMap<>();
+        if (serializable != null) {
+            for (Map.Entry<String, List<SerializableLocationEntry>> entry : serializable.entrySet()) {
+                LinkedList<LocationEntry> locations = new LinkedList<>();
+                if (entry.getValue() != null) {
+                    for (SerializableLocationEntry ser : entry.getValue()) {
+                        if (ser != null) {
+                            locations.add(ser.toLocationEntry());
+                        }
+                    }
+                }
+                loaded.put(entry.getKey(), locations);
+            }
+        }
+
+        trackedLocations.clear();
+        trackedLocations.putAll(loaded);
+        tempeststudios.inventorysort.core.InventorySortCore.LOGGER.info(
+                "Loaded tracking data for {} items in {}", trackedLocations.size(), activeNamespace);
+    }
+
+    private void writeJsonAtomically(Path target, Object data) throws IOException {
+        Files.createDirectories(target.getParent());
+        Path tempFile = Files.createTempFile(target.getParent(), target.getFileName().toString(), ".tmp");
+        try {
+            try (Writer writer = Files.newBufferedWriter(tempFile, StandardCharsets.UTF_8)) {
+                GSON.toJson(data, writer);
+            }
+            if (Files.exists(target)) {
+                Files.copy(target, backupFile(target), StandardCopyOption.REPLACE_EXISTING);
+            }
+            moveIntoPlace(tempFile, target);
+        } catch (IOException | RuntimeException e) {
+            Files.deleteIfExists(tempFile);
+            throw e;
+        }
+    }
+
+    private static void moveIntoPlace(Path tempFile, Path target) throws IOException {
+        try {
+            Files.move(tempFile, target, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+        } catch (AtomicMoveNotSupportedException e) {
+            Files.move(tempFile, target, StandardCopyOption.REPLACE_EXISTING);
+        }
+    }
+
+    private static Path backupFile(Path target) {
+        return target.resolveSibling(target.getFileName().toString() + ".bak");
     }
 
     /**

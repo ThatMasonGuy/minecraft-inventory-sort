@@ -1,6 +1,8 @@
 # Inventory Search TODO
 
-Current checkpoint: InvSort bundle partitioning fix built across supported profiles
+Current checkpoint: queued `3.2.0` bug-fix hardening is implemented locally for
+InvSort, InvSearch, InvCatalogue, and shared Core; full smoke/CI validation is
+deferred until the feature set is complete.
 
 ## Project Workflow
 
@@ -90,9 +92,9 @@ User-reported bug:
 
 Code-audit leads still worth keeping:
 
-1. Container slot detection still has a latent `"Crafting"` name-match trap in
-   `InventorySorter`; if buttons are ever exposed on a crafting-like screen, the
-   result slot could be treated as sortable.
+1. DONE (3.2.0 queued): Removed the latent `"Crafting"` name-match trap from
+   `InventorySorter` container detection so crafting-like screens are not
+   treated as sortable containers if buttons are exposed there later.
 2. DONE (3.2.0 queued): Removed the misleading bundle helper code touched by the
    partitioning fix. Remaining cleanup should be filed only if a new repro needs
    it.
@@ -105,21 +107,24 @@ Dropped from active bugs by user decision:
 
 ### InvSearch Bug Report
 
-Status: active hardening backlog, no new user repro reported yet.
+Status: fixed locally for the queued `3.2.0` minor release.
 
 Code-audit leads already in or added to the backlog:
 
-1. Item-location persistence writes the tracker JSON directly with `FileWriter`
-   and does not use an atomic temp-file swap or `.bak` fallback. A crash or
-   interrupted write can corrupt search history.
-2. Unlike `CatalogStore`, `ItemLocationTracker.load()` only catches
-   `IOException`; malformed JSON can throw a runtime parse exception and leave
-   the tracker repeatedly failing after a corrupted save file.
-3. Inventory sampling runs every client tick and saves the full tracker file on
-   every inventory-total signature change. Busy sessions can cause avoidable
-   disk churn.
-4. Shared Core world-confirmation input still polls raw Enter/Backspace rather
-   than user keybinds. This can surface while using Search world-profile flows.
+1. DONE (3.2.0 queued): `ItemLocationTracker.save()` now writes through a temp
+   file and moves it into place, keeping a `.bak` copy of the previous tracker
+   file before replacement.
+2. DONE (3.2.0 queued): `ItemLocationTracker.load()` now treats malformed JSON
+   as recoverable, attempts the `.bak` file, and starts with an empty tracker
+   instead of letting parse/runtime failures bubble through client startup.
+3. DONE (3.2.0 queued): `InventoryHistorySampler` now debounces inventory-total
+   writes, flushes pending state on shutdown, and resets pending state on
+   namespace changes so rapid inventory churn no longer saves the whole tracker
+   file every tick.
+4. DONE (3.2.0 queued): Shared Core world-profile confirmation now registers
+   remappable keybindings for confirm/open-profile actions. The compat helper
+   bridges the older Fabric `KeyBindingHelper` API and the 26.x
+   `KeyMappingHelper` API.
 
 Dropped from active bugs by user decision:
 
@@ -130,15 +135,15 @@ Dropped from active bugs by user decision:
 
 ### InvCatalogue Bug Report
 
-Status: active hardening backlog, no new user repro reported yet.
+Status: fixed locally for the queued `3.2.0` minor release.
 
 Code-audit leads already in the backlog:
 
-1. `CatalogStore.save()` writes the catalogue JSON directly without an atomic
-   temp-file swap or `.bak` fallback. A crash during write can lose that
-   namespace's catalogue, though load failure is caught and starts fresh.
-2. Shared Core world-confirmation input still uses raw Enter/Backspace polling,
-   which can affect catalogue sessions on multiplayer profile confirmation.
+1. DONE (3.2.0 queued): `CatalogStore.save()` now writes catalogue JSON through
+   a temp-file swap, keeps a `.bak` copy of the previous file, and attempts the
+   backup before starting fresh when a namespace catalogue cannot be parsed.
+2. DONE (3.2.0 queued): Shared Core world-profile confirmation now uses
+   remappable keybindings instead of raw Enter/Backspace polling.
 
 Dropped from active bugs by user decision:
 
@@ -1321,9 +1326,9 @@ implemented yet — this is the backlog backup.
    `slotClicked` packets (compact→restack→apply→restack→compact; shift-all quick-
    moves every slot). Risk of ghost items / rollback / kicks on rate-limited
    servers. Consider throttling/batching or a known-limitation note.
-3. 🟡 `"Crafting"` name match (`InventorySorter.java:257`, `:834`) would include the
-   crafting result slot if ever reached (`containerSize = total-36`). Currently
-   unreachable but a latent trap.
+3. 🟡 DONE (3.2.0 queued): Removed the `"Crafting"` name match from
+   `InventorySorter` container detection, closing the latent crafting-result
+   slot trap if buttons are ever exposed on a crafting-like screen.
 4. 🟡 DONE (3.2.0 queued): Dead/misleading bundle helper code:
    - Removed unused `fillPlayerStacksFromContainer`.
    - Removed misleading `findFirstEmptyNonBundle`.
@@ -1344,10 +1349,10 @@ implemented yet — this is the backlog backup.
 4. 🟡 Dead branch: `formatLocation` INVENTORY case checks `loc.getPos() != null`
    (`SearchModalScreen.java:515`) but inventory entries always have `pos == null`
    and are filtered out before formatting anyway.
-5. 🟡 World-confirmation uses global GLFW ENTER/BACKSPACE polling
-   (`ServerWorldProfileManager.java:91`); ignores keybind remaps and hijacks those
-   keys while active (does correctly bail when a screen is open). A real keybinding
-   would be cleaner.
+5. 🟡 DONE (3.2.0 queued): World-confirmation now uses registered keybindings
+   for the confirm/open-profile actions instead of raw GLFW ENTER/BACKSPACE
+   polling. Core uses a compat bridge for the 1.x `KeyBindingHelper` API and
+   the 26.x `KeyMappingHelper` API.
 
 ### Catalogue segment (new code, self-review)
 
@@ -1359,17 +1364,17 @@ implemented yet — this is the backlog backup.
    content hash (`ContainerTrackingMixin.generateContainerHash`), so two identically
    filled shulkers collide and count once. This is accepted as a current
    implementation limitation.
-3. 🟢 No atomic/`.bak` write on `CatalogStore.save()`; a crash mid-write loses that
-   namespace's catalogue (loader catches and starts fresh — no crash).
+3. 🟢 DONE (3.2.0 queued): `CatalogStore.save()` now writes through a temp-file
+   swap, keeps a `.bak` copy, and attempts the backup before starting fresh on
+   parse/load failure.
 4. 🟢 No in-game catalogue GUI yet (command-only). Natural future feature reusing
    the search modal styling.
 
 ### Performance
 
-1. 🟠 Inventory sampler disk churn: `InventoryHistorySampler.sample` runs every tick
-   and any inventory-total change triggers a full-file `save()`
-   (`ItemLocationTracker.java:141`). Mining/combat → many whole-JSON rewrites/sec.
-   Debounce / dirty-flag with periodic flush. (Overlaps "Performance And Logging" #1.)
+1. 🟠 DONE (3.2.0 queued): Inventory sampler disk churn is reduced by debouncing
+   inventory-total snapshot writes, periodically flushing sustained changes, and
+   flushing pending state during the Search shutdown hook.
 
 ## Mod Split Plan: InvSort / InvSearch / InvCatalogue
 

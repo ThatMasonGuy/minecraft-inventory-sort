@@ -6,6 +6,17 @@ All notable project changes will be documented here.
 
 ### Fixed
 
+- Hardened InvSearch and InvCatalogue persistence by writing tracker/catalogue
+  JSON through temp-file swaps, keeping `.bak` copies, and recovering from
+  malformed primary files without crashing client startup.
+- Reduced InvSearch inventory-tracker disk churn by debouncing player-inventory
+  snapshot writes, periodically flushing sustained changes, and flushing pending
+  inventory history during the Search shutdown hook.
+- Replaced shared world-profile raw Enter/Backspace polling with registered
+  remappable keybindings, using a Core compat bridge for the older Fabric
+  `KeyBindingHelper` API and the 26.x `KeyMappingHelper` API.
+- Removed the latent InvSort `"Crafting"` screen-name match so crafting-like
+  screens are not treated as sortable containers if buttons are exposed there.
 - Fixed InvSort sorting when bundles are present by moving bundle stacks to the
   front of the selected sortable region with a hotbar-buffer swap before sorting
   the non-bundle items behind them.

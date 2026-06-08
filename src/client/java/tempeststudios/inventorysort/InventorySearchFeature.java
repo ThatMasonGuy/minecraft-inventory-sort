@@ -32,6 +32,7 @@ public final class InventorySearchFeature {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
                 tempeststudios.inventorysort.core.InventorySortCore.LOGGER.info("Saving item location data on shutdown");
+                InventoryHistorySampler.flush();
                 ItemLocationTracker.getInstance().save();
             } catch (Exception e) {
                 tempeststudios.inventorysort.core.InventorySortCore.LOGGER.error("Failed to save item location data", e);

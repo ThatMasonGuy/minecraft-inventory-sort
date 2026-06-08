@@ -7,14 +7,15 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.ItemStack;
 
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -102,6 +103,7 @@ public final class CatalogStore {
         try {
             if (saveFile != null) {
                 Files.deleteIfExists(saveFile);
+                Files.deleteIfExists(backupFile(saveFile));
             }
         } catch (IOException e) {
             tempeststudios.inventorysort.core.InventorySortCore.LOGGER.error("Failed to delete catalog file for {}", activeNamespace, e);
@@ -177,10 +179,10 @@ public final class CatalogStore {
         if (saveFile == null) {
             return;
         }
-        try (Writer writer = new FileWriter(saveFile.toFile())) {
-            GSON.toJson(snapshots, writer);
+        try {
+            writeJsonAtomically(saveFile, snapshots);
             tempeststudios.inventorysort.core.InventorySortCore.LOGGER.debug("Saved catalog data for {}", activeNamespace);
-        } catch (IOException e) {
+        } catch (Exception e) {
             tempeststudios.inventorysort.core.InventorySortCore.LOGGER.error("Failed to save catalog data", e);
         }
     }
@@ -189,24 +191,78 @@ public final class CatalogStore {
         if (saveFile == null || !Files.exists(saveFile)) {
             return;
         }
-        try (Reader reader = new FileReader(saveFile.toFile())) {
-            Type type = new TypeToken<LinkedHashMap<String, LocationSnapshot>>() {}.getType();
-            Map<String, LocationSnapshot> loaded = GSON.fromJson(reader, type);
-            if (loaded != null) {
-                for (Map.Entry<String, LocationSnapshot> entry : loaded.entrySet()) {
-                    LocationSnapshot snapshot = entry.getValue();
-                    if (snapshot != null && snapshot.getCounts() != null) {
-                        snapshots.put(entry.getKey(), snapshot);
-                    }
-                }
-                tempeststudios.inventorysort.core.InventorySortCore.LOGGER.info("Loaded catalog with {} locations for {}",
-                        snapshots.size(), activeNamespace);
-            }
+        try {
+            loadFromFile(saveFile);
         } catch (Exception e) {
-            // Bad/partial catalog JSON should never crash the client - start fresh for this namespace.
-            tempeststudios.inventorysort.core.InventorySortCore.LOGGER.error("Failed to load catalog data for {}, starting fresh", activeNamespace, e);
+            tempeststudios.inventorysort.core.InventorySortCore.LOGGER.error("Failed to load catalog data for {}", activeNamespace, e);
+            Path backup = backupFile(saveFile);
+            if (Files.exists(backup)) {
+                try {
+                    loadFromFile(backup);
+                    tempeststudios.inventorysort.core.InventorySortCore.LOGGER.warn(
+                            "Restored catalog data for {} from backup {}", activeNamespace, backup.getFileName());
+                    return;
+                } catch (Exception backupError) {
+                    tempeststudios.inventorysort.core.InventorySortCore.LOGGER.error(
+                            "Failed to load catalog backup for {}", activeNamespace, backupError);
+                }
+            }
             snapshots.clear();
+            tempeststudios.inventorysort.core.InventorySortCore.LOGGER.warn(
+                    "Starting with empty catalog data for {}", activeNamespace);
         }
+    }
+
+    private void loadFromFile(Path file) throws IOException {
+        Type type = new TypeToken<LinkedHashMap<String, LocationSnapshot>>() {}.getType();
+        Map<String, LocationSnapshot> loaded;
+        try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
+            loaded = GSON.fromJson(reader, type);
+        }
+
+        Map<String, LocationSnapshot> sanitized = new LinkedHashMap<>();
+        if (loaded != null) {
+            for (Map.Entry<String, LocationSnapshot> entry : loaded.entrySet()) {
+                LocationSnapshot snapshot = entry.getValue();
+                if (snapshot != null && snapshot.getCounts() != null) {
+                    sanitized.put(entry.getKey(), snapshot);
+                }
+            }
+        }
+
+        snapshots.clear();
+        snapshots.putAll(sanitized);
+        tempeststudios.inventorysort.core.InventorySortCore.LOGGER.info("Loaded catalog with {} locations for {}",
+                snapshots.size(), activeNamespace);
+    }
+
+    private void writeJsonAtomically(Path target, Object data) throws IOException {
+        Files.createDirectories(target.getParent());
+        Path tempFile = Files.createTempFile(target.getParent(), target.getFileName().toString(), ".tmp");
+        try {
+            try (Writer writer = Files.newBufferedWriter(tempFile, StandardCharsets.UTF_8)) {
+                GSON.toJson(data, writer);
+            }
+            if (Files.exists(target)) {
+                Files.copy(target, backupFile(target), StandardCopyOption.REPLACE_EXISTING);
+            }
+            moveIntoPlace(tempFile, target);
+        } catch (IOException | RuntimeException e) {
+            Files.deleteIfExists(tempFile);
+            throw e;
+        }
+    }
+
+    private static void moveIntoPlace(Path tempFile, Path target) throws IOException {
+        try {
+            Files.move(tempFile, target, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+        } catch (AtomicMoveNotSupportedException e) {
+            Files.move(tempFile, target, StandardCopyOption.REPLACE_EXISTING);
+        }
+    }
+
+    private static Path backupFile(Path target) {
+        return target.resolveSibling(target.getFileName().toString() + ".bak");
     }
 
     /**
