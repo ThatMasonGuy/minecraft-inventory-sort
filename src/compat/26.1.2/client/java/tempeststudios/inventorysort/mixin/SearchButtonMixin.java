@@ -13,11 +13,12 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import tempeststudios.inventorysort.InventorySortIconButton;
+import tempeststudios.inventorysort.RecipeBookAwareButtonScreen;
 import tempeststudios.inventorysort.SearchModalScreen;
 import tempeststudios.inventorysort.compat.core.MinecraftApiCompat;
 
 @Mixin(AbstractContainerScreen.class)
-public abstract class SearchButtonMixin {
+public abstract class SearchButtonMixin implements RecipeBookAwareButtonScreen {
 
     @Unique private static final int inventorySearch$BUTTON_SIZE = 12;
     @Unique private static final int inventorySearch$BUTTON_GAP = 1;
@@ -51,6 +52,16 @@ public abstract class SearchButtonMixin {
 
     @Inject(method = "extractRenderState", at = @At("HEAD"))
     private void inventorySearch$onExtractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
+        inventorySearch$updateButtonPosition();
+    }
+
+    @Override
+    public void inventorysearch$updateButtonPositionsFromRecipeBookRender() {
+        inventorySearch$updateButtonPosition();
+    }
+
+    @Unique
+    private void inventorySearch$updateButtonPosition() {
         if (inventorySearch$searchButton == null) {
             return;
         }

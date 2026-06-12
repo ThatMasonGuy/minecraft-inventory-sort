@@ -32,6 +32,8 @@ All notable project changes will be documented here.
 
 ### Changed
 
+- Bumped the local patch lane to `3.2.1` for the recipe-book button offset
+  regression fix. This patch has not been published yet.
 - Unified the InvSort rules, InvSearch results/world, and InvCatalogue report
   screens under one modern dark theme with a per-mod accent (gold for InvSort,
   blue for InvSearch, green for InvCatalogue) so the three menus read as one
@@ -74,6 +76,10 @@ All notable project changes will be documented here.
 
 ### Fixed
 
+- Fixed the recipe-book button offset regression on player inventory and
+  crafting screens so the InvSort and InvSearch buttons recalculate against the
+  shifted vanilla GUI position when the recipe book opens, including the
+  Minecraft 26.x `GuiGraphicsExtractor` render-state path.
 - Hardened `verifyReleaseJars` so public feature jars and their embedded Core
   jars fail verification if project docs, source files, build scripts, or
   source-art formats are accidentally packaged.

@@ -1,6 +1,13 @@
 # Inventory Search TODO
 
-Current checkpoint: queued `3.2.0` bug-fix hardening is implemented locally for
+Current checkpoint: local `3.2.1` patch work fixes the recipe-book button
+offset regression on player inventory and crafting screens for InvSort and
+InvSearch, including the Minecraft 26.x render-state path. `mod_version` is
+bumped to `3.2.1`; `1.21.11` and `26.1.2` builds plus focused all-public smoke
+launches pass locally, the user confirmed the in-game recipe-book offset test
+works, and publish/push is intentionally deferred until the user asks.
+
+Previous `3.2.0` checkpoint: bug-fix hardening is implemented locally for
 InvSort, InvSearch, InvCatalogue, and shared Core. InvCatalogue now also has a
 local report-history browser for saved catalogue reports, and the full
 supported profile build passes. A user-reported Minecraft `1.21.11` launch
@@ -82,6 +89,43 @@ original image included an unwanted nested screenshot icon.
 - Inventory Search exposes shared world-profile commands as
   `/inventorysearch world list|use|default|current`.
 - Core no longer registers a public `/inventorysort` command root.
+
+## Bug Report Intake (2026-06-12)
+
+### Recipe Book Button Offset Regression
+
+Status: fixed locally for the queued `3.2.1` patch and confirmed by user local
+in-game testing. Publish/push remains deferred until the user asks.
+
+User-reported repro:
+
+1. In Minecraft `1.21.11`, InvSort and InvSearch buttons on player inventory
+   and crafting screens do not move when the recipe book opens.
+2. In Minecraft `26.1.2`, the same buttons also stay anchored to the old GUI
+   position instead of following the shifted vanilla screen.
+
+Implementation notes:
+
+- Restored the recipe-book-specific update path because
+  `AbstractRecipeBookScreen` overrides the normal `AbstractContainerScreen`
+  render/extract method used by the generic button-position refresh.
+- Fixed the 1.x `AbstractRecipeBookScreen` hook to match the real
+  `render(GuiGraphics, int, int, float)` signature.
+- Added 26.x `AbstractRecipeBookScreen` overlays that hook
+  `extractRenderState(GuiGraphicsExtractor, int, int, float)` and exclude the
+  shared 1.x mixin for 26.x profiles.
+- Let the Search button participate in the same recipe-book callback as the
+  Sort buttons, while keeping either feature mod installable on its own.
+
+Verification:
+
+- PASS: `git diff --check`.
+- PASS: `.\gradlew.bat buildAllMods --no-daemon --console=plain`.
+- PASS: `.\gradlew.bat buildAllMods "-Pminecraft_version_profile=26.1.2" --no-daemon --console=plain`.
+- PASS: `.\gradlew.bat smokeTestSelectedClients "-Pinventorysort_smoke_profiles=1.21.11,26.1-26.1.2" "-Pinventorysort_smoke_game_versions=1.21.11,26.1.2" "-Pinventorysort_smoke_install_sets=all-public" --no-daemon --console=plain`.
+- PASS: `.\gradlew.bat smokeTestSelectedClients "-Pinventorysort_smoke_profiles=1.21.11,26.1-26.1.2" "-Pinventorysort_smoke_game_versions=1.21.11,26.1.2" "-Pinventorysort_smoke_install_sets=inventorysort-only,inventorysearch-only" --no-daemon --console=plain`.
+- PASS: User local in-game recipe-book test confirmed the InvSort and InvSearch
+  buttons now move correctly.
 
 ## Bug Report Intake (2026-06-08)
 

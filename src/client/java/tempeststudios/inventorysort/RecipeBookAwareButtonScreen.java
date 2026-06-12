@@ -1,5 +1,9 @@
 package tempeststudios.inventorysort;
 
 public interface RecipeBookAwareButtonScreen {
-	void inventorysort$updateButtonPositionsFromRecipeBookRender();
+	default void inventorysort$updateButtonPositionsFromRecipeBookRender() {
+	}
+
+	default void inventorysearch$updateButtonPositionsFromRecipeBookRender() {
+	}
 }
