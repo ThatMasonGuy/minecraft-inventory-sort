@@ -3,10 +3,8 @@ package tempeststudios.inventorysort;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ServerData;
 import tempeststudios.inventorysort.compat.core.MinecraftApiCompat;
-import tempeststudios.inventorysort.compat.core.MinecraftApiCompat;
 
 import java.nio.file.Path;
-import java.util.Locale;
 
 public final class TrackingNamespace {
     private static final String UNKNOWN = "unknown";
@@ -29,7 +27,7 @@ public final class TrackingNamespace {
             } catch (Exception ignored) {
                 worldId = client.getSingleplayerServer().getWorldData().getLevelName();
             }
-            return "singleplayer:" + sanitize(worldId);
+            return TempestStudiosData.singleplayerNamespace(client, worldId);
         }
 
         ServerData server = client.getCurrentServer();
@@ -39,7 +37,7 @@ public final class TrackingNamespace {
             if (profile == null || profile.equals("default")) {
                 return "server:" + serverKey;
             }
-            return "server:" + serverKey + ":world:" + sanitize(profile);
+            return "server:" + serverKey + ":world:" + TempestStudiosData.sanitize(profile);
         }
 
         return UNKNOWN;
@@ -54,7 +52,7 @@ public final class TrackingNamespace {
             return null;
         }
         String serverId = server.ip != null && !server.ip.isBlank() ? server.ip : server.name;
-        return sanitize(serverId);
+        return TempestStudiosData.sanitize(serverId);
     }
 
     public static boolean isMultiplayerServer(Minecraft client) {
@@ -62,15 +60,6 @@ public final class TrackingNamespace {
     }
 
     public static String fileNameSafe(String namespace) {
-        return sanitize(namespace).replace(':', '_');
-    }
-
-    private static String sanitize(String value) {
-        if (value == null || value.isBlank()) {
-            return UNKNOWN;
-        }
-        return value.trim()
-                .toLowerCase(Locale.ROOT)
-                .replaceAll("[^a-z0-9._:-]+", "_");
+        return TempestStudiosData.fileNameSafe(namespace);
     }
 }

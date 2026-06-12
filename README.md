@@ -40,13 +40,24 @@ A lightweight **client-side** Minecraft mod that adds robust sorting capabilitie
 - **Minecart Storage:** Properly tracks Chest Minecarts and Hopper Minecarts.
 - **Multiplayer Server & World Profiles:** Maintains separate tracking databases per server or single-player world. Essential for multiplayer hardcore resets!
 - **World Confirmation HUD:** Uses a non-intrusive HUD prompt to confirm the world/profile context, preventing writes to the wrong database until confirmed without blocking your gameplay.
+- **Launcher-Safe Data:** Persistent mod data is stored in OS app-data under a shared Tempest Studios folder, with separate `InvSort`, `InvSearch`, `InvCatalogue`, and `InvCore` folders. Legacy `.minecraft/inventorysort` data is copied forward once on first launch.
 
 ### 4. Catalogue Mode
 
 - **Cataloguing Sessions:** Start a session with `/inventorycatalogue start` (use `/inventorycatalogue start includeInventory` to also count your own inventory), then walk your base opening every chest, shulker, ender chest, minecart, and other storage. Finish with `/inventorycatalogue stop` to get a deduplicated tally of everything you own.
 - **Identity-Based Deduplication:** Built on the same container-identity system as Tracked Storage, so single vs. double chests, individual shulkers, per-player ender chests, and minecarts are each counted once. Reopening a container refreshes its snapshot instead of double-counting it.
 - **Per-World & Persistent:** Catalogue data is scoped per server/world profile and saved to disk, so a tally accumulates across play sessions and survives restarts - perfect for seeing exactly how much of everything you hoarded by the end of a world. Reset a world's catalogue with `/inventorycatalogue clear`.
-- **Reports:** `/inventorycatalogue status` and `/inventorycatalogue report` show running totals in chat; `/inventorycatalogue reports` opens an in-game browser for saved reports with item icons, counts, and `:category` filters; `/inventorycatalogue stop` also writes a full plain-text report to `.minecraft/inventorysort/catalog/`.
+- **Reports:** `/inventorycatalogue status` and `/inventorycatalogue report` show running totals in chat; `/inventorycatalogue reports` opens an in-game browser for saved reports with item icons, counts, and `:category` filters; `/inventorycatalogue stop` also writes a full plain-text report to the app-data `InvCatalogue/catalog/` folder.
+
+## Persistent Data
+
+Inventory Mods stores cross-instance data outside the launcher instance folder:
+
+- Windows: `%APPDATA%\TempestStudios\InvSort\`, `InvSearch\`, `InvCatalogue\`, and `InvCore\`
+- macOS: `~/Library/Application Support/TempestStudios/InvSort/`, `InvSearch/`, `InvCatalogue/`, and `InvCore/`
+- Linux: `$XDG_DATA_HOME/tempest-studios/inv-sort/`, `inv-search/`, `inv-catalogue/`, and `inv-core/`, or `~/.local/share/tempest-studios/...` when `XDG_DATA_HOME` is not set
+
+Single-player tracking namespaces include a stable launcher-instance id so two different instances can each have a world named `world` without sharing storage. Multiplayer server namespaces stay shared across instances for the same user/account.
 
 ## Compatibility & Scope
 

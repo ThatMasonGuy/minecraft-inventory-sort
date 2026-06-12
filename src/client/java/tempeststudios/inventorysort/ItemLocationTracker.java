@@ -37,15 +37,14 @@ public class ItemLocationTracker {
     private ItemLocationTracker() {
         this.trackedLocations = new ConcurrentHashMap<>();
 
-        // Save file in .minecraft/inventorysort/item_locations.json
         Minecraft mc = Minecraft.getInstance();
-        Path gameDir = mc.gameDirectory.toPath();
-        this.modDir = gameDir.resolve("inventorysort");
+        LegacyDataMigration.migrateLegacyData(mc);
+        this.modDir = TempestStudiosData.modRoot(TempestStudiosData.ModDataFolder.SEARCH);
 
         try {
             Files.createDirectories(modDir);
         } catch (IOException e) {
-            tempeststudios.inventorysort.core.InventorySortCore.LOGGER.error("Failed to create mod directory", e);
+            tempeststudios.inventorysort.core.InventorySortCore.LOGGER.error("Failed to create InvSearch data directory", e);
         }
 
         this.activeNamespace = null;

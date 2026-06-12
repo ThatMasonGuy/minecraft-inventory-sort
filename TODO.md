@@ -5,7 +5,11 @@ offset regression on player inventory and crafting screens for InvSort and
 InvSearch, including the Minecraft 26.x render-state path. `mod_version` is
 bumped to `3.2.1`; `1.21.11` and `26.1.2` builds plus focused all-public smoke
 launches pass locally, the user confirmed the in-game recipe-book offset test
-works, and publish/push is intentionally deferred until the user asks.
+works. Follow-up local `3.2.1` work now moves persistent Inventory Mods data to
+Tempest Studios app-data roots with instance-scoped single-player namespaces and
+a once-per-source migration registry; `git diff --check` and local
+`buildAllMods` pass for that storage patch. Publish/push is intentionally
+deferred until the user asks.
 
 Previous `3.2.0` checkpoint: bug-fix hardening is implemented locally for
 InvSort, InvSearch, InvCatalogue, and shared Core. InvCatalogue now also has a
@@ -91,6 +95,69 @@ original image included an unwanted nested screenshot icon.
 - Core no longer registers a public `/inventorysort` command root.
 
 ## Bug Report Intake (2026-06-12)
+
+### Launcher/Instance-Hardened Persistent Data
+
+Status: implemented and verified locally for the queued `3.2.1` patch.
+Publish/push remains deferred until the user asks.
+
+User-requested storage model:
+
+1. Move persistent cross-instance data into shared Tempest Studios app-data
+   folders:
+   - Windows: `%APPDATA%\TempestStudios\Inv{Mod}\`
+   - macOS: `~/Library/Application Support/TempestStudios/Inv{Mod}/`
+   - Linux: `$XDG_DATA_HOME/tempest-studios/inv-{mod}/`, falling back to
+     `~/.local/share/tempest-studios/inv-{mod}/`.
+2. Keep each public feature mod clearly separated so users can delete one mod's
+   data without removing the others.
+3. Copy old `.minecraft/inventorysort` data on first launch without repeatedly
+   re-reading or double-merging legacy files.
+4. Treat single-player worlds as instance-local because two launcher instances
+   can both contain a world named `world`; keep multiplayer server/profile data
+   shared across instances for the same user/account.
+5. Handle InvSearch location files conservatively: prefer leaving ambiguous data
+   behind over merging legacy locations into the wrong shared namespace.
+
+Implementation notes:
+
+- Added `TempestStudiosData` in shared Core to centralize OS app-data roots,
+  per-mod folder names, legacy source paths, sanitization, and launcher-instance
+  ids derived from the canonical Minecraft game directory.
+- Active stores now write to app-data:
+  - `InvCore/server_world_profiles.json`
+  - `InvCore/migration_registry.json`
+  - `InvSort/sort_rules.json`
+  - `InvSearch/item_locations_<namespace>.json`
+  - `InvCatalogue/catalog/catalog_<namespace>.json` plus catalogue reports.
+- Single-player namespaces now use
+  `singleplayer:instance_<hash>:<world>`. Server namespaces remain
+  `server:<server>` or `server:<server>:world:<profile>`.
+- Added `LegacyDataMigration`, invoked from Core and defensively from each store
+  constructor before loading active data. It copies or transforms legacy files
+  only when the app-data target is absent and the source has not already been
+  recorded in the migration registry.
+- Sort-rule container override keys are rewritten from old single-player
+  namespaces to the new instance-scoped namespace during import.
+- InvSearch imports parse per-namespace JSON files, reject multi-namespace or
+  invalid files, rewrite accepted entries to the target namespace, and skip the
+  import if the destination tracking file already exists. It does not merge
+  legacy lists into existing shared data.
+- InvCatalogue snapshot files and report JSON/text files are copied into
+  `InvCatalogue/catalog/`; single-player report ids and namespace labels are
+  rewritten to the instance-scoped namespace.
+- The migration registry records source, target, result, game directory,
+  installed mod versions, epoch millis, and ISO timestamp so future launches do
+  not keep revisiting the same legacy source files.
+- The public release jar size sentinel was raised from 199 KB to 225 KB because
+  the shared Core storage/migration classes intentionally increased the embedded
+  Core footprint; the release-jar junk-file and embedded-Core checks remain in
+  place.
+
+Verification:
+
+- PASS: `git diff --check`.
+- PASS: `.\gradlew.bat buildAllMods --no-daemon --console=plain`.
 
 ### Recipe Book Button Offset Regression
 

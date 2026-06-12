@@ -29,11 +29,25 @@ All notable project changes will be documented here.
   InvCatalogue, including image metadata, banner selectors, description-image
   selectors, and a repeatable project-page/gallery sync script plus manual
   GitHub workflow.
+- Added Tempest Studios app-data roots for persistent InvSort, InvSearch,
+  InvCatalogue, and shared Core data, plus a migration registry that records
+  each legacy instance-file import with the installed mod versions and import
+  timestamp.
 
 ### Changed
 
 - Bumped the local patch lane to `3.2.1` for the recipe-book button offset
   regression fix. This patch has not been published yet.
+- Moved active persistent data out of `.minecraft/inventorysort` and into
+  per-feature app-data folders (`InvSort`, `InvSearch`, `InvCatalogue`, and
+  `InvCore`), with first-launch legacy copy/import from the old instance-local
+  folder.
+- Scoped single-player tracking namespaces by launcher-instance id so same-name
+  worlds in different instances do not collide in the shared app-data store,
+  while multiplayer server/profile namespaces remain shared across instances.
+- Raised the public release jar size sentinel to allow the intentional shared
+  Core storage/migration footprint while keeping the release-jar junk-file and
+  embedded-Core verification checks in place.
 - Unified the InvSort rules, InvSearch results/world, and InvCatalogue report
   screens under one modern dark theme with a per-mod accent (gold for InvSort,
   blue for InvSearch, green for InvCatalogue) so the three menus read as one

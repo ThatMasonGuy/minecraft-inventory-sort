@@ -27,12 +27,13 @@ public final class SortRuleStore {
 
     private SortRuleStore() {
         Minecraft mc = Minecraft.getInstance();
-        Path modDir = mc.gameDirectory.toPath().resolve("inventorysort");
+        LegacyDataMigration.migrateLegacyData(mc);
+        Path modDir = TempestStudiosData.modRoot(TempestStudiosData.ModDataFolder.SORT);
         this.saveFile = modDir.resolve("sort_rules.json");
         try {
             Files.createDirectories(modDir);
         } catch (IOException e) {
-            tempeststudios.inventorysort.core.InventorySortCore.LOGGER.error("Failed to create inventorysort directory", e);
+            tempeststudios.inventorysort.core.InventorySortCore.LOGGER.error("Failed to create InvSort data directory", e);
         }
         load();
     }

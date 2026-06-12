@@ -40,12 +40,14 @@ public final class ServerWorldProfileManager {
     private final Set<String> confirmedThisSession = new HashSet<>();
 
     private ServerWorldProfileManager() {
-        Path modDir = Minecraft.getInstance().gameDirectory.toPath().resolve("inventorysort");
+        Minecraft mc = Minecraft.getInstance();
+        LegacyDataMigration.migrateLegacyData(mc);
+        Path modDir = TempestStudiosData.modRoot(TempestStudiosData.ModDataFolder.CORE);
         this.saveFile = modDir.resolve("server_world_profiles.json");
         try {
             Files.createDirectories(modDir);
         } catch (IOException e) {
-            tempeststudios.inventorysort.core.InventorySortCore.LOGGER.error("Failed to create inventorysort directory", e);
+            tempeststudios.inventorysort.core.InventorySortCore.LOGGER.error("Failed to create InvCore data directory", e);
         }
         load();
     }

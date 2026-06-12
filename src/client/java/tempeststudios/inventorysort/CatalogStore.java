@@ -48,8 +48,8 @@ public final class CatalogStore {
 
     private CatalogStore() {
         Minecraft mc = Minecraft.getInstance();
-        Path gameDir = mc.gameDirectory.toPath();
-        this.catalogDir = gameDir.resolve("inventorysort").resolve("catalog");
+        LegacyDataMigration.migrateLegacyData(mc);
+        this.catalogDir = TempestStudiosData.modRoot(TempestStudiosData.ModDataFolder.CATALOGUE).resolve("catalog");
 
         try {
             Files.createDirectories(catalogDir);

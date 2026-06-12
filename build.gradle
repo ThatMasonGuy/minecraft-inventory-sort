@@ -109,7 +109,7 @@ def smokeTestRequiredMinecraftVersionProfiles = profileListProperty(
 		'smoke_test_required_minecraft_version_profiles',
 		supportedMinecraftVersionProfiles.join(',')
 )
-def maxPublicReleaseJarSizeBytes = (findProperty('public_release_max_jar_size_bytes') ?: '199000').toString() as long
+def maxPublicReleaseJarSizeBytes = (findProperty('public_release_max_jar_size_bytes') ?: '225000').toString() as long
 def forbiddenPackagedPathPattern = ~/(?i)(^|\/)(README|CHANGELOG|TODO|AGENTS|COMPATIBILITY)(\.|\/|$)|\.(md|adoc|txt|java|kt|kts|gradle|properties|ps1|bat|sh|xcf|psd|kra|blend|svg)$/
 def allowedPackagedPathPattern = ~/(?i)(^|\/)LICENSE(-GPL-3\.0)?(_[^\/]+)?$/
 def packagedJunkEntries = { Collection<String> entryNames ->
