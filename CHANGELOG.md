@@ -36,8 +36,8 @@ All notable project changes will be documented here.
 
 ### Changed
 
-- Bumped the local patch lane to `3.2.1` for the recipe-book button offset
-  regression fix. This patch has not been published yet.
+- Bumped the patch lane to `3.2.1` for the recipe-book button offset regression
+  fix and launcher/instance-hardened app-data storage migration.
 - Moved active persistent data out of `.minecraft/inventorysort` and into
   per-feature app-data folders (`InvSort`, `InvSearch`, `InvCatalogue`, and
   `InvCore`), with first-launch legacy copy/import from the old instance-local
@@ -88,6 +88,11 @@ All notable project changes will be documented here.
   jars.
 - Corrected the live InvSort `Rules: Inventory Order` Modrinth gallery and
   description screenshot after replacing the source image in `gallery/`.
+- Published `3.2.1` through guarded GitHub Actions workflow `27409085355`,
+  uploaded all 24 Modrinth compatibility-group versions, and created the
+  annotated `v3.2.1` GitHub Release on source commit
+  `878286ebde96d45d890366c0b2e350f5d080a377` without attaching GitHub jar
+  assets.
 
 ### Fixed
 

@@ -1,16 +1,18 @@
 # Inventory Search TODO
 
-Current checkpoint: local `3.2.1` patch work fixes the recipe-book button
+Current checkpoint: `3.2.1` patch work fixes the recipe-book button
 offset regression on player inventory and crafting screens for InvSort and
 InvSearch, including the Minecraft 26.x render-state path. `mod_version` is
 bumped to `3.2.1`; `1.21.11` and `26.1.2` builds plus focused all-public smoke
 launches pass locally, the user confirmed the in-game recipe-book offset test
-works. Follow-up local `3.2.1` work now moves persistent Inventory Mods data to
+works. Follow-up `3.2.1` work moves persistent Inventory Mods data to
 Tempest Studios app-data roots with instance-scoped single-player namespaces and
 a once-per-source migration registry; `git diff --check` and local
 `buildAllMods` pass for that storage patch. A later account-scope hardening pass
 for multiplayer server namespaces passes the full supported `buildAllVersions`
-gate. Publish/push is intentionally deferred until the user asks.
+gate. The guarded GitHub Actions Modrinth publish completed successfully for
+`3.2.1`, uploaded all 24 compatibility-group versions, and the annotated
+`v3.2.1` GitHub Release now points users to the canonical Modrinth downloads.
 
 Previous `3.2.0` checkpoint: bug-fix hardening is implemented locally for
 InvSort, InvSearch, InvCatalogue, and shared Core. InvCatalogue now also has a
@@ -97,10 +99,46 @@ original image included an unwanted nested screenshot icon.
 
 ## Bug Report Intake (2026-06-12)
 
+### `3.2.1` Publish Evidence
+
+Status: published.
+
+- Release source commit:
+  `878286ebde96d45d890366c0b2e350f5d080a377`.
+- Guarded Modrinth publish workflow:
+  `https://github.com/ThatMasonGuy/minecraft-inventory-sort/actions/runs/27409085355`.
+- Publish artifact:
+  `https://github.com/ThatMasonGuy/minecraft-inventory-sort/actions/runs/27409085355/artifacts/7589794071`.
+- Annotated Git tag: `v3.2.1`, resolving locally to the release source commit.
+- GitHub Release:
+  `https://github.com/ThatMasonGuy/minecraft-inventory-sort/releases/tag/v3.2.1`.
+- GitHub Release assets: none; Modrinth remains the canonical download surface.
+- Workflow upload result: `BUILD SUCCESSFUL in 53m 51s`; upload plan plus
+  release jars were captured in artifact `7589794071`.
+- Live Modrinth API readback confirmed all 8 InvSort and all 8 InvSearch
+  `3.2.1` versions as `listed`; InvCatalogue version URLs were recorded from
+  the successful upload log and public page checks before Modrinth rate limiting
+  stopped additional unauthenticated checks.
+
+Published Modrinth version ids:
+
+- InvSort: `PiPhyltA` (`1.20-1.20.4`), `BWm5UAyU` (`1.20.5-1.20.6`),
+  `uCSAwAo4` (`1.21-1.21.5`), `w0DSuxSa` (`1.21.6-1.21.8`),
+  `nHyLq9Yi` (`1.21.9-1.21.10`), `hDOm8yXL` (`1.21.11`), `Jc8Jyr1e`
+  (`26.1-26.1.2`), and `nSHow87k` (`26.2-pre-3`).
+- InvSearch: `LFplZX2l` (`1.20-1.20.4`), `oyA5JimT` (`1.20.5-1.20.6`),
+  `n8iT4lzh` (`1.21-1.21.5`), `iyuV8YvL` (`1.21.6-1.21.8`),
+  `U8wPWCjm` (`1.21.9-1.21.10`), `gvkgnSzg` (`1.21.11`), `mPjljVY5`
+  (`26.1-26.1.2`), and `zVi5oW1h` (`26.2-pre-3`).
+- InvCatalogue: `rqSTR5f3` (`1.20-1.20.4`), `xK2UviU8`
+  (`1.20.5-1.20.6`), `iKL9fLOg` (`1.21-1.21.5`), `YKVqgKgv`
+  (`1.21.6-1.21.8`), `sfHh95P5` (`1.21.9-1.21.10`), `yBkX7RdN`
+  (`1.21.11`), `2iEZg6L4` (`26.1-26.1.2`), and `7q9J83x8`
+  (`26.2-pre-3`).
+
 ### Launcher/Instance-Hardened Persistent Data
 
-Status: implemented and verified locally for the queued `3.2.1` patch.
-Publish/push remains deferred until the user asks.
+Status: implemented, verified locally, and published in `3.2.1`.
 
 User-requested storage model:
 
@@ -168,8 +206,8 @@ Verification:
 
 ### Recipe Book Button Offset Regression
 
-Status: fixed locally for the queued `3.2.1` patch and confirmed by user local
-in-game testing. Publish/push remains deferred until the user asks.
+Status: fixed, confirmed by user local in-game testing, and published in
+`3.2.1`.
 
 User-reported repro:
 
