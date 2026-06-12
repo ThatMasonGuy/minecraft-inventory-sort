@@ -8,8 +8,9 @@ launches pass locally, the user confirmed the in-game recipe-book offset test
 works. Follow-up local `3.2.1` work now moves persistent Inventory Mods data to
 Tempest Studios app-data roots with instance-scoped single-player namespaces and
 a once-per-source migration registry; `git diff --check` and local
-`buildAllMods` pass for that storage patch. Publish/push is intentionally
-deferred until the user asks.
+`buildAllMods` pass for that storage patch. A later account-scope hardening pass
+for multiplayer server namespaces passes the full supported `buildAllVersions`
+gate. Publish/push is intentionally deferred until the user asks.
 
 Previous `3.2.0` checkpoint: bug-fix hardening is implemented locally for
 InvSort, InvSearch, InvCatalogue, and shared Core. InvCatalogue now also has a
@@ -115,7 +116,8 @@ User-requested storage model:
    re-reading or double-merging legacy files.
 4. Treat single-player worlds as instance-local because two launcher instances
    can both contain a world named `world`; keep multiplayer server/profile data
-   shared across instances for the same user/account.
+   shared across instances for the same Minecraft account, while separating
+   different accounts on the same computer.
 5. Handle InvSearch location files conservatively: prefer leaving ambiguous data
    behind over merging legacy locations into the wrong shared namespace.
 
@@ -131,8 +133,12 @@ Implementation notes:
   - `InvSearch/item_locations_<namespace>.json`
   - `InvCatalogue/catalog/catalog_<namespace>.json` plus catalogue reports.
 - Single-player namespaces now use
-  `singleplayer:instance_<hash>:<world>`. Server namespaces remain
-  `server:<server>` or `server:<server>:world:<profile>`.
+  `singleplayer:instance_<hash>:<world>`. Server namespaces now use
+  `server:<server>:account:<hash>` or
+  `server:<server>:account:<hash>:world:<profile>`.
+- Legacy server namespace imports are mapped into the active Minecraft account
+  scope, keeping server data shared across launcher instances for that account
+  without sharing it across different accounts on the same OS user.
 - Added `LegacyDataMigration`, invoked from Core and defensively from each store
   constructor before loading active data. It copies or transforms legacy files
   only when the app-data target is absent and the source has not already been
@@ -158,6 +164,7 @@ Verification:
 
 - PASS: `git diff --check`.
 - PASS: `.\gradlew.bat buildAllMods --no-daemon --console=plain`.
+- PASS: `.\gradlew.bat buildAllVersions --no-daemon --console=plain`.
 
 ### Recipe Book Button Offset Regression
 

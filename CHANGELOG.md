@@ -44,7 +44,8 @@ All notable project changes will be documented here.
   folder.
 - Scoped single-player tracking namespaces by launcher-instance id so same-name
   worlds in different instances do not collide in the shared app-data store,
-  while multiplayer server/profile namespaces remain shared across instances.
+  while multiplayer server/profile namespaces remain shared across instances
+  only for the same Minecraft account.
 - Raised the public release jar size sentinel to allow the intentional shared
   Core storage/migration footprint while keeping the release-jar junk-file and
   embedded-Core verification checks in place.

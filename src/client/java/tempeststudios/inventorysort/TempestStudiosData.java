@@ -49,18 +49,32 @@ public final class TempestStudiosData {
         return "singleplayer:" + instanceId(client) + ":" + sanitize(worldId);
     }
 
-    public static String mapLegacyNamespace(Minecraft client, String namespace) {
+    public static String accountScopedServerNamespace(Minecraft client, String namespace) {
         String normalized = sanitize(namespace);
-        String prefix = "singleplayer:";
-        if (!normalized.startsWith(prefix)) {
+        if (!normalized.startsWith("server:") || normalized.contains(":account:")) {
             return normalized;
         }
 
-        String worldId = normalized.substring(prefix.length());
-        if (hasInstanceScope(worldId)) {
-            return normalized;
+        int worldIndex = normalized.lastIndexOf(":world:");
+        String suffix = "";
+        if (worldIndex >= 0) {
+            suffix = normalized.substring(worldIndex);
+            normalized = normalized.substring(0, worldIndex);
         }
-        return prefix + instanceId(client) + ":" + worldId;
+        return normalized + ":account:" + accountId(client) + suffix;
+    }
+
+    public static String mapLegacyNamespace(Minecraft client, String namespace) {
+        String normalized = sanitize(namespace);
+        String prefix = "singleplayer:";
+        if (normalized.startsWith(prefix)) {
+            String worldId = normalized.substring(prefix.length());
+            if (hasInstanceScope(worldId)) {
+                return normalized;
+            }
+            return prefix + instanceId(client) + ":" + worldId;
+        }
+        return accountScopedServerNamespace(client, normalized);
     }
 
     public static String fileNameSafe(String namespace) {
@@ -79,6 +93,19 @@ public final class TempestStudiosData {
     public static String instanceId(Minecraft client) {
         Path path = canonicalGameDirectory(client);
         return "instance_" + shortHash(path.toString());
+    }
+
+    public static String accountId(Minecraft client) {
+        try {
+            if (client != null && client.getUser() != null && client.getUser().getProfileId() != null) {
+                return "account_" + shortHash(client.getUser().getProfileId().toString());
+            }
+            if (client != null && client.getUser() != null && client.getUser().getName() != null) {
+                return "account_" + shortHash(client.getUser().getName());
+            }
+        } catch (Exception ignored) {
+        }
+        return "account_unknown";
     }
 
     private static boolean hasInstanceScope(String singleplayerSuffix) {

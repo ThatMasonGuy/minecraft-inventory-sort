@@ -57,7 +57,7 @@ Inventory Mods stores cross-instance data outside the launcher instance folder:
 - macOS: `~/Library/Application Support/TempestStudios/InvSort/`, `InvSearch/`, `InvCatalogue/`, and `InvCore/`
 - Linux: `$XDG_DATA_HOME/tempest-studios/inv-sort/`, `inv-search/`, `inv-catalogue/`, and `inv-core/`, or `~/.local/share/tempest-studios/...` when `XDG_DATA_HOME` is not set
 
-Single-player tracking namespaces include a stable launcher-instance id so two different instances can each have a world named `world` without sharing storage. Multiplayer server namespaces stay shared across instances for the same user/account.
+Single-player tracking namespaces include a stable launcher-instance id so two different instances can each have a world named `world` without sharing storage. Multiplayer server namespaces stay shared across instances for the same Minecraft account, and separated for different accounts on the same computer.
 
 ## Compatibility & Scope
 

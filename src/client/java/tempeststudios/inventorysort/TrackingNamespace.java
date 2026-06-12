@@ -33,11 +33,12 @@ public final class TrackingNamespace {
         ServerData server = client.getCurrentServer();
         if (server != null) {
             String serverKey = currentServerKey(client);
+            String serverNamespace = TempestStudiosData.accountScopedServerNamespace(client, "server:" + serverKey);
             String profile = ServerWorldProfileManager.getInstance().getActiveProfile(serverKey);
             if (profile == null || profile.equals("default")) {
-                return "server:" + serverKey;
+                return serverNamespace;
             }
-            return "server:" + serverKey + ":world:" + TempestStudiosData.sanitize(profile);
+            return serverNamespace + ":world:" + TempestStudiosData.sanitize(profile);
         }
 
         return UNKNOWN;

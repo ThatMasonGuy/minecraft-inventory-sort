@@ -623,6 +623,14 @@ public class CatalogReportBrowserScreen extends Screen {
         }
         if (value.startsWith("server:")) {
             value = value.substring("server:".length());
+            int accountIndex = value.indexOf(":account:");
+            if (accountIndex >= 0) {
+                String serverName = value.substring(0, accountIndex);
+                int worldIndex = value.indexOf(":world:", accountIndex + ":account:".length());
+                value = worldIndex >= 0
+                        ? serverName + value.substring(worldIndex)
+                        : serverName;
+            }
             return "Server - " + value;
         }
         return value;
