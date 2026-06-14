@@ -1,7 +1,6 @@
 # Inventory Search TODO
 
-Current checkpoint: `3.2.2` patch work is implemented locally for world-scoped InvSort
-rules. `mod_version` is bumped to `3.2.2`; InvSort now stores player inventory
+Current checkpoint: `3.2.2` is published. InvSort now stores player inventory
 rules, world-container defaults, screen overrides, and exact-container overrides
 under the active `TrackingNamespace.current(...)` entry in
 `InvSort/sort_rules.json`. Existing old-shape global rule files migrate once
@@ -9,8 +8,11 @@ into the new `worldRules` schema: player/container/screen defaults seed the
 current world, and namespace-prefixed exact-container overrides move into their
 matching world buckets with the namespace stripped from the container key. The
 rules screen labels now say `World player inventory` and `World Containers`
-across the shared 1.x UI and both 26.x overlays. `git diff --check` passes, and
-the default-profile `buildAllMods` gate passes locally.
+across the shared 1.x UI and both 26.x overlays. Local `git diff --check` and
+default-profile `buildAllMods` passed before release; the guarded GitHub Actions
+Modrinth publish completed successfully for `3.2.2`, uploaded all 24
+compatibility-group versions, and the annotated `v3.2.2` GitHub Release now
+points users to the canonical Modrinth downloads.
 
 Previous `3.2.1` checkpoint: recipe-book button offset regression fixes for
 InvSort and InvSearch were published, including the Minecraft 26.x render-state
@@ -106,6 +108,44 @@ original image included an unwanted nested screenshot icon.
 - Core no longer registers a public `/inventorysort` command root.
 
 ## Bug Report Intake (2026-06-12)
+
+### `3.2.2` Publish Evidence
+
+Status: published.
+
+- Release source commit:
+  `1729c0135d6f15d7f10b6da9ed7b9990bc368ce4`.
+- Guarded Modrinth publish workflow:
+  `https://github.com/ThatMasonGuy/minecraft-inventory-sort/actions/runs/27502873676`.
+- Publish artifact:
+  `https://github.com/ThatMasonGuy/minecraft-inventory-sort/actions/runs/27502873676/artifacts/7622693093`.
+- Annotated Git tag: `v3.2.2`, resolving locally to the release source commit.
+- GitHub Release:
+  `https://github.com/ThatMasonGuy/minecraft-inventory-sort/releases/tag/v3.2.2`.
+- GitHub Release assets: none; Modrinth remains the canonical download surface.
+- Workflow upload result: `BUILD SUCCESSFUL in 54m 17s`; upload plan plus
+  release jars were captured in artifact `7622693093`.
+- Workflow log recorded 92 `INVENTORYSORT_SMOKE_TEST_PASS` markers and 24
+  successful Modrinth uploads. Public Modrinth API readback confirmed all 8
+  InvSort and all 8 InvSearch `3.2.2` versions as `listed`; InvCatalogue version
+  URLs are recorded from the successful upload log.
+
+Published Modrinth version ids:
+
+- InvSort: `62ZDg75r` (`1.20-1.20.4`), `KoNqsI1X` (`1.20.5-1.20.6`),
+  `dMBExVqg` (`1.21-1.21.5`), `YYerUOjW` (`1.21.6-1.21.8`),
+  `wTywmkB3` (`1.21.9-1.21.10`), `eq0emMqR` (`1.21.11`), `K5NgCTWD`
+  (`26.1-26.1.2`), and `7OsOWTsH` (`26.2-pre-3`).
+- InvSearch: `Ji5DQL4U` (`1.20-1.20.4`), `cEOHysju`
+  (`1.20.5-1.20.6`), `q7Qu0bY4` (`1.21-1.21.5`), `STB478sr`
+  (`1.21.6-1.21.8`), `mUcmcu6p` (`1.21.9-1.21.10`), `5cH3gk5W`
+  (`1.21.11`), `ItL1nbRA` (`26.1-26.1.2`), and `pjMiq3id`
+  (`26.2-pre-3`).
+- InvCatalogue: `syUYNBBx` (`1.20-1.20.4`), `xr4kwVMT`
+  (`1.20.5-1.20.6`), `CeiWkhJf` (`1.21-1.21.5`), `EpGw18oc`
+  (`1.21.6-1.21.8`), `cWyq44t3` (`1.21.9-1.21.10`), `alMLgIlB`
+  (`1.21.11`), `2UacUu46` (`26.1-26.1.2`), and `dxWyap0B`
+  (`26.2-pre-3`).
 
 ### `3.2.1` Publish Evidence
 

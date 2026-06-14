@@ -44,6 +44,11 @@ All notable project changes will be documented here.
   and exact-container overrides to the active tracking world/profile instead of
   keeping new rules global; old-shape rule files are migrated into the
   namespace-keyed `worldRules` schema on first use.
+- Published `3.2.2` through guarded GitHub Actions workflow `27502873676`,
+  uploaded all 24 Modrinth compatibility-group versions, and created the
+  annotated `v3.2.2` GitHub Release on source commit
+  `1729c0135d6f15d7f10b6da9ed7b9990bc368ce4` without attaching GitHub jar
+  assets.
 - Moved active persistent data out of `.minecraft/inventorysort` and into
   per-feature app-data folders (`InvSort`, `InvSearch`, `InvCatalogue`, and
   `InvCore`), with first-launch legacy copy/import from the old instance-local
