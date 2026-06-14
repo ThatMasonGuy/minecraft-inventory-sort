@@ -19,6 +19,8 @@ import java.util.Locale;
 import java.util.Map;
 
 public final class SortRuleStore {
+    private static final int CURRENT_VERSION = 2;
+    private static final String UNKNOWN_NAMESPACE = "unknown";
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static SortRuleStore instance;
 
@@ -46,70 +48,71 @@ public final class SortRuleStore {
     }
 
     public SortRules playerRules() {
-        normalize();
-        return config.playerRules;
+        return currentWorldRules().playerRules;
     }
 
     public SortRules containerDefaultRules() {
-        normalize();
-        return config.containerRules;
+        return currentWorldRules().containerRules;
     }
 
     public SortRules effectiveContainerRules(ContainerIdentity identity, String screenClassName) {
-        normalize();
-        String containerKey = containerKey(identity);
-        if (containerKey != null) {
-            SortRules override = config.containerOverrides.get(containerKey);
-            if (override != null && override.enabled) {
-                return override;
-            }
+        WorldSortRuleConfig worldRules = currentWorldRules();
+        SortRules containerOverride = containerOverride(worldRules, identity);
+        if (containerOverride != null && containerOverride.enabled) {
+            return containerOverride;
         }
 
         String screenKey = screenKey(screenClassName);
         if (screenKey != null) {
-            SortRules override = config.screenOverrides.get(screenKey);
+            SortRules override = worldRules.screenOverrides.get(screenKey);
             if (override != null && override.enabled) {
                 return override;
             }
         }
 
-        return config.containerRules;
+        return worldRules.containerRules;
     }
 
     public SortRules editableContainerOverride(ContainerIdentity identity, String screenClassName) {
-        normalize();
+        WorldSortRuleConfig worldRules = currentWorldRules();
         String key = containerKey(identity);
         if (key != null) {
-            return config.containerOverrides.computeIfAbsent(key, ignored -> config.containerRules.copy());
+            SortRules legacy = containerOverride(worldRules, identity);
+            if (legacy != null) {
+                worldRules.containerOverrides.put(key, legacy);
+                removeLegacyContainerKey(worldRules, identity);
+                return worldRules.containerOverrides.get(key);
+            }
+            return worldRules.containerOverrides.computeIfAbsent(key, ignored -> worldRules.containerRules.copy());
         }
 
         String screenKey = screenKey(screenClassName);
         if (screenKey != null) {
-            return config.screenOverrides.computeIfAbsent(screenKey, ignored -> config.containerRules.copy());
+            return worldRules.screenOverrides.computeIfAbsent(screenKey, ignored -> worldRules.containerRules.copy());
         }
 
-        return config.containerRules;
+        return worldRules.containerRules;
     }
 
     public boolean hasContainerOverride(ContainerIdentity identity, String screenClassName) {
-        normalize();
-        String key = containerKey(identity);
-        if (key != null) {
-            return config.containerOverrides.containsKey(key);
+        WorldSortRuleConfig worldRules = currentWorldRules();
+        if (containerOverride(worldRules, identity) != null) {
+            return true;
         }
         String screenKey = screenKey(screenClassName);
-        return screenKey != null && config.screenOverrides.containsKey(screenKey);
+        return screenKey != null && worldRules.screenOverrides.containsKey(screenKey);
     }
 
     public void clearContainerOverride(ContainerIdentity identity, String screenClassName) {
-        normalize();
+        WorldSortRuleConfig worldRules = currentWorldRules();
         String key = containerKey(identity);
         if (key != null) {
-            config.containerOverrides.remove(key);
+            worldRules.containerOverrides.remove(key);
+            removeLegacyContainerKey(worldRules, identity);
         } else {
             String screenKey = screenKey(screenClassName);
             if (screenKey != null) {
-                config.screenOverrides.remove(screenKey);
+                worldRules.screenOverrides.remove(screenKey);
             }
         }
         save();
@@ -165,37 +168,132 @@ public final class SortRuleStore {
         normalize();
     }
 
+    private WorldSortRuleConfig currentWorldRules() {
+        normalize();
+        String namespace = currentNamespace();
+        migrateLegacyRules(namespace);
+        WorldSortRuleConfig rules = config.worldRules.computeIfAbsent(namespace, ignored -> new WorldSortRuleConfig());
+        rules.normalize();
+        return rules;
+    }
+
+    private void migrateLegacyRules(String currentNamespace) {
+        if (!hasLegacyRules() || UNKNOWN_NAMESPACE.equals(currentNamespace)) {
+            return;
+        }
+
+        WorldSortRuleConfig current = config.worldRules.computeIfAbsent(currentNamespace, ignored -> new WorldSortRuleConfig());
+        current.normalize();
+
+        if (config.playerRules != null) {
+            config.playerRules.normalize();
+            if (current.playerRules == null || current.playerRules.isDefault()) {
+                current.playerRules = config.playerRules.copy();
+            }
+        }
+        if (config.containerRules != null) {
+            config.containerRules.normalize();
+            if (current.containerRules == null || current.containerRules.isDefault()) {
+                current.containerRules = config.containerRules.copy();
+            }
+        }
+        if (config.screenOverrides != null) {
+            config.screenOverrides.forEach((key, rules) -> {
+                if (key != null && rules != null) {
+                    rules.normalize();
+                    current.screenOverrides.putIfAbsent(key, rules.copy());
+                }
+            });
+        }
+        if (config.containerOverrides != null) {
+            config.containerOverrides.forEach((key, rules) -> {
+                if (key == null || rules == null) {
+                    return;
+                }
+                rules.normalize();
+                String namespace = currentNamespace;
+                String containerKey = key;
+                int separator = key.indexOf('|');
+                if (separator > 0 && separator < key.length() - 1) {
+                    namespace = TempestStudiosData.sanitize(key.substring(0, separator));
+                    containerKey = key.substring(separator + 1);
+                }
+                WorldSortRuleConfig target = config.worldRules.computeIfAbsent(namespace, ignored -> new WorldSortRuleConfig());
+                target.normalize();
+                target.containerOverrides.putIfAbsent(containerKey, rules.copy());
+            });
+        }
+
+        config.playerRules = null;
+        config.containerRules = null;
+        config.containerOverrides = null;
+        config.screenOverrides = null;
+        config.version = CURRENT_VERSION;
+        save();
+    }
+
+    private boolean hasLegacyRules() {
+        return config != null && (config.playerRules != null
+                || config.containerRules != null
+                || config.containerOverrides != null
+                || config.screenOverrides != null);
+    }
+
     private void normalize() {
         if (config == null) {
             config = new SortRuleConfig();
         }
-        if (config.playerRules == null) {
-            config.playerRules = new SortRules();
+        if (config.version <= 0) {
+            config.version = CURRENT_VERSION;
         }
-        if (config.containerRules == null) {
-            config.containerRules = new SortRules();
+        if (config.worldRules == null) {
+            config.worldRules = new LinkedHashMap<>();
         }
-        if (config.containerOverrides == null) {
-            config.containerOverrides = new LinkedHashMap<>();
+        config.worldRules.entrySet().removeIf(entry ->
+                entry.getKey() == null || entry.getKey().isBlank() || entry.getValue() == null);
+        config.worldRules.values().forEach(WorldSortRuleConfig::normalize);
+        if (!hasLegacyRules()) {
+            config.version = CURRENT_VERSION;
         }
-        if (config.screenOverrides == null) {
-            config.screenOverrides = new LinkedHashMap<>();
-        }
-        config.playerRules.normalize();
-        config.containerRules.normalize();
-        config.containerOverrides.values().forEach(SortRules::normalize);
-        config.screenOverrides.values().forEach(SortRules::normalize);
     }
 
     private static String containerKey(ContainerIdentity identity) {
         if (identity == null || identity.getIdentityKey() == null || identity.getIdentityKey().isBlank()) {
             return null;
         }
+        return identity.getIdentityKey();
+    }
+
+    private static String legacyContainerKey(ContainerIdentity identity) {
+        String containerKey = containerKey(identity);
+        if (containerKey == null) {
+            return null;
+        }
         String namespace = identity.getNamespace();
         if (namespace == null || namespace.isBlank()) {
-            namespace = "unknown";
+            namespace = UNKNOWN_NAMESPACE;
         }
-        return namespace + "|" + identity.getIdentityKey();
+        return namespace + "|" + containerKey;
+    }
+
+    private static SortRules containerOverride(WorldSortRuleConfig worldRules, ContainerIdentity identity) {
+        String key = containerKey(identity);
+        if (key != null) {
+            SortRules rules = worldRules.containerOverrides.get(key);
+            if (rules != null) {
+                return rules;
+            }
+        }
+        String legacyKey = legacyContainerKey(identity);
+        return legacyKey == null ? null : worldRules.containerOverrides.get(legacyKey);
+    }
+
+    private static void removeLegacyContainerKey(WorldSortRuleConfig worldRules, ContainerIdentity identity) {
+        String key = containerKey(identity);
+        String legacyKey = legacyContainerKey(identity);
+        if (legacyKey != null && !legacyKey.equals(key)) {
+            worldRules.containerOverrides.remove(legacyKey);
+        }
     }
 
     private static String screenKey(String screenClassName) {
@@ -203,6 +301,14 @@ public final class SortRuleStore {
             return null;
         }
         return "screen|" + screenClassName.toLowerCase(Locale.ROOT);
+    }
+
+    private static String currentNamespace() {
+        String namespace = TrackingNamespace.current(Minecraft.getInstance());
+        if (namespace == null || namespace.isBlank()) {
+            return UNKNOWN_NAMESPACE;
+        }
+        return TempestStudiosData.sanitize(namespace);
     }
 
     private static void writeJsonAtomically(Path target, Object data) throws IOException {
@@ -235,11 +341,44 @@ public final class SortRuleStore {
     }
 
     private static final class SortRuleConfig {
-        int version = 1;
+        int version = CURRENT_VERSION;
+        Map<String, WorldSortRuleConfig> worldRules = new LinkedHashMap<>();
+        SortRules playerRules;
+        SortRules containerRules;
+        Map<String, SortRules> containerOverrides;
+        Map<String, SortRules> screenOverrides;
+    }
+
+    private static final class WorldSortRuleConfig {
         SortRules playerRules = new SortRules();
         SortRules containerRules = new SortRules();
         Map<String, SortRules> containerOverrides = new LinkedHashMap<>();
         Map<String, SortRules> screenOverrides = new LinkedHashMap<>();
+
+        void normalize() {
+            if (playerRules == null) {
+                playerRules = new SortRules();
+            }
+            if (containerRules == null) {
+                containerRules = new SortRules();
+            }
+            if (containerOverrides == null) {
+                containerOverrides = new LinkedHashMap<>();
+            }
+            if (screenOverrides == null) {
+                screenOverrides = new LinkedHashMap<>();
+            }
+            playerRules.normalize();
+            containerRules.normalize();
+            containerOverrides.entrySet().removeIf(entry -> entry.getKey() == null
+                    || entry.getKey().isBlank()
+                    || entry.getValue() == null);
+            screenOverrides.entrySet().removeIf(entry -> entry.getKey() == null
+                    || entry.getKey().isBlank()
+                    || entry.getValue() == null);
+            containerOverrides.values().forEach(SortRules::normalize);
+            screenOverrides.values().forEach(SortRules::normalize);
+        }
     }
 
     public static final class SortRules {
@@ -284,6 +423,15 @@ public final class SortRuleStore {
 
         public boolean usesCustomOrder() {
             return !categoryOrder.isEmpty() || !itemOrder.isEmpty();
+        }
+
+        private boolean isDefault() {
+            normalize();
+            return enabled
+                    && !absoluteItemOrder
+                    && categoryOrder.isEmpty()
+                    && itemOrder.isEmpty()
+                    && slotRules.isEmpty();
         }
 
         public SlotRule ruleFor(int slotIndex) {

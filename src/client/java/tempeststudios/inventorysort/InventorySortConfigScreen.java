@@ -161,7 +161,7 @@ public class InventorySortConfigScreen extends Screen {
 
     private void renderScopeRow(GuiGraphics g, InventorySortDrawContext ui, int mouseX, int mouseY) {
         if (!containerTarget) {
-            text(g, "Player inventory", panelX + PAD, scopeRowY + 4, InvUi.TEXT_MUTED);
+            text(g, "World player inventory", panelX + PAD, scopeRowY + 4, InvUi.TEXT_MUTED);
             return;
         }
         text(g, "Applies to", panelX + PAD, scopeRowY + 4, InvUi.TEXT_DIM);
@@ -170,7 +170,7 @@ public class InventorySortConfigScreen extends Screen {
             boolean selected = (i == 1) == editingOverride;
             boolean hovered = isInside(mouseX, mouseY, r[0], r[1], r[2], r[3]);
             int color = InvUi.segment(ui, r[0], r[1], r[2], r[3], hovered, selected, ACCENT);
-            String label = i == 0 ? "All Containers" : "This Container";
+            String label = i == 0 ? "World Containers" : "This Container";
             centeredText(g, label, r[0], r[2], r[1] + 4, color);
         }
     }

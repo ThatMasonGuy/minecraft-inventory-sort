@@ -9,8 +9,8 @@ All notable project changes will be documented here.
 - Added a first-pass InvSort rules screen, opened by right-clicking the Sort
   button, for configuring player-inventory rules and container rules in game.
 - Added InvSort custom category ordering, custom item-id ordering, protected
-  slots, item-specific slots, and local JSON persistence with global container
-  defaults plus per-container/per-screen overrides.
+  slots, item-specific slots, and local JSON persistence with world-scoped
+  container defaults plus per-container/per-screen overrides.
 - Added `/inventorycatalogue reports`, an in-game InvCatalogue report browser
   that groups saved reports by world/profile, opens a visual item-count grid
   with icons and search filtering, and writes structured JSON report snapshots
@@ -38,6 +38,12 @@ All notable project changes will be documented here.
 
 - Bumped the patch lane to `3.2.1` for the recipe-book button offset regression
   fix and launcher/instance-hardened app-data storage migration.
+- Bumped the queued patch lane to `3.2.2` for world-scoped InvSort rule
+  persistence.
+- Scoped InvSort player-inventory rules, container defaults, screen overrides,
+  and exact-container overrides to the active tracking world/profile instead of
+  keeping new rules global; old-shape rule files are migrated into the
+  namespace-keyed `worldRules` schema on first use.
 - Moved active persistent data out of `.minecraft/inventorysort` and into
   per-feature app-data folders (`InvSort`, `InvSearch`, `InvCatalogue`, and
   `InvCore`), with first-launch legacy copy/import from the old instance-local

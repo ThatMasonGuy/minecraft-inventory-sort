@@ -1,18 +1,26 @@
 # Inventory Search TODO
 
-Current checkpoint: `3.2.1` patch work fixes the recipe-book button
-offset regression on player inventory and crafting screens for InvSort and
-InvSearch, including the Minecraft 26.x render-state path. `mod_version` is
-bumped to `3.2.1`; `1.21.11` and `26.1.2` builds plus focused all-public smoke
-launches pass locally, the user confirmed the in-game recipe-book offset test
-works. Follow-up `3.2.1` work moves persistent Inventory Mods data to
-Tempest Studios app-data roots with instance-scoped single-player namespaces and
-a once-per-source migration registry; `git diff --check` and local
-`buildAllMods` pass for that storage patch. A later account-scope hardening pass
-for multiplayer server namespaces passes the full supported `buildAllVersions`
-gate. The guarded GitHub Actions Modrinth publish completed successfully for
-`3.2.1`, uploaded all 24 compatibility-group versions, and the annotated
-`v3.2.1` GitHub Release now points users to the canonical Modrinth downloads.
+Current checkpoint: `3.2.2` patch work is implemented locally for world-scoped InvSort
+rules. `mod_version` is bumped to `3.2.2`; InvSort now stores player inventory
+rules, world-container defaults, screen overrides, and exact-container overrides
+under the active `TrackingNamespace.current(...)` entry in
+`InvSort/sort_rules.json`. Existing old-shape global rule files migrate once
+into the new `worldRules` schema: player/container/screen defaults seed the
+current world, and namespace-prefixed exact-container overrides move into their
+matching world buckets with the namespace stripped from the container key. The
+rules screen labels now say `World player inventory` and `World Containers`
+across the shared 1.x UI and both 26.x overlays. `git diff --check` passes, and
+the default-profile `buildAllMods` gate passes locally.
+
+Previous `3.2.1` checkpoint: recipe-book button offset regression fixes for
+InvSort and InvSearch were published, including the Minecraft 26.x render-state
+path. Follow-up `3.2.1` work moved persistent Inventory Mods data to Tempest
+Studios app-data roots with instance-scoped single-player namespaces and a
+once-per-source migration registry, then hardened multiplayer server namespaces
+for account scope. The guarded GitHub Actions Modrinth publish completed
+successfully for `3.2.1`, uploaded all 24 compatibility-group versions, and the
+annotated `v3.2.1` GitHub Release now points users to the canonical Modrinth
+downloads.
 
 Previous `3.2.0` checkpoint: bug-fix hardening is implemented locally for
 InvSort, InvSearch, InvCatalogue, and shared Core. InvCatalogue now also has a

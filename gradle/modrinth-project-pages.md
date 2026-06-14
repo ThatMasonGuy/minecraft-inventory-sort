@@ -45,7 +45,7 @@ food, or exact items to appear in your preferred sequence.
 - Item-specific slots for keeping resources, tools, or building blocks in fixed
   places
 - Custom category and exact-item sort ordering
-- Per-screen, per-container, and global rule scopes
+- Per-world container defaults plus per-screen and per-container rule scopes
 - Restacks partial piles before laying items out cleanly
 - Compacts empty gaps so storage is easier to scan
 - Practical default ordering by stack size, item category, and item id

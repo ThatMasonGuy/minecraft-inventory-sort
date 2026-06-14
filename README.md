@@ -20,6 +20,9 @@ A lightweight **client-side** Minecraft mod that adds robust sorting capabilitie
   1. Higher max stack size first (e.g., 64-stack items before low-stack items)
   2. Category grouping (wood, stone/terrain, ores, redstone, building blocks, tools/combat, misc)
   3. Alphabetical item ID ordering
+- **Per-World Sorting Rules:** Right-click the Sort button to define protected
+  slots, item-specific slots, category order, and exact item priorities for the
+  current world or multiplayer tracked-world profile.
 - Leaves hotbar organization intentional when sorting the player inventory.
 
 ### 2. Inventory Search
