@@ -49,6 +49,10 @@ All notable project changes will be documented here.
   annotated `v3.2.2` GitHub Release on source commit
   `1729c0135d6f15d7f10b6da9ed7b9990bc368ce4` without attaching GitHub jar
   assets.
+- Consolidated duplicate 1.x `InventorySortDrawContexts`,
+  `ClientCommandCompat`, and `HudCompat` compat wrappers into shared client
+  source while keeping 26.x on its profile-specific overlays, then cleared and
+  rebuilt the generated `build/release` artifacts with `buildAllVersions`.
 - Moved active persistent data out of `.minecraft/inventorysort` and into
   per-feature app-data folders (`InvSort`, `InvSearch`, `InvCatalogue`, and
   `InvCore`), with first-launch legacy copy/import from the old instance-local

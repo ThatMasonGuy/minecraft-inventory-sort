@@ -14,6 +14,14 @@ Modrinth publish completed successfully for `3.2.2`, uploaded all 24
 compatibility-group versions, and the annotated `v3.2.2` GitHub Release now
 points users to the canonical Modrinth downloads.
 
+Maintenance checkpoint: duplicate 1.x `InventorySortDrawContexts`,
+`ClientCommandCompat`, and `HudCompat` copies were moved out of every 1.x
+compatibility group and into shared client source, while the 26.x profiles now
+exclude those shared 1.x wrappers and keep their `GuiGraphicsExtractor`,
+`ClientCommands`, and HUD registry overlays. The stale generated
+`build/release` folder was deleted and then rebuilt from scratch. Verification:
+PASS `.\gradlew.bat buildAllVersions --no-daemon --console=plain`.
+
 Previous `3.2.1` checkpoint: recipe-book button offset regression fixes for
 InvSort and InvSearch were published, including the Minecraft 26.x render-state
 path. Follow-up `3.2.1` work moved persistent Inventory Mods data to Tempest
