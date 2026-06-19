@@ -17,6 +17,7 @@ on:
           - printVersionProfile
           - buildAllMods
           - smokeTestSelectedClients
+          - smokeTestInventorySearchServer
       smoke_profiles:
         description: 'Comma-separated smoke release profile/profile_id filters for smokeTestSelectedClients'
         required: false

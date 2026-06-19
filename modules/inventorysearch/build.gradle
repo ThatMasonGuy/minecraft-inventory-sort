@@ -12,6 +12,11 @@ loom {
 }
 
 sourceSets {
+	main {
+		java {
+			srcDir rootProject.file("src/compat/${rootProject.compat_group}/inventorysearch/main/java")
+		}
+	}
 	client {
 		java {
 			srcDir rootProject.file("src/client/java")

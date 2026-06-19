@@ -19,3 +19,24 @@ tasks.matching { it.name == 'runClient' }.configureEach {
 		jvmArgs("-Dfabric.addMods=${smokeMods}")
 	}
 }
+
+tasks.matching { it.name == 'runServer' }.configureEach {
+	def smokeMods = rootProject.findProperty('inventorysort_smoke_mods')
+	if (smokeMods != null && !smokeMods.toString().isBlank()) {
+		jvmArgs("-Dfabric.addMods=${smokeMods}")
+	}
+	if ((rootProject.findProperty('inventorysearch_server_smoke_test') ?: 'false').toString().toBoolean()) {
+		jvmArgs('-Dinventorysearch.serverSmokeTest=true')
+		args('nogui')
+	}
+	doFirst {
+		def runDir = project.layout.projectDirectory.dir('run').asFile
+		runDir.mkdirs()
+		new File(runDir, 'eula.txt').text = 'eula=true' + System.lineSeparator()
+		new File(runDir, 'server.properties').text = [
+				'online-mode=false',
+				'server-port=0',
+				'level-name=InventorySearchSmoke'
+		].join(System.lineSeparator()) + System.lineSeparator()
+	}
+}

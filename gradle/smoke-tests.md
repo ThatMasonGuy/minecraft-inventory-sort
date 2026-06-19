@@ -35,6 +35,17 @@ upload. Broad supported matrices can take close to an hour on a local machine,
 so the manual Modrinth publish workflow is the normal place to run the full
 matrix.
 
+`smokeTestInventorySearchServer` launches a dedicated server with only the
+selected profile's packaged InvSearch jar installed. It writes an isolated
+server run directory, accepts the local EULA for the smoke process, waits for
+the optional server entrypoint to load, and fails unless the server log contains
+`INVENTORYSEARCH_SERVER_SMOKE_TEST_PASS`.
+
+`smokeTestInventorySearchSupportedServers` runs that server check for every
+supported profile and is part of `publishValidation`.
+`smokeTestInventorySearchValidationServers` runs it for every supported and
+candidate profile and is part of `ciValidation`.
+
 Smoke-test mode also starts an in-client watchdog after the harness is armed.
 If the client stops producing ticks before the pass marker, it logs
 `INVENTORYSORT_SMOKE_TEST_TIMEOUT` and exits the JVM instead of leaving the
@@ -58,6 +69,8 @@ Useful commands:
 ```powershell
 .\gradlew.bat verifySmokeTestMatrix
 .\gradlew.bat smokeTestSupportedClients
+.\gradlew.bat smokeTestInventorySearchServer
+.\gradlew.bat smokeTestInventorySearchSupportedServers
 .\gradlew.bat publishValidation
 .\gradlew.bat buildValidationVersions
 .\gradlew.bat smokeTestValidationClients

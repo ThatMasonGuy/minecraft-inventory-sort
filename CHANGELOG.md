@@ -44,6 +44,12 @@ All notable project changes will be documented here.
   keys and searchable variant terms across InvSearch and InvCatalogue.
 - Added InvSearch `<variant` search syntax for known enchanted, potion, and
   component-backed stacks.
+- Added an optional InvSearch server entrypoint and server-to-client auto
+  world/profile packet so Fabric servers can provide the active tracking
+  profile without requiring client-side manual setup.
+- Added selected, supported-profile, and validation-profile InvSearch server
+  smoke tasks, then wired the aggregate tasks into `ciValidation` and
+  `publishValidation` to prove the optional InvSearch server hook starts.
 
 ### Changed
 
@@ -64,6 +70,9 @@ All notable project changes will be documented here.
 - Changed InvSearch tracking and InvCatalogue report/catalogue totals to key new
   stacks by exact item data when NBT or data components are present, while
   keeping old plain `minecraft:item_id` tracking and report data readable.
+- Changed the tracked-world selector so `Default` can cycle into the server
+  supplied `Auto` profile when one is available, while manual profile selection
+  remains a player override.
 - Raised the public release jar size sentinel from 245,000 to 255,000 bytes for
   the intentional shared Core item-identity footprint while keeping junk-file
   and embedded-Core verification checks in place.
@@ -173,6 +182,8 @@ All notable project changes will be documented here.
 
 - Renamed the InvSort rules screen `Assign Item` action to `Assign` and added a
   matching `Unlock` action for default-locked hotbar slots.
+- Fixed InvSearch modal scroll buttons so the up/down controls sit inside the
+  menu container instead of outside the frame.
 - Fixed InvSort full-inventory sorting by using the existing hotbar-swap click
   path as a reversible buffer for layout swaps instead of depending on an empty
   cursor landing slot.

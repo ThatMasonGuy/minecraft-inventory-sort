@@ -129,19 +129,26 @@ enchanted, potion, or component-backed variants, such as `<sil` for Silk Touch.
 - Keeps tracking data separated by singleplayer world or multiplayer server
 - Works client-side in singleplayer, LAN, Realms, and multiplayer where
   client-side utility mods are allowed
+- Optional Fabric server install can send an automatic world/profile name to
+  clients, while still allowing manual profile overrides
 
 ## Good for
 
 - Finding misplaced tools, blocks, and resources
 - Large survival bases with too many storage chests
 - Hardcore or seasonal worlds where storage changes often
-- Players who want item search without server-side changes
+- Players who want item search without requiring server-side changes
 - Using alongside InvSort and InvCatalogue for broader inventory management
 
 ## Install note
 
 InvSearch does not require a server install. Install Fabric Loader, Fabric API,
 and the InvSearch jar for your Minecraft version.
+
+Server owners may also install the InvSearch jar on a Fabric server. When
+present, the server sends its world name to clients as an optional `auto`
+tracking profile so players do not need to create/select that profile by hand.
+Players can still switch back to `default` or choose a manual profile.
 
 It remembers what your client has seen. If another player moves items while you
 are away, reopen that storage so InvSearch can refresh its known location data.

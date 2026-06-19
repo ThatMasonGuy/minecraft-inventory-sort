@@ -737,11 +737,120 @@ tasks.register('smokeTestSelectedClients') {
 	}
 }
 
+def registerInventorySearchServerSmokeTask = { String taskName, String profileName, String profileId, Provider<Directory> releaseJarDirectory, Object buildDependency ->
+	def modListFile = layout.buildDirectory.file("smoke-mod-lists/server/${profileId}/inventorysearch-server.txt")
+	def serverSmokeLog = file('modules/smokelaunch/run/logs/latest.log')
+	def nestedGradleHome = layout.buildDirectory.dir("nested-gradle-home/${taskName}")
+	def runArguments = [
+			gradleWrapperExecutable,
+			':smokelaunch:runServer',
+			"-Pminecraft_version_profile=${profileName}",
+			"-Pinventorysort_smoke_mods=@${modListFile.get().asFile.absolutePath}",
+			'-Pinventorysearch_server_smoke_test=true'
+	]
+	if (useSmokeTestNestedNoDaemon) {
+		runArguments.add('--no-daemon')
+	}
+	runArguments.add('--console=plain')
+	return tasks.register(taskName, Exec) {
+		group = 'verification'
+		description = "Launches a dedicated ${profileName} server with the packaged InvSearch jar to verify the optional server hook loads."
+		dependsOn buildDependency
+		commandLine(runArguments as String[])
+		environment 'GRADLE_USER_HOME', nestedGradleHome.get().asFile.absolutePath
+		timeout.set(java.time.Duration.ofSeconds(smokeTestExecTimeoutSeconds))
+
+		doFirst {
+			nestedGradleHome.get().asFile.mkdirs()
+			def releaseDir = releaseJarDirectory.get().asFile
+			def searchJar = new File(releaseDir, "inventory-search-${version}.jar")
+			if (!searchJar.isFile()) {
+				throw new GradleException("InvSearch server smoke is missing release jar: ${searchJar}")
+			}
+			def modList = modListFile.get().asFile
+			modList.parentFile.mkdirs()
+			modList.text = searchJar.absolutePath + System.lineSeparator()
+			delete serverSmokeLog
+		}
+
+		doLast {
+			if (!serverSmokeLog.isFile()) {
+				throw new GradleException("InvSearch server smoke did not write a log: ${serverSmokeLog}")
+			}
+			def logText = serverSmokeLog.getText('UTF-8')
+			if (!logText.contains('INVENTORYSEARCH_SERVER_SMOKE_TEST_PASS')) {
+				throw new GradleException("InvSearch server smoke did not reach the pass marker. See ${serverSmokeLog}.")
+			}
+		}
+	}
+}
+
+def selectedInventorySearchServerSmokeTask = registerInventorySearchServerSmokeTask(
+		'smokeTestInventorySearchServer',
+		minecraft_version_profile,
+		minecraft_version_profile_id,
+		releaseOutputDirectory,
+		tasks.named('buildAllMods'))
+
+def registerInventorySearchServerSmokeTasks = { List<String> profiles, String taskPrefix, String buildTaskPrefix ->
+	def serverSmokeTasks = []
+	def previousServerSmokeTask = null
+
+	profiles.each { profileName ->
+		def profile = loadVersionProfile(profileName)
+		def profileId = profileIdFor(profileName, profile)
+		def taskName = "${taskPrefix}${safeTaskSuffix(profileName)}"
+		def buildTaskName = profileBuildTaskName(buildTaskPrefix, profileName)
+		def smokeTask = registerInventorySearchServerSmokeTask(
+				taskName,
+				profileName,
+				profileId,
+				layout.buildDirectory.dir("release/${profileId}"),
+				tasks.named(buildTaskName))
+
+		if (previousServerSmokeTask != null) {
+			def predecessor = previousServerSmokeTask
+			smokeTask.configure {
+				mustRunAfter predecessor
+			}
+		}
+		previousServerSmokeTask = smokeTask
+		serverSmokeTasks.add(smokeTask)
+	}
+
+	return serverSmokeTasks
+}
+
+def supportedInventorySearchServerSmokeTasks = registerInventorySearchServerSmokeTasks(
+		supportedMinecraftVersionProfiles,
+		'smokeSupportedInventorySearchServer',
+		'buildMinecraft'
+)
+
+def validationInventorySearchServerSmokeTasks = registerInventorySearchServerSmokeTasks(
+		validationMinecraftVersionProfiles,
+		'smokeValidationInventorySearchServer',
+		'validateMinecraft'
+)
+
+tasks.register('smokeTestInventorySearchSupportedServers') {
+	group = 'verification'
+	description = 'Launches dedicated servers with the packaged InvSearch jar for every supported profile.'
+	dependsOn supportedInventorySearchServerSmokeTasks
+}
+
+tasks.register('smokeTestInventorySearchValidationServers') {
+	group = 'verification'
+	description = 'Launches dedicated servers with the packaged InvSearch jar for every supported and candidate profile.'
+	dependsOn validationInventorySearchServerSmokeTasks
+}
+
 tasks.register('ciValidation') {
 	group = 'verification'
 	description = 'Runs CI validation across supported and candidate version profiles.'
 	dependsOn tasks.named('buildValidationVersions')
 	dependsOn tasks.named('smokeTestValidationClients')
+	dependsOn tasks.named('smokeTestInventorySearchValidationServers')
 	dependsOn tasks.named('verifySmokeTestMatrix')
 }
 
@@ -750,6 +859,7 @@ tasks.register('publishValidation') {
 	description = 'Builds and smoke-tests supported profiles only before Modrinth publishing.'
 	dependsOn tasks.named('buildAllVersions')
 	dependsOn tasks.named('smokeTestSupportedClients')
+	dependsOn tasks.named('smokeTestInventorySearchSupportedServers')
 	dependsOn tasks.named('verifySmokeTestMatrix')
 }
 

@@ -37,6 +37,7 @@ public final class ServerWorldProfileManager {
 
     private final Path saveFile;
     private final Map<String, ServerProfiles> profilesByServer = new HashMap<>();
+    private final Map<String, String> autoProfilesByServer = new HashMap<>();
     private final Set<String> confirmedThisSession = new HashSet<>();
 
     private ServerWorldProfileManager() {
@@ -76,7 +77,7 @@ public final class ServerWorldProfileManager {
         if (serverKey == null || serverKey.isBlank()) {
             return DEFAULT_PROFILE;
         }
-        return profilesFor(serverKey).activeProfile;
+        return activeProfileFor(serverKey, profilesFor(serverKey));
     }
 
     public List<String> getProfiles(String serverKey) {
@@ -101,6 +102,9 @@ public final class ServerWorldProfileManager {
             return false;
         }
         ServerProfiles profiles = profilesFor(serverKey);
+        if (isAutoProfileActive(serverKey)) {
+            return false;
+        }
         if (profiles.profiles.size() <= 1) {
             return false;
         }
@@ -125,7 +129,7 @@ public final class ServerWorldProfileManager {
             return;
         }
         ServerProfiles serverProfiles = profilesFor(serverKey);
-        String profile = serverProfiles.activeProfile;
+        String profile = activeProfileFor(serverKey, serverProfiles);
         long now = System.currentTimeMillis();
         long last = serverProfiles.lastUsed.getOrDefault(profile, 0L);
         if (now - last < USE_TOUCH_INTERVAL_MILLIS) {
@@ -186,6 +190,7 @@ public final class ServerWorldProfileManager {
         }
         String profile = sanitizeProfile(profileName);
         ServerProfiles serverProfiles = profilesFor(serverKey);
+        serverProfiles.useAutoProfile = false;
         serverProfiles.profiles.remove(profile);
         serverProfiles.profiles.add(0, profile);
         serverProfiles.activeProfile = profile;
@@ -193,6 +198,68 @@ public final class ServerWorldProfileManager {
         save();
         confirmActiveProfile(serverKey);
         publishNamespaceChanged(serverKey, profile);
+    }
+
+    public void useAutoProfile(String serverKey) {
+        if (serverKey == null || serverKey.isBlank() || !hasAutoProfile(serverKey)) {
+            return;
+        }
+        ServerProfiles serverProfiles = profilesFor(serverKey);
+        serverProfiles.useAutoProfile = true;
+        String profile = activeProfileFor(serverKey, serverProfiles);
+        serverProfiles.lastUsed.put(profile, System.currentTimeMillis());
+        save();
+        confirmedThisSession.add(confirmationKey(serverKey, profile));
+        publishNamespaceChanged(serverKey, profile);
+    }
+
+    public void useDefaultProfile(String serverKey) {
+        if (serverKey == null || serverKey.isBlank()) {
+            return;
+        }
+        ServerProfiles serverProfiles = profilesFor(serverKey);
+        serverProfiles.useAutoProfile = false;
+        serverProfiles.activeProfile = DEFAULT_PROFILE;
+        serverProfiles.profiles.remove(DEFAULT_PROFILE);
+        serverProfiles.profiles.add(0, DEFAULT_PROFILE);
+        serverProfiles.lastUsed.put(DEFAULT_PROFILE, System.currentTimeMillis());
+        save();
+        confirmActiveProfile(serverKey);
+        publishNamespaceChanged(serverKey, DEFAULT_PROFILE);
+    }
+
+    public void applyAutoProfile(Minecraft client, String profileName) {
+        String serverKey = TrackingNamespace.currentServerKey(client);
+        if (serverKey == null || serverKey.isBlank()) {
+            return;
+        }
+        String profile = sanitizeProfile(profileName);
+        autoProfilesByServer.put(serverKey, profile);
+        ServerProfiles serverProfiles = profilesFor(serverKey);
+        if (!serverProfiles.profiles.contains(profile)) {
+            serverProfiles.profiles.add(0, profile);
+        }
+        serverProfiles.lastUsed.put(profile, System.currentTimeMillis());
+        save();
+        if (serverProfiles.useAutoProfile) {
+            confirmedThisSession.add(confirmationKey(serverKey, profile));
+            publishNamespaceChanged(serverKey, profile);
+        }
+    }
+
+    public boolean hasAutoProfile(String serverKey) {
+        return serverKey != null && autoProfilesByServer.containsKey(serverKey);
+    }
+
+    public boolean isAutoProfileActive(String serverKey) {
+        if (serverKey == null || !hasAutoProfile(serverKey)) {
+            return false;
+        }
+        return profilesFor(serverKey).useAutoProfile;
+    }
+
+    public String getAutoProfile(String serverKey) {
+        return serverKey == null ? null : autoProfilesByServer.get(serverKey);
     }
 
     public String displayName(String profile) {
@@ -204,6 +271,14 @@ public final class ServerWorldProfileManager {
 
     private ServerProfiles profilesFor(String serverKey) {
         return profilesByServer.computeIfAbsent(serverKey, ignored -> new ServerProfiles());
+    }
+
+    private String activeProfileFor(String serverKey, ServerProfiles profiles) {
+        String autoProfile = autoProfilesByServer.get(serverKey);
+        if (profiles.useAutoProfile && autoProfile != null && !autoProfile.isBlank()) {
+            return autoProfile;
+        }
+        return profiles.activeProfile;
     }
 
     private String sanitizeProfile(String profileName) {
@@ -261,6 +336,7 @@ public final class ServerWorldProfileManager {
 
     private static final class ServerProfiles {
         String activeProfile = DEFAULT_PROFILE;
+        boolean useAutoProfile = true;
         List<String> profiles = new ArrayList<>();
         Map<String, Long> lastUsed = new HashMap<>();
 

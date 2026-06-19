@@ -128,9 +128,9 @@ public class SearchModalScreen extends Screen {
         }
 
         // Scroll arrows on the right rail.
-        scrollUpBtn = new InventorySortModalIconButton(railX, listTopY, 14, InventorySortModalIconButton.UP,
+        scrollUpBtn = new InventorySortModalIconButton(railX, listTopY + 2, 14, InventorySortModalIconButton.UP,
                 Component.literal("Scroll up"), btn -> scrollBy(-1));
-        scrollDownBtn = new InventorySortModalIconButton(railX, listBottomY - 14, 14, InventorySortModalIconButton.DOWN,
+        scrollDownBtn = new InventorySortModalIconButton(railX, listBottomY - 16, 14, InventorySortModalIconButton.DOWN,
                 Component.literal("Scroll down"), btn -> scrollBy(1));
         this.addRenderableWidget(scrollUpBtn);
         this.addRenderableWidget(scrollDownBtn);

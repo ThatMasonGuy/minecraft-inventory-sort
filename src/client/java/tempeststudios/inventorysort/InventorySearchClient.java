@@ -5,6 +5,7 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallba
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import org.slf4j.Logger;
 import tempeststudios.inventorysort.compat.core.ClientCommandCompat;
+import tempeststudios.inventorysort.compat.search.InventorySearchClientNetworking;
 import tempeststudios.inventorysort.core.InventorySortCore;
 
 public class InventorySearchClient implements ClientModInitializer {
@@ -13,6 +14,7 @@ public class InventorySearchClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         LOGGER.info("Initializing Inventory Search Mod");
+        InventorySearchClientNetworking.initialize();
         InventorySearchFeature.initialize();
         ClientTickEvents.END_CLIENT_TICK.register(InventorySearchFeature::sampleInventory);
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {

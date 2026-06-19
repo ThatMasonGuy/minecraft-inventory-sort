@@ -8,8 +8,9 @@
   "contact": {},
   "license": "LGPL-3.0-only",
   "icon": "assets/inventory-sort/invsearch.jpg",
-  "environment": "client",
+  "environment": "*",
   "entrypoints": {
+    "main": ["tempeststudios.inventorysort.InventorySearchServer"],
     "client": ["tempeststudios.inventorysort.InventorySearchClient"]
   },
   "mixins": ["inventorysearch.mixins.json"],

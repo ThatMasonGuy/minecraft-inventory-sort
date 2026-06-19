@@ -20,6 +20,8 @@ public class ServerWorldProfileScreen extends Screen {
     private EditBox profileBox;
     private String serverKey;
     private String activeProfile;
+    private boolean autoProfileAvailable;
+    private boolean autoProfileActive;
     private int scrollOffset = 0;
 
     // Layout (computed in init, read in render).
@@ -55,7 +57,10 @@ public class ServerWorldProfileScreen extends Screen {
     protected void init() {
         Minecraft mc = Minecraft.getInstance();
         serverKey = TrackingNamespace.currentServerKey(mc);
-        activeProfile = serverKey == null ? null : ServerWorldProfileManager.getInstance().getActiveProfile(serverKey);
+        ServerWorldProfileManager profileManager = ServerWorldProfileManager.getInstance();
+        activeProfile = serverKey == null ? null : profileManager.getActiveProfile(serverKey);
+        autoProfileAvailable = serverKey != null && profileManager.hasAutoProfile(serverKey);
+        autoProfileActive = serverKey != null && profileManager.isAutoProfileActive(serverKey);
 
         panelW = Math.min(322, this.width - 24);
         panelH = Math.min(244, this.height - 24);
@@ -93,8 +98,9 @@ public class ServerWorldProfileScreen extends Screen {
                 Component.literal("Use"), button -> useTypedProfile()));
 
         // Bottom bar.
+        String modeLabel = autoProfileAvailable && autoProfileActive ? "Auto" : "Default";
         this.addRenderableWidget(new InventorySortTextButton(panelX + PAD, bottomBarY, 76, 18,
-                Component.literal("Default"), button -> useProfile("default")));
+                Component.literal(modeLabel), button -> cycleDefaultAuto()));
         this.addRenderableWidget(new InventorySortTextButton(panelX + panelW - PAD - 64, bottomBarY, 64, 18,
                 Component.literal(requiresConfirmation ? "Confirm" : "Back"), button -> confirmOrClose()));
 
@@ -144,7 +150,7 @@ public class ServerWorldProfileScreen extends Screen {
 
         // Section label + active indicator.
         g.drawString(this.font, "Saved worlds", panelX + PAD, labelY, InvUi.TEXT_DIM, false);
-        String tracking = "Tracking: " + activeProfile;
+        String tracking = "Tracking: " + (autoProfileActive ? "auto:" + activeProfile : activeProfile);
         int trackingMax = panelW - PAD * 2 - this.font.width("Saved worlds") - 10;
         tracking = truncate(tracking, trackingMax);
         g.drawString(this.font, tracking, panelX + panelW - PAD - this.font.width(tracking), labelY, ACCENT, false);
@@ -166,7 +172,7 @@ public class ServerWorldProfileScreen extends Screen {
             String status;
             int statusColor;
             if (active) {
-                status = "active";
+                status = autoProfileActive ? "auto" : "active";
                 statusColor = ACCENT;
             } else {
                 long last = ServerWorldProfileManager.getInstance().getLastUsed(serverKey, profile);
@@ -247,6 +253,22 @@ public class ServerWorldProfileScreen extends Screen {
         Minecraft mc = Minecraft.getInstance();
         MinecraftApiCompat.sendSystemMessage(mc, Component.literal("Tracking world: "
                 + ServerWorldProfileManager.getInstance().getActiveProfile(serverKey)).withStyle(ChatFormatting.GREEN));
+        closeToParent();
+    }
+
+    private void cycleDefaultAuto() {
+        if (serverKey == null) {
+            return;
+        }
+        ServerWorldProfileManager manager = ServerWorldProfileManager.getInstance();
+        if (manager.hasAutoProfile(serverKey) && !manager.isAutoProfileActive(serverKey)) {
+            manager.useAutoProfile(serverKey);
+        } else {
+            manager.useDefaultProfile(serverKey);
+        }
+        Minecraft mc = Minecraft.getInstance();
+        MinecraftApiCompat.sendSystemMessage(mc, Component.literal("Tracking world: "
+                + manager.getActiveProfile(serverKey)).withStyle(ChatFormatting.GREEN));
         closeToParent();
     }
 

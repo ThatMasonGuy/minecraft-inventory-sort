@@ -1,6 +1,6 @@
 # Inventory Sort (Fabric)
 
-A lightweight **client-side** Minecraft mod that adds robust sorting capabilities and powerful inventory tracking to container screens. Intelligently organize your items, find misplaced gear, and keep tabs on your storage.
+A lightweight Minecraft inventory mod suite that adds robust sorting capabilities and powerful inventory tracking to container screens. Intelligently organize your items, find misplaced gear, and keep tabs on your storage.
 
 - **Mod ID:** `inventorysort`
 - **Minecraft:** current patch lane targets `1.20.x`, `1.21.x`, and
@@ -40,6 +40,10 @@ A lightweight **client-side** Minecraft mod that adds robust sorting capabilitie
   names, and other data-bearing stacks are tracked separately from their base
   item. Prefix a query with `<` to search only known enchanted, potion, or
   component-backed variants, such as `<sil` for Silk Touch.
+- **Optional Server Auto Profile:** InvSearch does not need a server install,
+  but if it is installed on a Fabric server it can send the active world name
+  to clients so tracking can select an `auto` world/profile without manual
+  setup.
 - **Expanded Location/Details View:** View detailed context about where your items are stored to easily locate them in a massive base.
 
 ### 3. Tracked Storage & Known Locations
@@ -69,9 +73,17 @@ Inventory Mods stores cross-instance data outside the launcher instance folder:
 
 Single-player tracking namespaces include a stable launcher-instance id so two different instances can each have a world named `world` without sharing storage. Multiplayer server namespaces stay shared across instances for the same Minecraft account, and separated for different accounts on the same computer.
 
+When InvSearch is also installed on a Fabric server, it sends the server world
+name to clients as an optional auto profile. The tracked-world selector can use
+that `auto` profile when available, fall back to `default`, or keep any manual
+profile the player selects.
+
 ## Compatibility & Scope
 
-- **Client-Side Only:** This mod operates entirely on the client. It adds no new blocks, items, or server-side mechanics, making it usable on vanilla servers where client-side utility mods are allowed.
+- **No Server Required:** InvSort, InvSearch, and InvCatalogue all work as
+  client-side utility mods where such mods are allowed. InvSearch may also be
+  installed on a Fabric server to send the optional auto world/profile hint to
+  clients, but it adds no blocks, items, or gameplay mechanics.
 - **Framework:** Requires **Fabric Loader** and **Fabric API** matching the target Minecraft version.
 - **Current Release Target:** The split release jars are supported/publishable
   for Minecraft `1.20` through `1.21.11`, plus `26.1`, `26.1.1`, `26.1.2`,

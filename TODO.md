@@ -49,6 +49,22 @@ variant rows. The public release jar size sentinel is raised from 245,000 to
 PASS `git diff --check`; PASS
 `.\gradlew.bat buildAllMods --no-daemon --console=plain` using the repo-local
 Gradle cache fallback.
+Fifth InvSearch checkpoint: InvSearch now has an optional server entrypoint and
+per-profile networking shims. If the InvSearch jar is installed on a Fabric
+server, it sends the server world name to connected clients as an `auto`
+tracking profile; clients still work without a server install and can switch
+back to `default` or select a manual profile. The tracked-world selector shows
+the server-supplied auto profile when available, and the Search menu scroll
+buttons now sit inside the menu frame. CI/publish validation now includes
+`smokeTestInventorySearchValidationServers` and
+`smokeTestInventorySearchSupportedServers`, with the selected-profile
+`smokeTestInventorySearchServer` available for focused checks. These tasks
+launch a dedicated server with only the packaged InvSearch jar and require
+`INVENTORYSEARCH_SERVER_SMOKE_TEST_PASS` in the server log. Verification: PASS
+`git diff --check`; PASS
+`.\gradlew.bat buildAllMods --no-daemon --console=plain`; PASS
+`.\gradlew.bat smokeTestInventorySearchServer --no-daemon --console=plain`
+using the repo-local Gradle cache fallback.
 
 Previous local checkpoint: `3.2.3` 26.x profile consolidation is complete after
 the coordinated right-side button placement work. Shared Core now exposes

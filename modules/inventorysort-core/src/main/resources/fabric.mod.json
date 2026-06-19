@@ -8,7 +8,7 @@
   "contact": {},
   "license": "LGPL-3.0-only",
   "icon": "assets/inventory-sort/icon.png",
-  "environment": "client",
+  "environment": "*",
   "entrypoints": {
     "client": ["tempeststudios.inventorysort.InventorySortCoreClient"]
   },
