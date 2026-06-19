@@ -129,6 +129,10 @@ def gradleWrapperExecutable = System.getProperty('os.name').toLowerCase(Locale.R
 		: './gradlew'
 def useSmokeTestXvfb = (findProperty('inventorysort_smoke_xvfb') ?: 'false').toString().toBoolean()
 def useSmokeTestNestedNoDaemon = (findProperty('inventorysort_smoke_nested_no_daemon') ?: 'true').toString().toBoolean()
+def smokeTestExecTimeoutSeconds = (findProperty('inventorysort_smoke_exec_timeout_seconds') ?: '300').toString() as long
+if (smokeTestExecTimeoutSeconds <= 0L) {
+	throw new GradleException("inventorysort_smoke_exec_timeout_seconds must be positive, got ${smokeTestExecTimeoutSeconds}.")
+}
 def selectedSmokeProfileFilters = profileListProperty('inventorysort_smoke_profiles', '') as Set
 def selectedSmokeGameVersionFilters = profileListProperty('inventorysort_smoke_game_versions', '') as Set
 def selectedSmokeInstallSetFilters = profileListProperty('inventorysort_smoke_install_sets', '') as Set
@@ -652,6 +656,7 @@ def registerSmokeTasks = { List<String> profiles, String taskPrefix, String buil
 					} else {
 						commandLine(runArguments as String[])
 					}
+					timeout.set(java.time.Duration.ofSeconds(smokeTestExecTimeoutSeconds))
 
 					doFirst {
 						def releaseDir = releaseJarDirectory.get().asFile

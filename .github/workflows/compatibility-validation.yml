@@ -16,6 +16,22 @@ on:
         options:
           - printVersionProfile
           - buildAllMods
+          - smokeTestSelectedClients
+      smoke_profiles:
+        description: 'Comma-separated smoke release profile/profile_id filters for smokeTestSelectedClients'
+        required: false
+        type: string
+        default: '26.1-26.2-pre-3'
+      smoke_game_versions:
+        description: 'Comma-separated exact Minecraft game versions for smokeTestSelectedClients'
+        required: false
+        type: string
+        default: ''
+      smoke_install_sets:
+        description: 'Comma-separated install sets for smokeTestSelectedClients'
+        required: false
+        type: string
+        default: 'all-public'
       gradle_java_version:
         description: 'Java version used to run Gradle'
         required: true
@@ -79,9 +95,24 @@ jobs:
           --no-daemon
           --console=plain
       - name: validate selected profile
+        if: ${{ inputs.validation_task != 'smokeTestSelectedClients' }}
         run: >
           ./gradlew ${{ inputs.validation_task }}
           -Pminecraft_version_profile=${{ inputs.minecraft_version_profile }}
+          --no-daemon
+          --console=plain
+      - name: install virtual display
+        if: ${{ inputs.validation_task == 'smokeTestSelectedClients' }}
+        run: sudo apt-get update && sudo apt-get install -y xvfb flite1-dev
+      - name: smoke selected profile
+        if: ${{ inputs.validation_task == 'smokeTestSelectedClients' }}
+        run: >
+          ./gradlew smokeTestSelectedClients
+          -Pminecraft_version_profile=${{ inputs.minecraft_version_profile }}
+          -Pinventorysort_smoke_profiles=${{ inputs.smoke_profiles }}
+          -Pinventorysort_smoke_game_versions=${{ inputs.smoke_game_versions }}
+          -Pinventorysort_smoke_install_sets=${{ inputs.smoke_install_sets }}
+          -Pinventorysort_smoke_xvfb=true
           --no-daemon
           --console=plain
       - name: capture validation artifacts

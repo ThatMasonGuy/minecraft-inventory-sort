@@ -111,6 +111,10 @@ All notable project changes will be documented here.
 - Hardened automated smoke launches with a smoke-only in-client watchdog so a
   hosted client stall fails with `INVENTORYSORT_SMOKE_TEST_TIMEOUT` instead of
   leaving the guarded publish workflow running indefinitely.
+- Added a Gradle-side smoke task timeout plus targeted hosted smoke controls in
+  the compatibility validation workflow, and install Flite in Linux smoke
+  workflows so Minecraft narrator native-library setup does not wedge headless
+  smoke launches.
 - Raised the public release jar size sentinel to allow the intentional embedded
   Core footprint from the shared button-slot API while keeping the existing
   junk-file and embedded-Core verification checks active.

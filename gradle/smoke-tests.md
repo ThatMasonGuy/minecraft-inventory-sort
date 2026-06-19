@@ -41,13 +41,17 @@ If the client stops producing ticks before the pass marker, it logs
 outer Gradle smoke task running indefinitely. The default watchdog window is
 180 seconds and can be overridden with
 `-Dinventorysort.smokeTimeoutSeconds=<seconds>` when debugging timing issues.
+The outer Gradle `Exec` smoke task also has a 300-second timeout, configurable
+with `-Pinventorysort_smoke_exec_timeout_seconds=<seconds>`, so a frozen client
+process cannot hold a GitHub runner until the workflow-level timeout.
 
 Normal push/PR builds intentionally run only `buildAllMods` for the default
 profile. Use local full smoke testing only when you specifically need it; the
-manual Modrinth publish workflow is the normal expensive release gate.
-For focused migration work, the manual GitHub Actions `compatibility validation`
-workflow can run one candidate profile with Java 25 before it is promoted into
-the full smoke matrix.
+manual Modrinth publish workflow is the normal expensive release gate. For
+focused hosted smoke checks, the manual GitHub Actions `compatibility
+validation` workflow can run `smokeTestSelectedClients` with specific
+`inventorysort_smoke_profiles`, `inventorysort_smoke_game_versions`, and
+`inventorysort_smoke_install_sets` filters under `xvfb`.
 
 Useful commands:
 

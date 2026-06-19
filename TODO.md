@@ -39,6 +39,19 @@ watchdog that logs `INVENTORYSORT_SMOKE_TEST_TIMEOUT` and exits the JVM if an
 armed smoke launch stalls before `INVENTORYSORT_SMOKE_TEST_PASS`. Watchdog
 verification: PASS `.\gradlew.bat buildAllVersions --no-daemon --console=plain`;
 PASS `.\gradlew.bat smokeTestSelectedClients "-Pinventorysort_smoke_profiles=1.21-1.21.5" "-Pinventorysort_smoke_game_versions=1.21.5" "-Pinventorysort_smoke_install_sets=all-public" --no-daemon --console=plain`.
+Follow-up publish run `27808903220` reached the same hosted smoke stall before
+upload capture and was also canceled before any Modrinth upload step. The smoke
+gate now has an outer Gradle `Exec` timeout
+(`inventorysort_smoke_exec_timeout_seconds`, default 300 seconds), the Linux
+publish and compatibility workflows install Flite for Minecraft narrator native
+libraries, and `compatibility validation` can run targeted hosted
+`smokeTestSelectedClients` checks with profile, game-version, and install-set
+filters before retrying a full publish. Verification: PASS `git diff --check`;
+PASS `.\gradlew.bat smokeTestSelectedClients
+"-Pinventorysort_smoke_profiles=1.21-1.21.5"
+"-Pinventorysort_smoke_game_versions=1.21.5"
+"-Pinventorysort_smoke_install_sets=all-public" --no-daemon --console=plain`;
+PASS `.\gradlew.bat buildAllVersions --no-daemon --console=plain`.
 
 Previous checkpoint: `3.2.2` is published. InvSort now stores player inventory
 rules, world-container defaults, screen overrides, and exact-container overrides
