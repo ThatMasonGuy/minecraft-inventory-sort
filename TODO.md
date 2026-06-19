@@ -1,7 +1,7 @@
-# Inventory Search TODO
+# Inventory Mods TODO
 
-Current local checkpoint: `3.2.3` is queued for coordinated right-side button
-placement. Shared Core now exposes
+Current local checkpoint: `3.2.3` docs hygiene is complete for coordinated
+right-side button placement. Shared Core now exposes
 `tempeststudios.inventorysort.api.InventoryScreenButtonSlots`, which lets mods
 reserve priority-ordered `PLAYER_INVENTORY` and `CONTAINER` right-side slots,
 read occupied slots, and recalculate placement as vanilla or recipe-book screen
@@ -18,7 +18,11 @@ requested-slot fit, next-slot fit, and placement `fitsInGroup()` status, with
 owner ids, slot ids, priorities, and screen conditions. Verification: PASS
 `git diff --check`; PASS
 `.\gradlew.bat buildAllMods --no-daemon --console=plain`; PASS
-`.\gradlew.bat buildAllVersions --no-daemon --console=plain`.
+`.\gradlew.bat buildAllVersions --no-daemon --console=plain`. Follow-up docs
+hygiene added `docs/README.md`, linked the developer docs from `AGENTS.md` and
+`README.md`, and moved the TODO title from the old Search-only name to the
+current Inventory Mods suite name. Docs-only verification: PASS
+`git diff --check`.
 
 Previous checkpoint: `3.2.2` is published. InvSort now stores player inventory
 rules, world-container defaults, screen overrides, and exact-container overrides

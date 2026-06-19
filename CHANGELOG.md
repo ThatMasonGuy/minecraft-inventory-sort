@@ -107,6 +107,9 @@ All notable project changes will be documented here.
 - Raised the public release jar size sentinel to allow the intentional embedded
   Core footprint from the shared button-slot API while keeping the existing
   junk-file and embedded-Core verification checks active.
+- Added a `docs/README.md` developer-doc index, linked the button-slot API guide
+  from `AGENTS.md` and `README.md`, and renamed the TODO heading to the current
+  Inventory Mods suite name.
 - Bumped the queued minor release to `3.2.0` for validation and publishing.
 - Refreshed the source-of-truth Modrinth project descriptions to explain the
   new InvSort rules screen, InvSearch category search, and InvCatalogue report

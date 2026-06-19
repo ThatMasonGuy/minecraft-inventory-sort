@@ -166,6 +166,8 @@ additional buttons fit in the current screen geometry. See
 [`docs/button-slot-api.md`](docs/button-slot-api.md) for examples and the stable
 InvSort/InvSearch reservation order.
 
+Additional developer-facing docs are indexed in [`docs/README.md`](docs/README.md).
+
 ## Project Structure
 
 - `src/client/java/.../InventorySorter.java` - Core logic for sorting, restacking, hotbar top-ups, and layout organization.
@@ -177,6 +179,7 @@ InvSort/InvSearch reservation order.
 - `src/client/java/.../mixin/HandledScreenMixin.java` - Injects and renders the **Sort** and transfer buttons into existing container screens.
 - `src/client/java/.../mixin/SearchButtonMixin.java` - Injects the inventory search button independently from the sorting feature.
 - `src/compat/<compat_group>/` - Optional compatibility overlays selected by Minecraft version profile.
+- `docs/` - Developer-facing docs such as the shared button-slot API contract.
 - `modules/` - Gradle subprojects for Core, Sort, Search, and Catalogue release artifacts.
 
 ## Credits

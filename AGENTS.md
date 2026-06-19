@@ -17,7 +17,12 @@ Read these files before making changes:
    description-page source copy.
 9. `gallery/README.md` for Modrinth gallery assets, banner selectors, and
    description image selectors.
-10. `gradle/compatibility-release-playbook.md` for the portable compatibility
+10. `docs/README.md` for developer-facing docs that do not belong in the
+    release/publishing playbooks.
+11. `docs/button-slot-api.md` when touching inventory/container button
+    placement, companion-mod button interoperability, or right-side slot
+    reservations.
+12. `gradle/compatibility-release-playbook.md` for the portable compatibility
    and CI plan that can be adapted to other mods.
 
 After reading the docs, run `git status --short` before editing. Preserve any
