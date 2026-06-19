@@ -12,7 +12,6 @@ import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -185,6 +184,7 @@ public final class CatalogSession {
 
         CatalogStore store = CatalogStore.getInstance();
         Map<String, Integer> totals = store.aggregateTotals();
+        Map<String, ItemStackIdentity.Info> itemInfo = store.aggregateItemInfo();
         int locationCount = store.locationCount();
 
         List<Map.Entry<String, Integer>> sortedItems = totals.entrySet().stream()
@@ -212,7 +212,7 @@ public final class CatalogSession {
             int shown = Math.min(sortedItems.size(), CHAT_ITEM_LIMIT);
             for (int i = 0; i < shown; i++) {
                 Map.Entry<String, Integer> entry = sortedItems.get(i);
-                MutableComponent line = Component.literal("  • " + formatItemName(entry.getKey()) + ": ")
+                MutableComponent line = Component.literal("  • " + formatItemName(entry.getKey(), itemInfo.get(entry.getKey())) + ": ")
                         .withStyle(ChatFormatting.WHITE)
                         .append(Component.literal(String.format("%,d", entry.getValue()))
                                 .withStyle(ChatFormatting.GREEN, ChatFormatting.BOLD));
@@ -229,7 +229,7 @@ public final class CatalogSession {
         }
 
         if (writeFile && !sortedItems.isEmpty()) {
-            Path file = writeReportFile(sortedItems, totalItems, locationCount, durationSeconds);
+            Path file = writeReportFile(sortedItems, itemInfo, totalItems, locationCount, durationSeconds);
             if (file != null) {
                 report.add(Component.empty());
                 report.add(Component.literal("Saved report: " + file.getFileName())
@@ -245,6 +245,7 @@ public final class CatalogSession {
     }
 
     private Path writeReportFile(List<Map.Entry<String, Integer>> sortedItems,
+                                 Map<String, ItemStackIdentity.Info> itemInfo,
                                  int totalItems,
                                  int locationCount,
                                  long durationSeconds) {
@@ -262,11 +263,11 @@ public final class CatalogSession {
             writer.write("\n");
             for (Map.Entry<String, Integer> entry : sortedItems) {
                 writer.write(String.format("%,d\t%s\t(%s)%n",
-                        entry.getValue(), formatItemName(entry.getKey()), entry.getKey()));
+                        entry.getValue(), formatItemName(entry.getKey(), itemInfo.get(entry.getKey())), entry.getKey()));
             }
             CatalogReportHistory.save(CatalogReportSnapshot.create(reportId, namespace,
                     System.currentTimeMillis(), durationSeconds, locationCount, totalItems,
-                    file.getFileName().toString(), itemCountMap(sortedItems)));
+                    file.getFileName().toString(), itemCountMap(sortedItems), itemInfoMap(sortedItems, itemInfo)));
             lastReportId = reportId;
         } catch (IOException e) {
             tempeststudios.inventorysort.core.InventorySortCore.LOGGER.error("Failed to write catalog report file", e);
@@ -283,12 +284,17 @@ public final class CatalogSession {
         return itemCounts;
     }
 
+    private Map<String, ItemStackIdentity.Info> itemInfoMap(List<Map.Entry<String, Integer>> sortedItems,
+                                                            Map<String, ItemStackIdentity.Info> itemInfo) {
+        Map<String, ItemStackIdentity.Info> out = new LinkedHashMap<>();
+        for (Map.Entry<String, Integer> entry : sortedItems) {
+            out.put(entry.getKey(), ItemStackIdentity.infoOrFallback(entry.getKey(), itemInfo.get(entry.getKey())));
+        }
+        return out;
+    }
+
     /** minecraft:iron_ingot -> Iron Ingot */
-    private static String formatItemName(String itemId) {
-        String name = itemId.contains(":") ? itemId.substring(itemId.lastIndexOf(':') + 1) : itemId;
-        return Arrays.stream(name.split("_"))
-                .filter(word -> !word.isEmpty())
-                .map(word -> word.substring(0, 1).toUpperCase() + word.substring(1))
-                .collect(Collectors.joining(" "));
+    private static String formatItemName(String itemId, ItemStackIdentity.Info info) {
+        return ItemStackIdentity.displayName(itemId, info);
     }
 }

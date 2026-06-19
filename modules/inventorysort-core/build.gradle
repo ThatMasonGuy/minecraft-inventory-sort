@@ -28,6 +28,7 @@ sourceSets {
 			include "tempeststudios/inventorysort/InventorySortHitboxButton.java"
 			include "tempeststudios/inventorysort/InventorySortCoreClient.java"
 			include "tempeststudios/inventorysort/InventorySortSmokeTest.java"
+			include "tempeststudios/inventorysort/ItemStackIdentity.java"
 			include "tempeststudios/inventorysort/LegacyDataMigration.java"
 			include "tempeststudios/inventorysort/InventorySortIconButton.java"
 			include "tempeststudios/inventorysort/InventorySortIconButtonRenderer.java"

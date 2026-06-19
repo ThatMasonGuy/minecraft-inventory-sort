@@ -106,6 +106,11 @@ InvSearch now also understands category queries. Start a search with `:` to
 match practical item groups from the shared sorting vocabulary, such as
 `:wood`, `:stone`, `:tools`, `:food`, `:gear`, or `:storage`.
 
+Search and tracking are also component/NBT-aware for known stacks. Enchanted
+gear, potion variants, custom names, and other data-bearing stacks are tracked
+separately from their base item. Start a query with `<` to search only known
+enchanted, potion, or component-backed variants, such as `<sil` for Silk Touch.
+
 ![InvSearch selected result](modrinth-gallery://InvSearch/02_InvSearch_Search_Result.png)
 
 ## Features
@@ -114,6 +119,7 @@ match practical item groups from the shared sorting vocabulary, such as
 - Live results while you type
 - `:category` searches for broad groups such as wood, stone, tools, food, gear,
   storage, and redstone
+- `<variant` searches known enchanted, potion, and component-backed stacks
 - Known-current item location tracking
 - Per-location item counts for searched stacks
 - Held-versus-tracked counts so you can see what is on you and what is stored
@@ -172,6 +178,10 @@ The report browser shows item totals in an icon grid, keeps old report
 snapshots available for later review, and can filter by item text or shared
 category queries such as `:wood`, `:stone`, and `:tools`.
 
+Catalogue counts are component/NBT-aware too, so enchanted gear, potion
+variants, custom names, and other data-bearing stacks are reported separately
+from their base item instead of being merged into one total.
+
 ![InvCatalogue filtered report](modrinth-gallery://InvCatalogue/02_InvCatalogue_Report_Filtered.png)
 
 ## Features
@@ -191,6 +201,8 @@ category queries such as `:wood`, `:stone`, and `:tools`.
 - `/inventorycatalogue reports` for viewing previous catalogue snapshots in an
   item-grid UI
 - Text and `:category` report filtering for quick audits
+- Component/NBT-aware item totals for enchanted, potion, named, and other
+  data-bearing stacks
 - Keeps catalogue data separated by singleplayer world or multiplayer server
 
 ## Good for

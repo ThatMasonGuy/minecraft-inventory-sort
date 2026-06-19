@@ -40,6 +40,10 @@ All notable project changes will be documented here.
   remaining slots, next-slot fit checks, and placement fit reporting, plus a
   dedicated button-slot API guide that documents first-party owner ids, slot
   ids, priorities, and screen conditions.
+- Added a shared Core item-stack identity helper for component/NBT-aware item
+  keys and searchable variant terms across InvSearch and InvCatalogue.
+- Added InvSearch `<variant` search syntax for known enchanted, potion, and
+  component-backed stacks.
 
 ### Changed
 
@@ -57,6 +61,12 @@ All notable project changes will be documented here.
 - Moved player-inventory snapshot collection into shared Core so Catalogue,
   Search, and the tracking event mixin use the same full player inventory
   sampling path instead of duplicating menu-slot guesses.
+- Changed InvSearch tracking and InvCatalogue report/catalogue totals to key new
+  stacks by exact item data when NBT or data components are present, while
+  keeping old plain `minecraft:item_id` tracking and report data readable.
+- Raised the public release jar size sentinel from 245,000 to 255,000 bytes for
+  the intentional shared Core item-identity footprint while keeping junk-file
+  and embedded-Core verification checks in place.
 - Bumped the queued patch lane to `3.2.3` for coordinated right-side inventory
   button placement.
 - Bumped the patch lane to `3.2.1` for the recipe-book button offset regression

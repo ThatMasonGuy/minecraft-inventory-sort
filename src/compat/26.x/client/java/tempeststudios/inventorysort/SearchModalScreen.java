@@ -30,7 +30,7 @@ public class SearchModalScreen extends Screen {
     private static List<RegistryEntry> REGISTRY_CACHE = null;
     private static final Map<String, RegistryEntry> REGISTRY_BY_ID = new HashMap<>();
 
-    // Most-recently-seen item ids (persist across opens)
+    // Most-recently-seen item keys (persist across opens)
     private static final Deque<String> RECENT_IDS = new ArrayDeque<>();
     private static final int RECENT_LIMIT = 50;
 
@@ -243,7 +243,7 @@ public class SearchModalScreen extends Screen {
         boolean focused = searchBox != null && searchBox.isFocused();
         InvUi.field(ui, boxX, searchY, boxW, 18, focused, ACCENT);
         if (searchBox != null && searchBox.getValue().isEmpty()) {
-            g.text(this.font, "Search items, ids, or :category...", boxX + 6, searchY + 5, InvUi.TEXT_DIM, false);
+            g.text(this.font, "Search items, ids, :category, or <enchant/potion...", boxX + 6, searchY + 5, InvUi.TEXT_DIM, false);
         }
 
         // Context label for the list.
@@ -434,39 +434,65 @@ public class SearchModalScreen extends Screen {
         if (mc == null || mc.player == null) return;
 
         String q = (queryRaw == null ? "" : queryRaw.trim().toLowerCase(Locale.ROOT));
+        String normalizedQ = ItemStackIdentity.normalizeSearchText(q);
         InventorySortCategories.CategoryQuery categoryQuery = InventorySortCategories.categoryQuery(queryRaw);
+        boolean variantSearch = q.startsWith("<");
+        String variantQ = variantSearch ? ItemStackIdentity.normalizeSearchText(q.substring(1)) : normalizedQ;
         results.clear();
+        LinkedHashMap<String, ResultRow> rows = new LinkedHashMap<>();
 
         if (q.isEmpty()) {
             int added = 0;
             for (String id : RECENT_IDS) {
-                RegistryEntry entry = REGISTRY_BY_ID.get(id);
-                if (entry == null) continue;
-
-                results.add(buildRowForEntry(entry));
-                added++;
-                if (added >= 10) break;
+                if (addRow(rows, buildRowForKey(id))) {
+                    added++;
+                    if (added >= 10) break;
+                }
+            }
+        } else if (variantSearch) {
+            for (String itemKey : knownItemKeys(true)) {
+                ItemStackIdentity.Info info = infoForKey(itemKey);
+                if (ItemStackIdentity.matchesVariantQuery(itemKey, info, variantQ)) {
+                    addRow(rows, buildRowForKey(itemKey));
+                    if (rows.size() >= 400) break;
+                }
             }
         } else if (categoryQuery != null) {
             for (RegistryEntry e : REGISTRY_CACHE) {
                 if (categoryQuery.matches(e.item)) {
-                    results.add(buildRowForEntry(e));
-                    if (results.size() >= 400) break;
+                    addRow(rows, buildRowForEntry(e));
+                    if (rows.size() >= 400) break;
                 }
             }
 
+            results.addAll(rows.values());
             results.sort((a, b) -> compareCategoryResults(categoryQuery, a, b));
+            expanded.retainAll(idsOf(results));
+            return;
         } else {
             for (RegistryEntry e : REGISTRY_CACHE) {
                 if (e.searchName.contains(q) || e.searchId.contains(q)) {
-                    results.add(buildRowForEntry(e));
-                    if (results.size() >= 400) break;
+                    addRow(rows, buildRowForEntry(e));
+                    if (rows.size() >= 400) break;
                 }
             }
+            if (rows.size() < 400) {
+                for (String itemKey : knownItemKeys(true)) {
+                    ItemStackIdentity.Info info = infoForKey(itemKey);
+                    if (ItemStackIdentity.matchesSearch(itemKey, info, normalizedQ)) {
+                        addRow(rows, buildRowForKey(itemKey));
+                        if (rows.size() >= 400) break;
+                    }
+                }
+            }
+        }
 
+        results.addAll(rows.values());
+        if (!q.isEmpty() && categoryQuery == null) {
+            String scoreQ = variantSearch ? variantQ : q;
             results.sort((a, b) -> {
-                int sa = relevanceScore(q, a.searchName, a.searchId);
-                int sb = relevanceScore(q, b.searchName, b.searchId);
+                int sa = relevanceScore(scoreQ, a.searchName, a.searchId);
+                int sb = relevanceScore(scoreQ, b.searchName, b.searchId);
                 if (sa != sb) return Integer.compare(sb, sa);
 
                 int la = a.name.length();
@@ -478,6 +504,14 @@ public class SearchModalScreen extends Screen {
         }
 
         expanded.retainAll(idsOf(results));
+    }
+
+    private boolean addRow(LinkedHashMap<String, ResultRow> rows, ResultRow row) {
+        if (row == null || rows.containsKey(row.id)) {
+            return false;
+        }
+        rows.put(row.id, row);
+        return true;
     }
 
     private static int compareCategoryResults(InventorySortCategories.CategoryQuery query, ResultRow a, ResultRow b) {
@@ -533,6 +567,56 @@ public class SearchModalScreen extends Screen {
                 currentInvLine,
                 entry.item
         );
+    }
+
+    private ResultRow buildRowForKey(String itemKey) {
+        if (!ItemStackIdentity.isVariantKey(itemKey)) {
+            RegistryEntry entry = REGISTRY_BY_ID.get(itemKey);
+            if (entry != null) {
+                return buildRowForEntry(entry);
+            }
+        }
+
+        InvSnapshot snap = invSnapshot.get(itemKey);
+        boolean seen = snap != null && snap.count > 0;
+        String currentInvLine = seen ? formatCurrentInventoryLocation(snap) : null;
+        ItemStackIdentity.Info info = snap != null ? snap.info : ItemStackIdentity.legacyInfo(itemKey);
+        RegistryEntry baseEntry = REGISTRY_BY_ID.get(info.baseItemId());
+        ItemStack icon = snap != null && snap.icon != null && !snap.icon.isEmpty()
+                ? snap.icon
+                : (baseEntry != null ? baseEntry.icon : ItemStack.EMPTY);
+        Item item = baseEntry != null ? baseEntry.item : null;
+
+        return new ResultRow(
+                itemKey,
+                info.displayName(),
+                icon,
+                info.searchText(),
+                ItemStackIdentity.normalizeSearchText(itemKey),
+                seen,
+                seen ? snap.count : 0,
+                currentInvLine,
+                item
+        );
+    }
+
+    private Set<String> knownItemKeys(boolean variantsOnly) {
+        LinkedHashSet<String> keys = new LinkedHashSet<>();
+        keys.addAll(invSnapshot.keySet());
+        try {
+            keys.addAll(ItemLocationTracker.getInstance().getTrackedItemKeys());
+        } catch (Exception e) {
+            tempeststudios.inventorysort.core.InventorySortCore.LOGGER.error("Failed to query tracked item keys", e);
+        }
+        if (variantsOnly) {
+            keys.removeIf(key -> !ItemStackIdentity.isVariantKey(key));
+        }
+        return keys;
+    }
+
+    private ItemStackIdentity.Info infoForKey(String itemKey) {
+        InvSnapshot snap = invSnapshot.get(itemKey);
+        return snap != null ? snap.info : ItemStackIdentity.legacyInfo(itemKey);
     }
 
     private static String formatCurrentInventoryLocation(InvSnapshot snap) {
@@ -626,13 +710,13 @@ public class SearchModalScreen extends Screen {
     }
 
     private String searchTextFor(String id, String displayName) {
-        String searchText = displayName.toLowerCase(Locale.ROOT);
+        String searchText = ItemStackIdentity.normalizeSearchText(displayName + " " + id);
         if (id.equals("minecraft:potion")) {
-            searchText += " water bottle awkward potion mundane thick";
+            searchText += " " + ItemStackIdentity.normalizeSearchText("water bottle awkward potion mundane thick");
         } else if (id.equals("minecraft:splash_potion")) {
-            searchText += " splash water bottle awkward potion mundane thick";
+            searchText += " " + ItemStackIdentity.normalizeSearchText("splash water bottle awkward potion mundane thick");
         } else if (id.equals("minecraft:lingering_potion")) {
-            searchText += " lingering water bottle awkward potion mundane thick";
+            searchText += " " + ItemStackIdentity.normalizeSearchText("lingering water bottle awkward potion mundane thick");
         }
         return searchText;
     }
@@ -644,8 +728,8 @@ public class SearchModalScreen extends Screen {
             ItemStack stack = inv.getItem(slot);
             if (stack == null || stack.isEmpty()) continue;
 
-            Item item = stack.getItem();
-            String id = BuiltInRegistries.ITEM.getKey(item).toString();
+            ItemStackIdentity.Info info = ItemStackIdentity.info(stack);
+            String id = info.key();
 
             InvSnapshot snap = invSnapshot.get(id);
             if (snap == null) {
@@ -653,6 +737,10 @@ public class SearchModalScreen extends Screen {
                 invSnapshot.put(id, snap);
             }
 
+            snap.info = info;
+            if (snap.icon == null || snap.icon.isEmpty()) {
+                snap.icon = stack.copy();
+            }
             snap.count += stack.getCount();
             snap.hasHotbar |= slot < 9;
             snap.hasInventory |= slot >= 9;
@@ -681,6 +769,8 @@ public class SearchModalScreen extends Screen {
         boolean hasHotbar = false;
         boolean hasInventory = false;
         String locationLabel = "Inventory";
+        ItemStackIdentity.Info info;
+        ItemStack icon = ItemStack.EMPTY;
     }
 
     private static final class RegistryEntry {
@@ -758,7 +848,7 @@ public class SearchModalScreen extends Screen {
             if (trackedLoaded) return;
             trackedLoaded = true;
             try {
-                List<LocationEntry> locations = ItemLocationTracker.getInstance().getLocations(item);
+                List<LocationEntry> locations = ItemLocationTracker.getInstance().getLocationsByKey(id);
                 locations.removeIf(loc -> loc.getType() == LocationEntry.LocationType.INVENTORY);
                 trackedEntries = locations;
                 int sum = 0;

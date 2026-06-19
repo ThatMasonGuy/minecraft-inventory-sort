@@ -37,6 +37,18 @@ Gradle cache fallback. Attempted targeted `26.x` build from the fresh
 repo-local Gradle cache, but Gradle could not resolve
 `net.fabricmc.fabric-loom-remap:1.16-SNAPSHOT` before compilation; keep a hosted
 or existing-cache 26.x validation pass on the follow-up verification list.
+Fourth InvSearch/InvCatalogue checkpoint: shared Core now owns
+`ItemStackIdentity`, a component/NBT-aware item key and search-term helper with
+per-version identity shims. New InvSearch tracking snapshots and InvCatalogue
+catalogue/report snapshots key data-bearing stacks by exact item data while
+legacy plain `minecraft:item_id` data stays readable. InvSearch now accepts
+`<variant` searches that only match known enchanted, potion, custom-name, or
+component-backed stack variants, and normal searches can also surface known
+variant rows. The public release jar size sentinel is raised from 245,000 to
+255,000 bytes for the intentional shared Core identity footprint. Verification:
+PASS `git diff --check`; PASS
+`.\gradlew.bat buildAllMods --no-daemon --console=plain` using the repo-local
+Gradle cache fallback.
 
 Previous local checkpoint: `3.2.3` 26.x profile consolidation is complete after
 the coordinated right-side button placement work. Shared Core now exposes

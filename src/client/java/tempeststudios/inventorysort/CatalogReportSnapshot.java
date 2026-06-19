@@ -24,9 +24,11 @@ public final class CatalogReportSnapshot {
     private int totalItems;
     private String reportFileName;
     private Map<String, Integer> itemCounts;
+    private Map<String, ItemStackIdentity.Info> itemInfo;
 
     public CatalogReportSnapshot() {
         this.itemCounts = new LinkedHashMap<>();
+        this.itemInfo = new LinkedHashMap<>();
     }
 
     private CatalogReportSnapshot(String id,
@@ -36,7 +38,8 @@ public final class CatalogReportSnapshot {
                                   int locationCount,
                                   int totalItems,
                                   String reportFileName,
-                                  Map<String, Integer> itemCounts) {
+                                  Map<String, Integer> itemCounts,
+                                  Map<String, ItemStackIdentity.Info> itemInfo) {
         this.id = id;
         this.namespace = namespace;
         this.generatedAt = generatedAt;
@@ -45,6 +48,7 @@ public final class CatalogReportSnapshot {
         this.totalItems = totalItems;
         this.reportFileName = reportFileName;
         this.itemCounts = new LinkedHashMap<>(itemCounts);
+        this.itemInfo = new LinkedHashMap<>(itemInfo);
         this.uniqueItems = this.itemCounts.size();
     }
 
@@ -55,9 +59,10 @@ public final class CatalogReportSnapshot {
                                                int locationCount,
                                                int totalItems,
                                                String reportFileName,
-                                               Map<String, Integer> itemCounts) {
+                                               Map<String, Integer> itemCounts,
+                                               Map<String, ItemStackIdentity.Info> itemInfo) {
         return new CatalogReportSnapshot(id, namespace, generatedAt, durationSeconds,
-                locationCount, totalItems, reportFileName, itemCounts);
+                locationCount, totalItems, reportFileName, itemCounts, itemInfo);
     }
 
     public boolean isUsable() {
@@ -79,6 +84,12 @@ public final class CatalogReportSnapshot {
         }
         if (itemCounts == null) {
             itemCounts = new LinkedHashMap<>();
+        }
+        if (itemInfo == null) {
+            itemInfo = new LinkedHashMap<>();
+        }
+        for (String itemKey : itemCounts.keySet()) {
+            itemInfo.putIfAbsent(itemKey, ItemStackIdentity.legacyInfo(itemKey));
         }
         if (uniqueItems <= 0) {
             uniqueItems = itemCounts.size();
@@ -131,6 +142,13 @@ public final class CatalogReportSnapshot {
         return Collections.unmodifiableMap(itemCounts);
     }
 
+    public ItemStackIdentity.Info getItemInfo(String itemKey) {
+        if (itemInfo == null) {
+            itemInfo = new LinkedHashMap<>();
+        }
+        return ItemStackIdentity.infoOrFallback(itemKey, itemInfo.get(itemKey));
+    }
+
     public String displayTime() {
         LocalDateTime dateTime = LocalDateTime.ofInstant(
                 Instant.ofEpochMilli(generatedAt),
@@ -142,7 +160,7 @@ public final class CatalogReportSnapshot {
         List<ItemCount> items = new ArrayList<>();
         for (Map.Entry<String, Integer> entry : itemCounts.entrySet()) {
             if (entry.getValue() != null && entry.getValue() > 0) {
-                items.add(new ItemCount(entry.getKey(), entry.getValue()));
+                items.add(new ItemCount(entry.getKey(), entry.getValue(), getItemInfo(entry.getKey())));
             }
         }
         items.sort((left, right) -> {
@@ -155,10 +173,12 @@ public final class CatalogReportSnapshot {
     public static final class ItemCount {
         private final String itemId;
         private final int count;
+        private final ItemStackIdentity.Info info;
 
-        ItemCount(String itemId, int count) {
+        ItemCount(String itemId, int count, ItemStackIdentity.Info info) {
             this.itemId = itemId;
             this.count = count;
+            this.info = info;
         }
 
         public String itemId() {
@@ -167,6 +187,10 @@ public final class CatalogReportSnapshot {
 
         public int count() {
             return count;
+        }
+
+        public ItemStackIdentity.Info info() {
+            return info;
         }
     }
 }

@@ -235,7 +235,7 @@ public class CatalogReportBrowserScreen extends Screen {
                 boolean hovered = mouseX >= x && mouseX <= x + TILE && mouseY >= y && mouseY <= y + TILE;
                 InvUi.slot(ui, x, y, TILE, hovered, selected, ACCENT);
 
-                ItemEntry entry = itemEntry(item.itemId());
+                ItemEntry entry = itemEntry(item);
                 if (!entry.icon.isEmpty()) {
                     g.item(entry.icon, x + (TILE - 16) / 2, y + (TILE - 16) / 2);
                     g.itemDecorations(this.font, entry.icon, x + (TILE - 16) / 2, y + (TILE - 16) / 2);
@@ -266,7 +266,7 @@ public class CatalogReportBrowserScreen extends Screen {
                 return;
             }
 
-            ItemEntry entry = itemEntry(selected.itemId());
+            ItemEntry entry = itemEntry(selected);
             int iconX = detailX + DETAIL_INSET;
             int iconY = contentY;
             InvUi.slot(ui, iconX, iconY, 22, false, false, ACCENT);
@@ -368,7 +368,7 @@ public class CatalogReportBrowserScreen extends Screen {
         String normalizedQuery = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
         InventorySortCategories.CategoryQuery categoryQuery = InventorySortCategories.categoryQuery(query);
         for (CatalogReportSnapshot.ItemCount item : selectedReport.sortedItems()) {
-            ItemEntry entry = itemEntry(item.itemId());
+            ItemEntry entry = itemEntry(item);
             boolean matches = normalizedQuery.isEmpty()
                     || (categoryQuery != null
                             ? categoryQuery.matches(entry.item)
@@ -681,32 +681,18 @@ public class CatalogReportBrowserScreen extends Screen {
         itemCacheLoaded = true;
     }
 
-    private static ItemEntry itemEntry(String itemId) {
-        ensureItemCache();
-        ItemEntry entry = ITEM_CACHE.get(itemId);
-        return entry != null ? entry : new ItemEntry(itemId, formatItemName(itemId), ItemStack.EMPTY, null);
+    private static ItemEntry itemEntry(CatalogReportSnapshot.ItemCount item) {
+        return itemEntry(item.itemId(), item.info());
     }
 
-    private static String formatItemName(String itemId) {
-        String name = itemId == null ? "unknown" : itemId;
-        if (name.contains(":")) {
-            name = name.substring(name.lastIndexOf(':') + 1);
-        }
-        String[] words = name.split("_");
-        StringBuilder out = new StringBuilder();
-        for (String word : words) {
-            if (word.isEmpty()) {
-                continue;
-            }
-            if (out.length() > 0) {
-                out.append(' ');
-            }
-            out.append(Character.toUpperCase(word.charAt(0)));
-            if (word.length() > 1) {
-                out.append(word.substring(1));
-            }
-        }
-        return out.length() == 0 ? "Unknown" : out.toString();
+    private static ItemEntry itemEntry(String itemId, ItemStackIdentity.Info info) {
+        ensureItemCache();
+        String baseItemId = ItemStackIdentity.baseItemId(itemId);
+        ItemEntry base = ITEM_CACHE.get(baseItemId);
+        ItemStack icon = base != null ? base.icon : ItemStack.EMPTY;
+        Item item = base != null ? base.item : null;
+        ItemStackIdentity.Info resolved = ItemStackIdentity.infoOrFallback(itemId, info);
+        return new ItemEntry(itemId, resolved.displayName(), icon, item, resolved.searchText());
     }
 
     private static final class ItemEntry {
@@ -717,11 +703,16 @@ public class CatalogReportBrowserScreen extends Screen {
         final String searchName;
 
         ItemEntry(String itemId, String displayName, ItemStack icon, Item item) {
+            this(itemId, displayName, icon, item,
+                    ItemStackIdentity.normalizeSearchText(displayName + " " + itemId));
+        }
+
+        ItemEntry(String itemId, String displayName, ItemStack icon, Item item, String searchName) {
             this.itemId = itemId;
             this.displayName = displayName;
             this.icon = icon;
             this.item = item;
-            this.searchName = (displayName + " " + itemId).toLowerCase(Locale.ROOT);
+            this.searchName = searchName;
         }
     }
 

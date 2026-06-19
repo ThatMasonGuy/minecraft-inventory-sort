@@ -118,7 +118,8 @@ public final class CatalogReportHistory {
             }
 
             CatalogReportSnapshot snapshot = CatalogReportSnapshot.create(id, namespace, generatedAt,
-                    durationSeconds, locationCount, totalItems, path.getFileName().toString(), itemCounts);
+                    durationSeconds, locationCount, totalItems, path.getFileName().toString(),
+                    itemCounts, itemInfoFor(itemCounts));
             snapshot.normalize(id, path.getFileName().toString());
             if (snapshot.isUsable()) {
                 reportsById.put(snapshot.getId(), snapshot);
@@ -127,6 +128,14 @@ public final class CatalogReportHistory {
             tempeststudios.inventorysort.core.InventorySortCore.LOGGER.error(
                     "Failed to read legacy catalog report {}", path.getFileName(), e);
         }
+    }
+
+    private static Map<String, ItemStackIdentity.Info> itemInfoFor(Map<String, Integer> itemCounts) {
+        Map<String, ItemStackIdentity.Info> itemInfo = new LinkedHashMap<>();
+        for (String itemKey : itemCounts.keySet()) {
+            itemInfo.put(itemKey, ItemStackIdentity.legacyInfo(itemKey));
+        }
+        return itemInfo;
     }
 
     private static void parseItemLine(String line, Map<String, Integer> itemCounts) {

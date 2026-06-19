@@ -90,7 +90,7 @@ public final class CatalogStore {
 
         boolean isNew = !snapshots.containsKey(identityKey);
         LocationSnapshot snapshot = new LocationSnapshot(identityKey, containerType, positionLabel,
-                dimensionKey, System.currentTimeMillis(), aggregate(items));
+                dimensionKey, System.currentTimeMillis(), aggregate(items), aggregateItemInfo(items));
         snapshots.put(identityKey, snapshot);
         save();
         return isNew;
@@ -132,6 +132,17 @@ public final class CatalogStore {
         return totals;
     }
 
+    public Map<String, ItemStackIdentity.Info> aggregateItemInfo() {
+        ensureCurrentNamespace();
+        Map<String, ItemStackIdentity.Info> itemInfo = new LinkedHashMap<>();
+        for (LocationSnapshot snapshot : snapshots.values()) {
+            for (Map.Entry<String, ItemStackIdentity.Info> entry : snapshot.getItemInfo().entrySet()) {
+                itemInfo.putIfAbsent(entry.getKey(), entry.getValue());
+            }
+        }
+        return itemInfo;
+    }
+
     private Map<String, Integer> aggregate(Collection<ItemStack> items) {
         Map<String, Integer> counts = new HashMap<>();
         if (items == null) {
@@ -141,10 +152,25 @@ public final class CatalogStore {
             if (stack == null || stack.isEmpty()) {
                 continue;
             }
-            String itemId = BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
+            String itemId = ItemStackIdentity.key(stack);
             counts.merge(itemId, stack.getCount(), Integer::sum);
         }
         return counts;
+    }
+
+    private Map<String, ItemStackIdentity.Info> aggregateItemInfo(Collection<ItemStack> items) {
+        Map<String, ItemStackIdentity.Info> itemInfo = new LinkedHashMap<>();
+        if (items == null) {
+            return itemInfo;
+        }
+        for (ItemStack stack : items) {
+            if (stack == null || stack.isEmpty()) {
+                continue;
+            }
+            ItemStackIdentity.Info info = ItemStackIdentity.info(stack);
+            itemInfo.putIfAbsent(info.key(), info);
+        }
+        return itemInfo;
     }
 
     private void ensureCurrentNamespace() {
@@ -225,6 +251,7 @@ public final class CatalogStore {
             for (Map.Entry<String, LocationSnapshot> entry : loaded.entrySet()) {
                 LocationSnapshot snapshot = entry.getValue();
                 if (snapshot != null && snapshot.getCounts() != null) {
+                    snapshot.normalize();
                     sanitized.put(entry.getKey(), snapshot);
                 }
             }
@@ -275,19 +302,22 @@ public final class CatalogStore {
         private String dimensionKey;
         private long lastSeen;
         private Map<String, Integer> counts;
+        private Map<String, ItemStackIdentity.Info> itemInfo;
 
         LocationSnapshot(String identityKey,
                          String containerType,
                          String positionLabel,
                          String dimensionKey,
                          long lastSeen,
-                         Map<String, Integer> counts) {
+                         Map<String, Integer> counts,
+                         Map<String, ItemStackIdentity.Info> itemInfo) {
             this.identityKey = identityKey;
             this.containerType = containerType;
             this.positionLabel = positionLabel;
             this.dimensionKey = dimensionKey;
             this.lastSeen = lastSeen;
             this.counts = counts;
+            this.itemInfo = itemInfo;
         }
 
         public String getIdentityKey() {
@@ -312,6 +342,25 @@ public final class CatalogStore {
 
         public Map<String, Integer> getCounts() {
             return counts;
+        }
+
+        public Map<String, ItemStackIdentity.Info> getItemInfo() {
+            if (itemInfo == null) {
+                itemInfo = new LinkedHashMap<>();
+            }
+            return itemInfo;
+        }
+
+        void normalize() {
+            if (counts == null) {
+                counts = new HashMap<>();
+            }
+            if (itemInfo == null) {
+                itemInfo = new LinkedHashMap<>();
+            }
+            for (String itemKey : counts.keySet()) {
+                itemInfo.putIfAbsent(itemKey, ItemStackIdentity.legacyInfo(itemKey));
+            }
         }
 
         public int getTotalItems() {

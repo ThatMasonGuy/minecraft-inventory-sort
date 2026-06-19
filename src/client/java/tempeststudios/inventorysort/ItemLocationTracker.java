@@ -26,7 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ItemLocationTracker {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
-    // Map: Item ID -> current known locations, sorted by most recent.
+    // Map: item stack key -> current known locations, sorted by most recent.
     private final Map<String, LinkedList<LocationEntry>> trackedLocations;
     private final Path modDir;
     private Path saveFile;
@@ -66,7 +66,7 @@ public class ItemLocationTracker {
         if (stack.isEmpty()) return;
         String namespace = ensureCurrentNamespace();
 
-        String itemId = getItemId(stack.getItem());
+        String itemId = ItemStackIdentity.key(stack);
         LocationEntry newEntry = new LocationEntry(namespace, null, null,
                 pos, dimension, containerType, stack.getCount(), System.currentTimeMillis());
 
@@ -81,7 +81,7 @@ public class ItemLocationTracker {
         if (stack.isEmpty() || identity == null) return;
         ensureNamespaceLoaded(identity.getNamespace());
 
-        String itemId = getItemId(stack.getItem());
+        String itemId = ItemStackIdentity.key(stack);
         LocationEntry newEntry = new LocationEntry(identity, stack.getCount(), System.currentTimeMillis());
 
         addOrUpdateLocation(itemId, newEntry);
@@ -96,7 +96,7 @@ public class ItemLocationTracker {
         if (stack.isEmpty()) return;
         String namespace = ensureCurrentNamespace();
 
-        String itemId = getItemId(stack.getItem());
+        String itemId = ItemStackIdentity.key(stack);
         LocationEntry newEntry = new LocationEntry(namespace, shulkerIdentifier, stack.getCount(), System.currentTimeMillis());
 
         addOrUpdateLocation(itemId, newEntry);
@@ -106,7 +106,7 @@ public class ItemLocationTracker {
         if (!ServerWorldProfileManager.getInstance().trackingAllowed(Minecraft.getInstance())) return;
         if (identity == null) return;
         String namespace = ensureNamespaceLoaded(identity.getNamespace());
-        Map<String, Integer> aggregated = aggregateByItem(stacks);
+        Map<String, Integer> aggregated = aggregateByStackKey(stacks);
 
         removeLocations(location -> location.getType() == LocationEntry.LocationType.CONTAINER
                 && location.isInNamespace(namespace)
@@ -136,7 +136,7 @@ public class ItemLocationTracker {
                 && location.isInNamespace(namespace));
 
         long timestamp = System.currentTimeMillis();
-        for (Map.Entry<String, Integer> entry : aggregateByItem(stacks).entrySet()) {
+        for (Map.Entry<String, Integer> entry : aggregateByStackKey(stacks).entrySet()) {
             if (entry.getValue() <= 0) continue;
             addOrUpdateLocation(entry.getKey(), new LocationEntry(namespace,
                     LocationEntry.LocationType.INVENTORY, entry.getValue(), timestamp));
@@ -213,7 +213,7 @@ public class ItemLocationTracker {
         }
     }
 
-    private Map<String, Integer> aggregateByItem(Collection<ItemStack> stacks) {
+    private Map<String, Integer> aggregateByStackKey(Collection<ItemStack> stacks) {
         Map<String, Integer> totals = new HashMap<>();
         if (stacks == null) {
             return totals;
@@ -222,7 +222,7 @@ public class ItemLocationTracker {
         for (ItemStack stack : stacks) {
             if (stack == null || stack.isEmpty()) continue;
 
-            String itemId = getItemId(stack.getItem());
+            String itemId = ItemStackIdentity.key(stack);
             totals.put(itemId, totals.getOrDefault(itemId, 0) + stack.getCount());
         }
 
@@ -263,6 +263,29 @@ public class ItemLocationTracker {
     public List<LocationEntry> getLocations(Item item) {
         String namespace = ensureCurrentNamespace();
         String itemId = getItemId(item);
+        return locationsForKey(namespace, itemId);
+    }
+
+    public List<LocationEntry> getLocationsByKey(String itemKey) {
+        String namespace = ensureCurrentNamespace();
+        return locationsForKey(namespace, itemKey);
+    }
+
+    public Set<String> getTrackedItemKeys() {
+        String namespace = ensureCurrentNamespace();
+        Set<String> keys = new LinkedHashSet<>();
+        for (Map.Entry<String, LinkedList<LocationEntry>> entry : trackedLocations.entrySet()) {
+            for (LocationEntry location : entry.getValue()) {
+                if (location.isInNamespace(namespace)) {
+                    keys.add(entry.getKey());
+                    break;
+                }
+            }
+        }
+        return keys;
+    }
+
+    private List<LocationEntry> locationsForKey(String namespace, String itemId) {
         LinkedList<LocationEntry> locations = trackedLocations.get(itemId);
 
         if (locations == null) {
@@ -283,7 +306,7 @@ public class ItemLocationTracker {
      */
     public List<LocationEntry> getLocations(ItemStack stack) {
         if (stack.isEmpty()) return Collections.emptyList();
-        return getLocations(stack.getItem());
+        return getLocationsByKey(ItemStackIdentity.key(stack));
     }
 
     /**
