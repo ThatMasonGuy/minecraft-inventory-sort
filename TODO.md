@@ -56,6 +56,14 @@ Hosted validation: PASS GitHub Actions `compatibility validation` run
 `27810831395` on commit `a94f536535c140460d002eb1d4f211eeb5b11b4d` for
 `smokeTestSelectedClients`, profile `1.21-1.21.5`, game version `1.21.5`,
 install set `all-public`, Java 21.
+Release status: `3.2.3` is published. The guarded GitHub Actions Modrinth
+publish completed successfully in run `27811047206` on source commit
+`05f69286f1915fdbc603a4144237fee922c7015c`, passed all 92 supported smoke
+launches with 0 smoke timeouts, uploaded 21 listed Modrinth versions, and
+captured artifact `7744607337`. Annotated tag `v3.2.3` points to the released
+source commit, and the GitHub Release is live at
+`https://github.com/ThatMasonGuy/minecraft-inventory-sort/releases/tag/v3.2.3`
+with no attached jar assets.
 
 Previous checkpoint: `3.2.2` is published. InvSort now stores player inventory
 rules, world-container defaults, screen overrides, and exact-container overrides

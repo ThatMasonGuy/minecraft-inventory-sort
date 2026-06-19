@@ -115,6 +115,12 @@ All notable project changes will be documented here.
   the compatibility validation workflow, and install Flite in Linux smoke
   workflows so Minecraft narrator native-library setup does not wedge headless
   smoke launches.
+- Published `3.2.3` through guarded GitHub Actions workflow `27811047206`,
+  passed all 92 supported smoke launches, uploaded all 21 Modrinth
+  compatibility-group versions after the 26.x profile consolidation, and
+  created the annotated `v3.2.3` GitHub Release on source commit
+  `05f69286f1915fdbc603a4144237fee922c7015c` without attaching GitHub jar
+  assets.
 - Raised the public release jar size sentinel to allow the intentional embedded
   Core footprint from the shared button-slot API while keeping the existing
   junk-file and embedded-Core verification checks active.
