@@ -4,9 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.inventory.DispenserMenu;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -15,13 +13,15 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import tempeststudios.inventorysort.InventorySortIconButton;
 import tempeststudios.inventorysort.RecipeBookAwareButtonScreen;
 import tempeststudios.inventorysort.SearchModalScreen;
+import tempeststudios.inventorysort.api.InventoryScreenButtonSlots;
 import tempeststudios.inventorysort.compat.core.MinecraftApiCompat;
 
 @Mixin(AbstractContainerScreen.class)
 public abstract class SearchButtonMixin implements RecipeBookAwareButtonScreen {
 
     @Unique private static final int inventorySearch$BUTTON_SIZE = 12;
-    @Unique private static final int inventorySearch$BUTTON_GAP = 1;
+    @Unique private static final String inventorySearch$OWNER = "inventorysearch";
+    @Unique private static final String inventorySearch$SEARCH_SLOT = "inventory_search";
 
     @Unique private Button inventorySearch$searchButton;
 
@@ -32,6 +32,9 @@ public abstract class SearchButtonMixin implements RecipeBookAwareButtonScreen {
 
         Minecraft client = Minecraft.getInstance();
         if (client == null || client.player == null) return;
+
+        inventorySearch$searchButton = null;
+        InventoryScreenButtonSlots.releaseOwner(screen, inventorySearch$OWNER);
 
         if (inventorySearch$isContainer(screen)) {
             return;
@@ -74,35 +77,20 @@ public abstract class SearchButtonMixin implements RecipeBookAwareButtonScreen {
 
     @Unique
     private static boolean inventorySearch$isContainer(AbstractContainerScreen<?> screen) {
-        var menu = screen.getMenu();
-        int totalSlots = menu.slots.size();
-        boolean smallGridContainer = menu instanceof DispenserMenu;
-        return !(screen instanceof CreativeModeInventoryScreen) && (totalSlots > 46 || smallGridContainer);
+        return InventoryScreenButtonSlots.isInventoryModsContainer(screen);
     }
 
     @Unique
     private static int[] inventorySearch$positionFor(AbstractContainerScreen<?> screen, AbstractContainerScreenAccessor accessor) {
-        int x = inventorySearch$calcButtonX(accessor.getLeftPos(), accessor.getImageWidth(), screen.width, inventorySearch$BUTTON_SIZE);
-        int y = accessor.getTopPos() + accessor.getImageHeight() - 83 + inventorySearch$rowOffset(1);
-        return new int[]{x, y};
-    }
-
-    @Unique
-    private static int inventorySearch$calcButtonX(int leftPos, int imageWidth, int screenWidth, int totalButtonWidth) {
-        int rightX = leftPos + imageWidth - 3;
-        if (rightX + totalButtonWidth <= screenWidth) {
-            return rightX;
-        }
-        int leftX = leftPos - totalButtonWidth + 3;
-        if (leftX >= 0) {
-            return leftX;
-        }
-        return Math.max(0, screenWidth - totalButtonWidth);
-    }
-
-    @Unique
-    private static int inventorySearch$rowOffset(int row) {
-        return row * (inventorySearch$BUTTON_SIZE + inventorySearch$BUTTON_GAP);
+        InventoryScreenButtonSlots.SlotPlacement placement = InventoryScreenButtonSlots.reserveRightSlot(
+                screen,
+                InventoryScreenButtonSlots.RightSlotGroup.PLAYER_INVENTORY,
+                inventorySearch$OWNER,
+                inventorySearch$SEARCH_SLOT,
+                InventoryScreenButtonSlots.FIRST_PARTY_SEARCH_PRIORITY,
+                inventorySearch$BUTTON_SIZE
+        );
+        return new int[]{placement.x(), placement.y()};
     }
 
     @Unique

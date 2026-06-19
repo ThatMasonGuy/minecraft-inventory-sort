@@ -3,7 +3,7 @@
 A lightweight **client-side** Minecraft mod that adds robust sorting capabilities and powerful inventory tracking to container screens. Intelligently organize your items, find misplaced gear, and keep tabs on your storage.
 
 - **Mod ID:** `inventorysort`
-- **Minecraft:** current `3.2.1` patch lane targets `1.20.x`, `1.21.x`, and
+- **Minecraft:** current patch lane targets `1.20.x`, `1.21.x`, and
   `26.x` through compatibility-group releases
 - **Loader:** Fabric
 - **Java:** 17+ for `1.20-1.20.4`, 21+ for `1.20.5+`, 25+ for `26.x`
@@ -153,6 +153,15 @@ Run the client for local testing:
 ```bash
 ./gradlew :inventorysort:runClient
 ```
+
+### Button Slot API
+
+Shared Core exposes `tempeststudios.inventorysort.api.InventoryScreenButtonSlots`
+for right-side inventory-screen button placement. Mods can reserve
+`PLAYER_INVENTORY` or `CONTAINER` slots with a stable owner id, slot id, and
+priority, then use the returned placement to set their button coordinates each
+render. `getOccupiedRightSlots(...)` exposes the current reservations for mods
+that need to inspect occupied slots directly.
 
 ## Project Structure
 

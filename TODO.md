@@ -1,6 +1,22 @@
 # Inventory Search TODO
 
-Current checkpoint: `3.2.2` is published. InvSort now stores player inventory
+Current local checkpoint: `3.2.3` is queued for coordinated right-side button
+placement. Shared Core now exposes
+`tempeststudios.inventorysort.api.InventoryScreenButtonSlots`, which lets mods
+reserve priority-ordered `PLAYER_INVENTORY` and `CONTAINER` right-side slots,
+read occupied slots, and recalculate placement as vanilla or recipe-book screen
+positions move. InvSort now reserves its Sort/transfer slots through that API in
+the shared 1.x mixin and both 26.x overlays. InvSearch reserves the search
+button through the same API, so standalone InvSearch occupies the first
+inventory button slot when InvSort is not installed, while combined installs
+keep InvSort first and Search underneath. The public release jar size sentinel
+is raised from 225,000 to 245,000 bytes for the intentional embedded Core API
+footprint while the junk-file and embedded-Core checks stay active.
+Verification: PASS `git diff --check`; PASS
+`.\gradlew.bat buildAllMods --no-daemon --console=plain`; PASS
+`.\gradlew.bat buildAllVersions --no-daemon --console=plain`.
+
+Previous checkpoint: `3.2.2` is published. InvSort now stores player inventory
 rules, world-container defaults, screen overrides, and exact-container overrides
 under the active `TrackingNamespace.current(...)` entry in
 `InvSort/sort_rules.json`. Existing old-shape global rule files migrate once

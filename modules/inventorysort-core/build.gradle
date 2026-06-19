@@ -15,6 +15,7 @@ sourceSets {
 	client {
 		java {
 			srcDir rootProject.file("src/client/java")
+			include "tempeststudios/inventorysort/api/**"
 			include "tempeststudios/inventorysort/core/**"
 			include "tempeststudios/inventorysort/compat/core/**"
 			include "tempeststudios/inventorysort/ContainerIdentity.java"

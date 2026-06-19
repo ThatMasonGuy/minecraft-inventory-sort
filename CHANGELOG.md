@@ -33,9 +33,14 @@ All notable project changes will be documented here.
   InvCatalogue, and shared Core data, plus a migration registry that records
   each legacy instance-file import with the installed mod versions and import
   timestamp.
+- Added the shared Core `InventoryScreenButtonSlots` API for reserving,
+  positioning, and inspecting ordered right-side button slots on inventory and
+  container screens.
 
 ### Changed
 
+- Bumped the queued patch lane to `3.2.3` for coordinated right-side inventory
+  button placement.
 - Bumped the patch lane to `3.2.1` for the recipe-book button offset regression
   fix and launcher/instance-hardened app-data storage migration.
 - Bumped the queued patch lane to `3.2.2` for world-scoped InvSort rule
@@ -91,6 +96,13 @@ All notable project changes will be documented here.
 - Shared the InvSort category vocabulary through Core so standalone InvSearch
   and InvCatalogue jars can use category matching without depending on the
   public InvSort feature jar.
+- Moved InvSort and InvSearch screen buttons onto shared priority-ordered
+  right-side slot reservations, including the Minecraft 26.x render-state
+  overlays, so standalone InvSearch can occupy the top inventory button slot
+  when InvSort is not installed.
+- Raised the public release jar size sentinel to allow the intentional embedded
+  Core footprint from the shared button-slot API while keeping the existing
+  junk-file and embedded-Core verification checks active.
 - Bumped the queued minor release to `3.2.0` for validation and publishing.
 - Refreshed the source-of-truth Modrinth project descriptions to explain the
   new InvSort rules screen, InvSearch category search, and InvCatalogue report

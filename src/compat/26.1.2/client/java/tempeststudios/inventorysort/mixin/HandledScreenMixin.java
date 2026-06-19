@@ -4,9 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.inventory.DispenserMenu;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -16,6 +14,7 @@ import tempeststudios.inventorysort.InventorySortConfigScreen;
 import tempeststudios.inventorysort.InventorySortIconButton;
 import tempeststudios.inventorysort.InventorySorter;
 import tempeststudios.inventorysort.RecipeBookAwareButtonScreen;
+import tempeststudios.inventorysort.api.InventoryScreenButtonSlots;
 import tempeststudios.inventorysort.compat.core.MinecraftApiCompat;
 
 import java.util.ArrayList;
@@ -25,7 +24,13 @@ import java.util.List;
 public abstract class HandledScreenMixin implements RecipeBookAwareButtonScreen {
 
     @Unique private static final int inventorySort$BUTTON_SIZE = 12;
-    @Unique private static final int inventorySort$BUTTON_GAP = 1;
+    @Unique private static final String inventorySort$OWNER = "inventorysort";
+    @Unique private static final String inventorySort$PLAYER_SORT_SLOT = "player_sort";
+    @Unique private static final String inventorySort$PLAYER_MATCHING_TO_CONTAINER_SLOT = "player_matching_to_container";
+    @Unique private static final String inventorySort$PLAYER_ALL_TO_CONTAINER_SLOT = "player_all_to_container";
+    @Unique private static final String inventorySort$CONTAINER_SORT_SLOT = "container_sort";
+    @Unique private static final String inventorySort$CONTAINER_MATCHING_TO_PLAYER_SLOT = "container_matching_to_player";
+    @Unique private static final String inventorySort$CONTAINER_ALL_TO_PLAYER_SLOT = "container_all_to_player";
     @Unique private static final int inventorySort$PLAYER_SORT = 0;
     @Unique private static final int inventorySort$PLAYER_MATCHING_TO_CONTAINER = 1;
     @Unique private static final int inventorySort$PLAYER_ALL_TO_CONTAINER = 2;
@@ -36,20 +41,6 @@ public abstract class HandledScreenMixin implements RecipeBookAwareButtonScreen 
     @Unique private final List<Button> inventorySort$trackedButtons = new ArrayList<>();
     @Unique private final List<Integer> inventorySort$trackedButtonRoles = new ArrayList<>();
     @Unique private boolean inventorySort$isContainer = false;
-    @Unique private int inventorySort$containerRows = 0;
-
-    @Unique
-    private static int calcButtonX(int leftPos, int imageWidth, int screenWidth, int totalButtonWidth) {
-        int rightX = leftPos + imageWidth - 3;
-        if (rightX + totalButtonWidth <= screenWidth) {
-            return rightX;
-        }
-        int leftX = leftPos - totalButtonWidth + 3;
-        if (leftX >= 0) {
-            return leftX;
-        }
-        return Math.max(0, screenWidth - totalButtonWidth);
-    }
 
     @Inject(method = "init", at = @At("TAIL"))
     private void onInit(CallbackInfo ci) {
@@ -61,21 +52,9 @@ public abstract class HandledScreenMixin implements RecipeBookAwareButtonScreen 
 
         inventorySort$trackedButtons.clear();
         inventorySort$trackedButtonRoles.clear();
+        InventoryScreenButtonSlots.releaseOwner(screen, inventorySort$OWNER);
 
-        var menu = screen.getMenu();
-        int totalSlots = menu.slots.size();
-        boolean smallGridContainer = menu instanceof DispenserMenu;
-        inventorySort$isContainer = !(screen instanceof CreativeModeInventoryScreen)
-                && (totalSlots > 46 || smallGridContainer);
-
-        if (inventorySort$isContainer) {
-            int containerSlots = totalSlots - 36;
-            inventorySort$containerRows = menu instanceof DispenserMenu
-                    ? 3
-                    : (int) Math.ceil(containerSlots / 9.0);
-        } else {
-            inventorySort$containerRows = 0;
-        }
+        inventorySort$isContainer = InventoryScreenButtonSlots.isInventoryModsContainer(screen);
 
         inventorySort$addButton(screen, screenAccessor, inventorySort$PLAYER_SORT, InventorySortIconButton.SORT,
                 "Sort inventory",
@@ -192,38 +171,49 @@ public abstract class HandledScreenMixin implements RecipeBookAwareButtonScreen 
 
     @Unique
     private int[] inventorySort$positionFor(int role, AbstractContainerScreen<?> screen, AbstractContainerScreenAccessor accessor) {
-        int x = calcButtonX(accessor.getLeftPos(), accessor.getImageWidth(), screen.width, inventorySort$BUTTON_SIZE);
-        int y;
-        if (role == inventorySort$CONTAINER_SORT) {
-            y = inventorySort$containerGroupY(accessor);
-        } else if (role == inventorySort$CONTAINER_MATCHING_TO_PLAYER) {
-            y = inventorySort$containerGroupY(accessor) + inventorySort$rowOffset(1);
-        } else if (role == inventorySort$CONTAINER_ALL_TO_PLAYER) {
-            y = inventorySort$containerGroupY(accessor) + inventorySort$rowOffset(2);
-        } else if (role == inventorySort$PLAYER_MATCHING_TO_CONTAINER) {
-            y = inventorySort$playerGroupY(accessor) + inventorySort$rowOffset(1);
-        } else if (role == inventorySort$PLAYER_ALL_TO_CONTAINER) {
-            y = inventorySort$playerGroupY(accessor) + inventorySort$rowOffset(2);
-        } else {
-            y = inventorySort$playerGroupY(accessor);
+        InventoryScreenButtonSlots.SlotPlacement placement = InventoryScreenButtonSlots.reserveRightSlot(
+                screen,
+                inventorySort$slotGroup(role),
+                inventorySort$OWNER,
+                inventorySort$slotId(role),
+                inventorySort$priority(role),
+                inventorySort$BUTTON_SIZE
+        );
+        return new int[]{placement.x(), placement.y()};
+    }
+
+    @Unique
+    private static InventoryScreenButtonSlots.RightSlotGroup inventorySort$slotGroup(int role) {
+        if (role == inventorySort$CONTAINER_SORT
+                || role == inventorySort$CONTAINER_MATCHING_TO_PLAYER
+                || role == inventorySort$CONTAINER_ALL_TO_PLAYER) {
+            return InventoryScreenButtonSlots.RightSlotGroup.CONTAINER;
         }
-        return new int[]{x, y};
+        return InventoryScreenButtonSlots.RightSlotGroup.PLAYER_INVENTORY;
     }
 
     @Unique
-    private int inventorySort$containerGroupY(AbstractContainerScreenAccessor accessor) {
-        int groupHeight = inventorySort$rowOffset(2) + inventorySort$BUTTON_SIZE;
-        int containerHeight = Math.max(1, inventorySort$containerRows) * 18;
-        return accessor.getTopPos() + 17 + Math.max(0, (containerHeight - groupHeight) / 2);
+    private static String inventorySort$slotId(int role) {
+        if (role == inventorySort$PLAYER_MATCHING_TO_CONTAINER) {
+            return inventorySort$PLAYER_MATCHING_TO_CONTAINER_SLOT;
+        }
+        if (role == inventorySort$PLAYER_ALL_TO_CONTAINER) {
+            return inventorySort$PLAYER_ALL_TO_CONTAINER_SLOT;
+        }
+        if (role == inventorySort$CONTAINER_SORT) {
+            return inventorySort$CONTAINER_SORT_SLOT;
+        }
+        if (role == inventorySort$CONTAINER_MATCHING_TO_PLAYER) {
+            return inventorySort$CONTAINER_MATCHING_TO_PLAYER_SLOT;
+        }
+        if (role == inventorySort$CONTAINER_ALL_TO_PLAYER) {
+            return inventorySort$CONTAINER_ALL_TO_PLAYER_SLOT;
+        }
+        return inventorySort$PLAYER_SORT_SLOT;
     }
 
     @Unique
-    private static int inventorySort$playerGroupY(AbstractContainerScreenAccessor accessor) {
-        return accessor.getTopPos() + accessor.getImageHeight() - 83;
-    }
-
-    @Unique
-    private static int inventorySort$rowOffset(int row) {
-        return row * (inventorySort$BUTTON_SIZE + inventorySort$BUTTON_GAP);
+    private static int inventorySort$priority(int role) {
+        return InventoryScreenButtonSlots.FIRST_PARTY_SORT_PRIORITY + role;
     }
 }
