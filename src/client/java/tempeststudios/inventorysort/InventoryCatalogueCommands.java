@@ -9,8 +9,6 @@ import net.minecraft.network.chat.Component;
 import tempeststudios.inventorysort.compat.core.ClientCommandCompat;
 import tempeststudios.inventorysort.compat.core.MinecraftApiCompat;
 
-import java.util.List;
-
 public final class InventoryCatalogueCommands {
 
     private InventoryCatalogueCommands() {
@@ -70,10 +68,13 @@ public final class InventoryCatalogueCommands {
             return 0;
         }
 
-        List<Component> report = CatalogSession.stop();
+        CatalogSession.StopResult result = CatalogSession.stop();
 
-        for (Component line : report) {
+        for (Component line : result.report()) {
             context.getSource().sendFeedback(line);
+        }
+        if (result.reportId() != null) {
+            openReports(context, result.reportId());
         }
 
         tempeststudios.inventorysort.core.InventorySortCore.LOGGER.info("Catalog session stopped and report generated");
@@ -87,6 +88,9 @@ public final class InventoryCatalogueCommands {
         }
 
         CatalogSession session = CatalogSession.getActive();
+        if (session.shouldIncludeInventory()) {
+            session.recordCurrentPlayerInventory();
+        }
 
         context.getSource().sendFeedback(Component.literal("=".repeat(40)).withStyle(ChatFormatting.AQUA));
         context.getSource().sendFeedback(Component.literal("Catalog Session Status").withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD));
@@ -107,6 +111,10 @@ public final class InventoryCatalogueCommands {
             return openReports(context);
         }
 
+        CatalogSession session = CatalogSession.getActive();
+        if (session.shouldIncludeInventory()) {
+            session.recordCurrentPlayerInventory();
+        }
         for (Component line : CatalogSession.getActive().buildReport(false)) {
             context.getSource().sendFeedback(line);
         }
@@ -114,12 +122,16 @@ public final class InventoryCatalogueCommands {
     }
 
     private static int openReports(CommandContext<FabricClientCommandSource> context) {
+        return openReports(context, null);
+    }
+
+    private static int openReports(CommandContext<FabricClientCommandSource> context, String reportId) {
         Minecraft client = Minecraft.getInstance();
         if (client == null) {
             context.getSource().sendError(Component.literal("Minecraft client is not ready yet."));
             return 0;
         }
-        client.execute(() -> MinecraftApiCompat.setScreen(client, new CatalogReportBrowserScreen(null)));
+        client.execute(() -> MinecraftApiCompat.setScreen(client, new CatalogReportBrowserScreen(null, reportId)));
         return 1;
     }
 

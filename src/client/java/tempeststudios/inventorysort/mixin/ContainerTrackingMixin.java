@@ -15,6 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import tempeststudios.inventorysort.ContainerIdentity;
 import tempeststudios.inventorysort.ContainerPositionCapture;
 import tempeststudios.inventorysort.InventorySortContainerContext;
+import tempeststudios.inventorysort.PlayerInventorySnapshot;
 import tempeststudios.inventorysort.core.InventorySortCore;
 import tempeststudios.inventorysort.core.InventorySortEvents;
 
@@ -120,7 +121,7 @@ public abstract class ContainerTrackingMixin implements InventorySortContainerCo
 
         if (inventorySort$isPlayerInventory) {
             InventorySortEvents.INVENTORY_SNAPSHOT.invoker().onInventorySnapshot(
-                    new InventorySortEvents.InventorySnapshotContext(client, collectPlayerInventoryItems()));
+                    new InventorySortEvents.InventorySnapshotContext(client, collectPlayerInventoryItems(client)));
         } else if (inventorySort$skipTracking) {
             InventorySortCore.LOGGER.debug("Skipped tracking transient or unsupported screen: {}", inventorySort$screenClassName);
         } else {
@@ -200,17 +201,11 @@ public abstract class ContainerTrackingMixin implements InventorySortContainerCo
         return Integer.toHexString(Math.abs(itemHash));
     }
 
-    private List<ItemStack> collectPlayerInventoryItems() {
-        List<ItemStack> items = new ArrayList<>();
-        for (Slot slot : menu.slots) {
-            if (slot.getContainerSlot() < 36) {
-                ItemStack stack = slot.getItem();
-                if (!stack.isEmpty()) {
-                    items.add(stack.copy());
-                }
-            }
-        }
-        return items;
+    private List<ItemStack> collectPlayerInventoryItems(Minecraft client) {
+        ItemStack carried = client.player.containerMenu == null
+                ? ItemStack.EMPTY
+                : client.player.containerMenu.getCarried();
+        return PlayerInventorySnapshot.collect(client.player.getInventory(), carried);
     }
 
     private List<ItemStack> collectContainerItems() {

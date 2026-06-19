@@ -36,6 +36,7 @@ sourceSets {
 			include "tempeststudios/inventorysort/InventorySortTextButton.java"
 			include "tempeststudios/inventorysort/InventorySortTextButtonRenderer.java"
 			include "tempeststudios/inventorysort/InventorySortUIUtils.java"
+			include "tempeststudios/inventorysort/PlayerInventorySnapshot.java"
 			include "tempeststudios/inventorysort/RecipeBookAwareButtonScreen.java"
 			include "tempeststudios/inventorysort/ServerWorldProfileHud.java"
 			include "tempeststudios/inventorysort/ServerWorldProfileManager.java"

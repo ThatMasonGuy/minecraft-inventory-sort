@@ -1,6 +1,22 @@
 # Inventory Mods TODO
 
-Current local checkpoint: `3.2.3` 26.x profile consolidation is complete after
+Current local checkpoint: `3.3.0` Inv+ bug-fix train is open. First
+InvCatalogue checkpoint: `includeInventory` sessions now record the actual
+player inventory when the session starts and refresh it before status, active
+reports, and stop reports. The shared Core now owns
+`PlayerInventorySnapshot`, so the tracking event mixin and Catalogue commands
+sample the same player inventory path, including armor/offhand slots and any
+cursor-carried stack exposed by the current menu. `/inventorycatalogue stop`
+now returns a structured stop result, writes the existing plain-text and JSON
+report snapshots, and opens the newly saved snapshot directly in the
+InvCatalogue report browser. Version lane bumped to `3.3.0` with
+`gradle/release-notes/3.3.0.md` started for user-facing changes.
+Verification: PASS `git diff --check`; PASS
+`.\gradlew.bat buildAllMods --no-daemon --console=plain` using a repo-local
+Gradle cache because the user-level wrapper cache was not writable from the
+Codex sandbox.
+
+Previous local checkpoint: `3.2.3` 26.x profile consolidation is complete after
 the coordinated right-side button placement work. Shared Core now exposes
 `tempeststudios.inventorysort.api.InventoryScreenButtonSlots`, which lets mods
 reserve priority-ordered `PLAYER_INVENTORY` and `CONTAINER` right-side slots,

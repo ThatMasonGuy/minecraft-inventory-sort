@@ -43,6 +43,11 @@ All notable project changes will be documented here.
 
 ### Changed
 
+- Bumped the queued minor lane to `3.3.0` for the Inv+ bug-fix and
+  feature-hardening train.
+- Moved player-inventory snapshot collection into shared Core so Catalogue,
+  Search, and the tracking event mixin use the same full player inventory
+  sampling path instead of duplicating menu-slot guesses.
 - Bumped the queued patch lane to `3.2.3` for coordinated right-side inventory
   button placement.
 - Bumped the patch lane to `3.2.1` for the recipe-book button offset regression
@@ -147,6 +152,13 @@ All notable project changes will be documented here.
 
 ### Fixed
 
+- Fixed InvCatalogue `includeInventory` sessions so the player's inventory is
+  captured when the session starts, refreshed for status/report/stop, and
+  sampled from the actual player inventory including armor/offhand slots and
+  any carried cursor stack.
+- Changed `/inventorycatalogue stop` to open the newly saved report directly in
+  the in-game report browser instead of ending at chat text that only points at
+  the plain-text file.
 - Fixed the recipe-book button offset regression on player inventory and
   crafting screens so the InvSort and InvSearch buttons recalculate against the
   shifted vanilla GUI position when the recipe book opens, including the

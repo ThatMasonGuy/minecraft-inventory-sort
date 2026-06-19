@@ -39,11 +39,15 @@ public final class CatalogSession {
     private final boolean includeInventory;
     private final String namespace;
     private final long startTime;
+    private String lastReportId;
 
     public enum RecordResult {
         ADDED,      // newly catalogued location
         UPDATED,    // existing location's snapshot refreshed
         SKIPPED     // tracking not allowed, or namespace changed mid-session
+    }
+
+    public record StopResult(List<Component> report, String reportId) {
     }
 
     private CatalogSession(boolean includeInventory, String namespace) {
@@ -67,16 +71,23 @@ public final class CatalogSession {
         CatalogStore store = CatalogStore.getInstance();
         store.reloadForCurrentNamespace();
         activeSession = new CatalogSession(includeInventory, store.currentNamespace());
+        if (includeInventory) {
+            activeSession.recordCurrentPlayerInventory();
+        }
         return activeSession;
     }
 
-    public static List<Component> stop() {
+    public static StopResult stop() {
         if (activeSession == null) {
             throw new IllegalStateException("No active catalog session");
         }
+        if (activeSession.includeInventory) {
+            activeSession.recordCurrentPlayerInventory();
+        }
         List<Component> report = activeSession.buildReport(true);
+        String reportId = activeSession.lastReportId;
         activeSession = null;
-        return report;
+        return new StopResult(report, reportId);
     }
 
     public boolean shouldIncludeInventory() {
@@ -85,6 +96,15 @@ public final class CatalogSession {
 
     public String getNamespace() {
         return namespace;
+    }
+
+    public RecordResult recordCurrentPlayerInventory() {
+        Minecraft client = Minecraft.getInstance();
+        if (client == null || client.player == null) {
+            return RecordResult.SKIPPED;
+        }
+        return recordInventory(PlayerInventorySnapshot.collect(client.player.getInventory(),
+                client.player.containerMenu == null ? ItemStack.EMPTY : client.player.containerMenu.getCarried()));
     }
 
     // --- Recording ----------------------------------------------------------
@@ -212,8 +232,10 @@ public final class CatalogSession {
             Path file = writeReportFile(sortedItems, totalItems, locationCount, durationSeconds);
             if (file != null) {
                 report.add(Component.empty());
-                report.add(Component.literal("Full report saved to: " + file)
+                report.add(Component.literal("Saved report: " + file.getFileName())
                         .withStyle(ChatFormatting.DARK_AQUA));
+                report.add(Component.literal("Opening the report browser for review...")
+                        .withStyle(ChatFormatting.GRAY));
             }
         }
 
@@ -245,6 +267,7 @@ public final class CatalogSession {
             CatalogReportHistory.save(CatalogReportSnapshot.create(reportId, namespace,
                     System.currentTimeMillis(), durationSeconds, locationCount, totalItems,
                     file.getFileName().toString(), itemCountMap(sortedItems)));
+            lastReportId = reportId;
         } catch (IOException e) {
             tempeststudios.inventorysort.core.InventorySortCore.LOGGER.error("Failed to write catalog report file", e);
             return null;

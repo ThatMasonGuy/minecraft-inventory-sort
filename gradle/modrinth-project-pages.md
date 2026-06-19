@@ -160,9 +160,9 @@ on its own, or alongside InvSort and InvSearch as part of the wider inventory
 management suite.
 
 Use `/inventorycatalogue start` before walking through your storage. Open each
-container you want counted, then use `/inventorycatalogue stop` or
-`/inventorycatalogue report` to write a report. Saved reports can be reopened
-in game with `/inventorycatalogue reports`.
+container you want counted, then use `/inventorycatalogue stop` to save and
+open a report, or `/inventorycatalogue report` to check active-session totals.
+Saved reports can be reopened in game with `/inventorycatalogue reports`.
 
 ![InvCatalogue report browser](modrinth-gallery://InvCatalogue/01_InvCatalogue_Report.png)
 
@@ -176,13 +176,15 @@ category queries such as `:wood`, `:stone`, and `:tools`.
 
 - Start and stop catalogue sessions with `/inventorycatalogue start` and
   `/inventorycatalogue stop`
-- Optional `includeInventory` mode for counting your own inventory too
+- Optional `includeInventory` mode for counting your own inventory, equipped
+  armor, offhand, and carried stack too
 - Counts standard containers, placed shulkers, ender chests, and storage
   minecarts through the shared inventory tracking system
 - Deduplicates known container identities so reopening the same storage refreshes
   it instead of double-counting it
 - Chat status and report commands for quick totals
-- Plain-text reports written locally for later review
+- Plain-text reports written locally, with the new saved report opened in game
+  after stopping a session
 - Saved JSON report snapshots for the in-game report browser
 - `/inventorycatalogue reports` for viewing previous catalogue snapshots in an
   item-grid UI
