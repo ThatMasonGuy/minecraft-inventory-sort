@@ -152,6 +152,12 @@ All notable project changes will be documented here.
 
 ### Fixed
 
+- Fixed InvSort full-inventory sorting by using the existing hotbar-swap click
+  path as a reversible buffer for layout swaps instead of depending on an empty
+  cursor landing slot.
+- Fixed InvSort reserved-slot sorting so empty reserved item slots can be used
+  as temporary sort buffers, while the final pass clears those temporary slots
+  again so reserved-empty slots stay empty after sorting.
 - Fixed InvCatalogue `includeInventory` sessions so the player's inventory is
   captured when the session starts, refreshed for status/report/stop, and
   sampled from the actual player inventory including armor/offhand slots and

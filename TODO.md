@@ -15,6 +15,15 @@ Verification: PASS `git diff --check`; PASS
 `.\gradlew.bat buildAllMods --no-daemon --console=plain` using a repo-local
 Gradle cache because the user-level wrapper cache was not writable from the
 Codex sandbox.
+Second InvSort checkpoint: full-inventory sorting now uses the existing hotbar
+swap click path as a reversible buffer for layout swaps when a hotbar slot is
+available, avoiding reliance on an empty cursor landing slot. The sort work
+list now appends empty reserved item slots as temporary buffers only after
+reserved-slot enforcement has had a chance to fill them, and the final pass
+clears temporary reserved slots so assigned-empty slots stay empty after
+sorting. Verification: PASS `git diff --check`; PASS
+`.\gradlew.bat buildAllMods --no-daemon --console=plain` using the same
+repo-local Gradle cache fallback.
 
 Previous local checkpoint: `3.2.3` 26.x profile consolidation is complete after
 the coordinated right-side button placement work. Shared Core now exposes

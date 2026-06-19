@@ -87,24 +87,26 @@ public class InventorySorter {
 		if (!ensureCursorEmpty(menu, invoker, slotsToSort, fallbackSlots))
 			return;
 
+		Slot hotbarSwapBuffer = findHotbarBuffer(hotbarBufferSlots, slotsToSort);
+
 		if (rules != null && rules.enabled) {
-			enforceReservedSlots(menu, invoker, slotsToSort, rules);
+			enforceReservedSlots(menu, invoker, slotsToSort, rules, hotbarSwapBuffer);
 			if (!ensureCursorEmpty(menu, invoker, slotsToSort, fallbackSlots))
 				return;
 		}
 
-		List<Slot> movableSlots = movableSlots(slotsToSort, rules, true);
-		if (movableSlots.isEmpty())
+		SortWorkSlots workSlots = sortWorkSlots(slotsToSort, rules);
+		if (workSlots.slots().isEmpty())
 			return;
 
-		List<Slot> sortableSlots = moveBundlesToFront(invoker, movableSlots, hotbarBufferSlots);
+		List<Slot> sortableSlots = moveBundlesToFront(invoker, workSlots.slots(), hotbarSwapBuffer);
 		if (!ensureCursorEmpty(menu, invoker, slotsToSort, fallbackSlots))
 			return;
 		if (sortableSlots.isEmpty())
 			return;
 
 		// A) Compact empties to the end (stable)
-		stableCompact(sortableSlots, invoker, menu);
+		stableCompact(sortableSlots, invoker, menu, hotbarSwapBuffer);
 
 		// B) Restack within region
 		restack(menu, invoker, sortableSlots);
@@ -115,13 +117,14 @@ public class InventorySorter {
 
 		// D) Apply layout (treat same item+components as "already correct", ignore
 		// counts; restack handles fullness)
-		applyLayout(menu, invoker, sortableSlots, desired);
+		applyLayout(menu, invoker, sortableSlots, desired, hotbarSwapBuffer);
 
 		// E) Restack again now that like-items are adjacent (full stacks first naturally)
 		restack(menu, invoker, sortableSlots);
 
 		// F) Final compact
-		stableCompact(sortableSlots, invoker, menu);
+		stableCompact(sortableSlots, invoker, menu, hotbarSwapBuffer);
+		clearTemporarySlots(invoker, workSlots.temporarySlots(), workSlots.slots(), hotbarSwapBuffer);
 
 		// Final safety
 		ensureCursorEmpty(menu, invoker, sortableSlots, fallbackSlots);
@@ -155,10 +158,41 @@ public class InventorySorter {
 		return movable;
 	}
 
+	private static SortWorkSlots sortWorkSlots(List<Slot> slots, SortRuleStore.SortRules rules) {
+		if (rules == null || !rules.enabled) {
+			return new SortWorkSlots(new ArrayList<>(slots), Collections.emptyList());
+		}
+
+		List<Slot> movable = new ArrayList<>();
+		List<Slot> temporary = new ArrayList<>();
+		for (int i = 0; i < slots.size(); i++) {
+			SortRuleStore.SlotRule rule = rules.ruleFor(i);
+			if (rule.restricted) {
+				continue;
+			}
+			Slot slot = slots.get(i);
+			if (rule.hasReservation()) {
+				if (slot.getItem().isEmpty()) {
+					temporary.add(slot);
+				}
+				continue;
+			}
+			movable.add(slot);
+		}
+		if (!temporary.isEmpty()) {
+			movable.addAll(temporary);
+		}
+		return new SortWorkSlots(movable, temporary);
+	}
+
+	private record SortWorkSlots(List<Slot> slots, List<Slot> temporarySlots) {
+	}
+
 	private static void enforceReservedSlots(AbstractContainerMenu menu,
 											 AbstractContainerScreenInvoker invoker,
 											 List<Slot> slots,
-											 SortRuleStore.SortRules rules) {
+											 SortRuleStore.SortRules rules,
+											 Slot hotbarSwapBuffer) {
 		for (int i = 0; i < slots.size(); i++) {
 			SortRuleStore.SlotRule rule = rules.ruleFor(i);
 			if (rule.restricted || !rule.hasReservation()) {
@@ -175,11 +209,11 @@ public class InventorySorter {
 			if (targetStack.isEmpty() || !itemIdEquals(targetStack, reservedItemId)) {
 				int matching = findReservedSource(slots, rules, reservedItemId, i);
 				if (matching != -1) {
-					swap(invoker, target, slots.get(matching));
+					swapSafely(invoker, target, slots.get(matching), hotbarSwapBuffer);
 				} else if (!targetStack.isEmpty()) {
 					int empty = findEmptyMovableSlot(slots, rules, i);
 					if (empty != -1) {
-						swap(invoker, target, slots.get(empty));
+						swapSafely(invoker, target, slots.get(empty), hotbarSwapBuffer);
 					}
 				}
 			}
@@ -270,13 +304,12 @@ public class InventorySorter {
 
 	private static List<Slot> moveBundlesToFront(AbstractContainerScreenInvoker invoker,
 												 List<Slot> slots,
-												 List<Slot> hotbarBufferSlots) {
+												 Slot hotbarBuffer) {
 		int bundleCount = countBundles(slots);
 		if (bundleCount == 0) {
 			return slots;
 		}
 
-		Slot hotbarBuffer = findHotbarBuffer(hotbarBufferSlots, slots);
 		if (hotbarBuffer == null) {
 			tempeststudios.inventorysort.core.InventorySortCore.LOGGER.warn(
 					"Cannot partition bundles before sorting because no hotbar buffer slot was available.");
@@ -290,7 +323,7 @@ public class InventorySorter {
 				continue;
 			}
 			if (scanIndex != targetIndex) {
-				swapUsingHotbarBuffer(invoker, slots.get(targetIndex), source, hotbarBuffer);
+				swapSafely(invoker, slots.get(targetIndex), source, hotbarBuffer);
 			}
 			targetIndex++;
 		}
@@ -848,7 +881,8 @@ public class InventorySorter {
 	private static void applyLayout(AbstractContainerMenu menu,
 									AbstractContainerScreenInvoker invoker,
 									List<Slot> slots,
-									List<ItemStack> desired) {
+									List<ItemStack> desired,
+									Slot hotbarSwapBuffer) {
 
 		for (int i = 0; i < slots.size(); i++) {
 			ItemStack want = desired.get(i);
@@ -870,7 +904,7 @@ public class InventorySorter {
 			if (isBundle(slots.get(j).getItem()))
 				continue;
 
-			swap(invoker, slots.get(i), slots.get(j));
+			swapSafely(invoker, slots.get(i), slots.get(j), hotbarSwapBuffer);
 
 			if (!menu.getCarried().isEmpty()) {
 				int empty = findFirstEmpty(slots);
@@ -949,7 +983,7 @@ public class InventorySorter {
 	}
 
 	private static void stableCompact(List<Slot> slots, AbstractContainerScreenInvoker invoker,
-									  AbstractContainerMenu menu) {
+									  AbstractContainerMenu menu, Slot hotbarSwapBuffer) {
 		for (int i = 0; i < slots.size(); i++) {
 			if (!slots.get(i).getItem().isEmpty())
 				continue;
@@ -964,7 +998,7 @@ public class InventorySorter {
 			if (isBundle(slots.get(j).getItem()))
 				continue;
 
-			swap(invoker, slots.get(i), slots.get(j));
+			swapSafely(invoker, slots.get(i), slots.get(j), hotbarSwapBuffer);
 
 			if (!menu.getCarried().isEmpty()) {
 				int empty = findFirstEmpty(slots);
@@ -980,6 +1014,30 @@ public class InventorySorter {
 				return i;
 		}
 		return -1;
+	}
+
+	private static void clearTemporarySlots(AbstractContainerScreenInvoker invoker,
+											List<Slot> temporarySlots,
+											List<Slot> workSlots,
+											Slot hotbarSwapBuffer) {
+		for (Slot temporary : temporarySlots) {
+			if (temporary.getItem().isEmpty()) {
+				continue;
+			}
+			Slot empty = findFirstEmptyExcluding(workSlots, temporarySlots);
+			if (empty != null) {
+				swapSafely(invoker, temporary, empty, hotbarSwapBuffer);
+			}
+		}
+	}
+
+	private static Slot findFirstEmptyExcluding(List<Slot> slots, List<Slot> excluded) {
+		for (Slot slot : slots) {
+			if (!excluded.contains(slot) && slot.getItem().isEmpty()) {
+				return slot;
+			}
+		}
+		return null;
 	}
 
 	// ─────────────────────────────────────────────────────────────
@@ -1025,6 +1083,17 @@ public class InventorySorter {
 		click(invoker, a);
 		click(invoker, b);
 		click(invoker, a);
+	}
+
+	private static void swapSafely(AbstractContainerScreenInvoker invoker, Slot a, Slot b, Slot hotbarSwapBuffer) {
+		if (a == b) {
+			return;
+		}
+		if (hotbarSwapBuffer != null) {
+			swapUsingHotbarBuffer(invoker, a, b, hotbarSwapBuffer);
+			return;
+		}
+		swap(invoker, a, b);
 	}
 
 	// ─────────────────────────────────────────────────────────────
