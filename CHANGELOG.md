@@ -184,6 +184,9 @@ All notable project changes will be documented here.
   matching `Unlock` action for default-locked hotbar slots.
 - Fixed InvSearch modal scroll buttons so the up/down controls sit inside the
   menu container instead of outside the frame.
+- Fixed an InvSearch client launch crash caused by the optional server
+  entrypoint registering the `inventorysearch:auto_world` payload on the
+  physical client before the client networking receiver registered it.
 - Fixed InvSort full-inventory sorting by using the existing hotbar-swap click
   path as a reversible buffer for layout swaps instead of depending on an empty
   cursor landing slot.

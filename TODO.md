@@ -65,6 +65,14 @@ launch a dedicated server with only the packaged InvSearch jar and require
 `.\gradlew.bat buildAllMods --no-daemon --console=plain`; PASS
 `.\gradlew.bat smokeTestInventorySearchServer --no-daemon --console=plain`
 using the repo-local Gradle cache fallback.
+Sixth InvSearch checkpoint: fixed the post-server-optional launch crash where
+the `inventorysearch:auto_world` payload type was registered twice on a
+physical client. The optional server entrypoint now exits immediately in client
+environment, leaving client payload registration to `InventorySearchClient`.
+Verification: PASS `git diff --check`; PASS
+`.\gradlew.bat buildAllMods --no-daemon --console=plain`; PASS
+`.\gradlew.bat smokeTestSelectedClients "-Pinventorysort_smoke_profiles=1.21.11" "-Pinventorysort_smoke_game_versions=1.21.11" "-Pinventorysort_smoke_install_sets=inventorysearch-only" --no-daemon --console=plain`;
+PASS `.\gradlew.bat smokeTestInventorySearchServer --no-daemon --console=plain`.
 
 Previous local checkpoint: `3.2.3` 26.x profile consolidation is complete after
 the coordinated right-side button placement work. Shared Core now exposes

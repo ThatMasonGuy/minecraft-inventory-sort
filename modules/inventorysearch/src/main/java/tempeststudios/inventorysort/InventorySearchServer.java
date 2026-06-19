@@ -1,7 +1,9 @@
 package tempeststudios.inventorysort;
 
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.api.EnvType;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.loader.api.FabricLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tempeststudios.inventorysort.compat.search.InventorySearchServerNetworking;
@@ -12,6 +14,9 @@ public class InventorySearchServer implements ModInitializer {
 
     @Override
     public void onInitialize() {
+        if (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT) {
+            return;
+        }
         LOGGER.info("Initializing Inventory Search server hooks");
         InventorySearchServerNetworking.initialize();
         registerServerSmokeHook();
