@@ -12,9 +12,11 @@ public final class InventorySortSmokeTest {
             "net.minecraft.client.multiplayer.MultiPlayerGameMode"
     };
     private static final int PASS_AFTER_TICKS = 20;
+    private static final long DEFAULT_TIMEOUT_MILLIS = 180_000L;
+    private static final String TIMEOUT_SECONDS_PROPERTY = "inventorysort.smokeTimeoutSeconds";
 
     private static int ticks;
-    private static boolean complete;
+    private static volatile boolean complete;
 
     private InventorySortSmokeTest() {
     }
@@ -25,8 +27,53 @@ public final class InventorySortSmokeTest {
         }
 
         LOGGER.info("Inventory Sort automated smoke test armed");
+        startWatchdog();
         forceLoadMixinTargets();
         ClientTickEvents.END_CLIENT_TICK.register(InventorySortSmokeTest::tick);
+    }
+
+    private static void startWatchdog() {
+        long timeoutMillis = timeoutMillis();
+        Thread watchdog = new Thread(() -> {
+            try {
+                Thread.sleep(timeoutMillis);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
+            }
+
+            if (complete) {
+                return;
+            }
+
+            LOGGER.error(
+                    "INVENTORYSORT_SMOKE_TEST_TIMEOUT minecraftProfile={} releaseProfile={} installSet={} timeoutMillis={}",
+                    System.getProperty("inventorysort.smokeMinecraftProfile", "unknown"),
+                    System.getProperty("inventorysort.smokeReleaseProfile", "unknown"),
+                    System.getProperty("inventorysort.smokeInstallSet", "unknown"),
+                    timeoutMillis
+            );
+            Runtime.getRuntime().halt(124);
+        }, "InventorySortSmokeTest-Watchdog");
+        watchdog.setDaemon(true);
+        watchdog.start();
+    }
+
+    private static long timeoutMillis() {
+        String seconds = System.getProperty(TIMEOUT_SECONDS_PROPERTY);
+        if (seconds == null || seconds.isBlank()) {
+            return DEFAULT_TIMEOUT_MILLIS;
+        }
+
+        try {
+            long parsedSeconds = Long.parseLong(seconds);
+            if (parsedSeconds > 0L) {
+                return parsedSeconds * 1_000L;
+            }
+        } catch (NumberFormatException e) {
+            LOGGER.warn("Invalid {} value '{}'; using default smoke timeout", TIMEOUT_SECONDS_PROPERTY, seconds);
+        }
+        return DEFAULT_TIMEOUT_MILLIS;
     }
 
     private static void forceLoadMixinTargets() {

@@ -35,6 +35,13 @@ upload. Broad supported matrices can take close to an hour on a local machine,
 so the manual Modrinth publish workflow is the normal place to run the full
 matrix.
 
+Smoke-test mode also starts an in-client watchdog after the harness is armed.
+If the client stops producing ticks before the pass marker, it logs
+`INVENTORYSORT_SMOKE_TEST_TIMEOUT` and exits the JVM instead of leaving the
+outer Gradle smoke task running indefinitely. The default watchdog window is
+180 seconds and can be overridden with
+`-Dinventorysort.smokeTimeoutSeconds=<seconds>` when debugging timing issues.
+
 Normal push/PR builds intentionally run only `buildAllMods` for the default
 profile. Use local full smoke testing only when you specifically need it; the
 manual Modrinth publish workflow is the normal expensive release gate.

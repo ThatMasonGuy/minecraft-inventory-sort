@@ -32,6 +32,13 @@ PASS
 `.\gradlew.bat buildAllMods "-Pminecraft_version_profile=26.x" --no-daemon --console=plain`;
 PASS
 `.\gradlew.bat smokeTestSelectedClients "-Pinventorysort_smoke_profiles=26.1-26.2-pre-3" --no-daemon --console=plain`.
+Release publish run `27806878154` was canceled before upload after a hosted
+`1.21.5` all-public smoke launch stopped producing ticks; the same focused
+smoke case passed locally. `InventorySortSmokeTest` now has a smoke-only
+watchdog that logs `INVENTORYSORT_SMOKE_TEST_TIMEOUT` and exits the JVM if an
+armed smoke launch stalls before `INVENTORYSORT_SMOKE_TEST_PASS`. Watchdog
+verification: PASS `.\gradlew.bat buildAllVersions --no-daemon --console=plain`;
+PASS `.\gradlew.bat smokeTestSelectedClients "-Pinventorysort_smoke_profiles=1.21-1.21.5" "-Pinventorysort_smoke_game_versions=1.21.5" "-Pinventorysort_smoke_install_sets=all-public" --no-daemon --console=plain`.
 
 Previous checkpoint: `3.2.2` is published. InvSort now stores player inventory
 rules, world-container defaults, screen overrides, and exact-container overrides

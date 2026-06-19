@@ -108,6 +108,9 @@ All notable project changes will be documented here.
 - Collapsed the duplicated Minecraft 26.x publish lane into one `26.x` build
   profile and one shared `src/compat/26.x` overlay, with exact 26.x runtime
   profiles retained only for smoke testing.
+- Hardened automated smoke launches with a smoke-only in-client watchdog so a
+  hosted client stall fails with `INVENTORYSORT_SMOKE_TEST_TIMEOUT` instead of
+  leaving the guarded publish workflow running indefinitely.
 - Raised the public release jar size sentinel to allow the intentional embedded
   Core footprint from the shared button-slot API while keeping the existing
   junk-file and embedded-Core verification checks active.
