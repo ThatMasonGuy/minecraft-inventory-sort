@@ -25,10 +25,10 @@ import java.util.Set;
  * one obvious place.
  */
 public class InventorySortConfigScreen extends Screen {
-    private static final int MAX_PANEL_W = 480;
-    private static final int MAX_PANEL_H = 290;
-    private static final int MIN_PANEL_W = 318;
-    private static final int MIN_PANEL_H = 232;
+    private static final int MAX_PANEL_W = InvUi.STANDARD_MODAL_W;
+    private static final int MAX_PANEL_H = InvUi.STANDARD_MODAL_H;
+    private static final int MIN_PANEL_W = InvUi.MIN_MODAL_W;
+    private static final int MIN_PANEL_H = InvUi.MIN_MODAL_H;
     private static final int PAD = 12;
     private static final int ROW_H = 16;
 
@@ -38,6 +38,7 @@ public class InventorySortConfigScreen extends Screen {
     private static final int ACCENT = InvUi.ACCENT_SORT;
     private static final int MARK_PROTECTED = 0xFFD15B4A;
     private static final int MARK_PROTECTED_SOFT = 0x66D15B4A;
+    private static final int MARK_UNLOCKED = 0xFF74C4FF;
 
     private final AbstractContainerScreen<?> parent;
     private final Player player;
@@ -188,21 +189,27 @@ public class InventorySortConfigScreen extends Screen {
     // ----------------------------------------------------------- slots tab
 
     private void addSlotsTabWidgets() {
-        int bw = (gridW - 8) / 3;
+        int bw = (gridW - 12) / 4;
         InventorySortTextButton protect = new InventorySortTextButton(gridX, actionsY, bw, 18,
-                Component.literal("Protect"), button -> protectSelectedSlots());
+                Component.literal("Lock"), button -> protectSelectedSlots());
         protect.setTooltip(Tooltip.create(Component.literal(
                 "Sorting will not move items into or out of the selected slots.")));
         this.addRenderableWidget(protect);
 
-        InventorySortTextButton assign = new InventorySortTextButton(gridX + bw + 4, actionsY, bw, 18,
-                Component.literal("Assign Item"), button -> reserveSelectedSlots());
+        InventorySortTextButton unlock = new InventorySortTextButton(gridX + bw + 4, actionsY, bw, 18,
+                Component.literal("Unlock"), button -> unlockSelectedSlots());
+        unlock.setTooltip(Tooltip.create(Component.literal(
+                "Allow the selected slots to be sorted. Hotbar slots need this unless assigned.")));
+        this.addRenderableWidget(unlock);
+
+        InventorySortTextButton assign = new InventorySortTextButton(gridX + (bw + 4) * 2, actionsY, bw, 18,
+                Component.literal("Assign"), button -> reserveSelectedSlots());
         assign.setTooltip(Tooltip.create(Component.literal(
                 "Reserve the selected slots for the held or selected item type.")));
         this.addRenderableWidget(assign);
 
-        InventorySortTextButton clear = new InventorySortTextButton(gridX + (bw + 4) * 2, actionsY,
-                gridW - (bw + 4) * 2, 18, Component.literal("Clear"), button -> clearSelectedSlots());
+        InventorySortTextButton clear = new InventorySortTextButton(gridX + (bw + 4) * 3, actionsY,
+                gridW - (bw + 4) * 3, 18, Component.literal("Clear"), button -> clearSelectedSlots());
         clear.setTooltip(Tooltip.create(Component.literal("Remove any rule from the selected slots.")));
         this.addRenderableWidget(clear);
 
@@ -232,12 +239,15 @@ public class InventorySortConfigScreen extends Screen {
                 g.renderItemDecorations(this.font, stack, x + (draw - 16) / 2, y + (draw - 16) / 2);
             }
 
-            if (rule.restricted) {
-                ui.fill(x + 1, y + 1, x + draw - 1, y + 2, MARK_PROTECTED);
-                ui.fill(x + 1, y + draw - 5, x + 5, y + draw - 1, MARK_PROTECTED);
+            if (isEffectivelyLocked(i, rule)) {
+                int mark = rule.restricted ? MARK_PROTECTED : MARK_PROTECTED_SOFT;
+                ui.fill(x + 1, y + 1, x + draw - 1, y + 2, mark);
+                ui.fill(x + 1, y + draw - 5, x + 5, y + draw - 1, mark);
             } else if (rule.hasReservation()) {
                 ui.fill(x + 1, y + 1, x + 6, y + 3, ACCENT);
                 ui.fill(x + 1, y + 1, x + 3, y + 6, ACCENT);
+            } else if (isHotbarSlot(i) && rule.unlocked) {
+                ui.fill(x + 1, y + draw - 3, x + draw - 1, y + draw - 1, MARK_UNLOCKED);
             }
         }
 
@@ -263,25 +273,25 @@ public class InventorySortConfigScreen extends Screen {
             String item = stack.isEmpty() ? "empty" : InventorySorter.itemId(stack);
             text(g, "Slot " + slotIndex, tx, ty, InvUi.TEXT);
             text(g, truncate("Holds: " + shortItemId(item), maxW), tx, ty + 13, InvUi.TEXT_MUTED);
-            String state = rule.restricted ? "Protected from sorting"
-                    : rule.hasReservation() ? "Reserved: " + shortItemId(rule.reservedItemId)
-                    : "Normal sort slot";
-            int color = rule.restricted ? MARK_PROTECTED : rule.hasReservation() ? ACCENT : InvUi.TEXT_DIM;
+            String state = slotStateText(slotIndex, rule);
+            int color = isEffectivelyLocked(slotIndex, rule) ? MARK_PROTECTED
+                    : rule.hasReservation() ? ACCENT
+                    : rule.unlocked ? MARK_UNLOCKED : InvUi.TEXT_DIM;
             text(g, truncate(state, maxW), tx, ty + 26, color);
         } else {
             text(g, count + " slots selected", tx, ty, InvUi.TEXT);
-            wrapText(g, "Protect, Assign Item, or Clear will apply to all of them.",
+            wrapText(g, "Lock, Unlock, Assign, or Clear will apply to all of them.",
                     tx, ty + 14, maxW, InvUi.TEXT_MUTED, 2);
         }
 
         // Legend pinned to the bottom of the info panel.
         int ly = infoY + infoH - 30;
         ui.fill(tx, ly, tx + 9, ly + 9, MARK_PROTECTED);
-        text(g, "Protected slot", tx + 15, ly + 1, InvUi.TEXT_MUTED);
+        text(g, "Locked slot", tx + 15, ly + 1, InvUi.TEXT_MUTED);
         int ly2 = ly + 14;
         ui.fill(tx, ly2, tx + 6, ly2 + 2, ACCENT);
         ui.fill(tx, ly2, tx + 2, ly2 + 6, ACCENT);
-        text(g, "Item-specific slot", tx + 15, ly2 + 1, InvUi.TEXT_MUTED);
+        text(g, "Assigned slot", tx + 15, ly2 + 1, InvUi.TEXT_MUTED);
     }
 
     // ----------------------------------------------------------- order tab
@@ -576,7 +586,25 @@ public class InventorySortConfigScreen extends Screen {
         for (Integer slotIndex : selectedSlots) {
             SortRuleStore.SlotRule rule = currentRules().mutableRuleFor(slotIndex);
             rule.restricted = true;
+            rule.unlocked = false;
             rule.reservedItemId = null;
+        }
+        store.save();
+    }
+
+    private void unlockSelectedSlots() {
+        if (selectedSlots.isEmpty()) {
+            return;
+        }
+        for (Integer slotIndex : selectedSlots) {
+            if (isHotbarSlot(slotIndex)) {
+                SortRuleStore.SlotRule rule = currentRules().mutableRuleFor(slotIndex);
+                rule.restricted = false;
+                rule.unlocked = true;
+                rule.reservedItemId = null;
+            } else {
+                currentRules().slotRules.remove(slotIndex);
+            }
         }
         store.save();
     }
@@ -592,6 +620,7 @@ public class InventorySortConfigScreen extends Screen {
         for (Integer slotIndex : selectedSlots) {
             SortRuleStore.SlotRule rule = currentRules().mutableRuleFor(slotIndex);
             rule.restricted = false;
+            rule.unlocked = false;
             rule.reservedItemId = itemId;
         }
         store.save();
@@ -708,7 +737,7 @@ public class InventorySortConfigScreen extends Screen {
         if (containerTarget) {
             return InventorySorter.getContainerSlots(parent.getMenu(), parent);
         }
-        return InventorySorter.getPlayerMainSlots(parent.getMenu(), player);
+        return InventorySorter.getPlayerInventorySlots(parent.getMenu(), player);
     }
 
     private SortRuleStore.SortRules currentRules() {
@@ -806,6 +835,28 @@ public class InventorySortConfigScreen extends Screen {
     }
 
     // -------------------------------------------------------------- helpers
+
+    private boolean isEffectivelyLocked(int slotIndex, SortRuleStore.SlotRule rule) {
+        return rule.restricted
+                || (!containerTarget && isHotbarSlot(slotIndex) && !rule.unlocked && !rule.hasReservation());
+    }
+
+    private boolean isHotbarSlot(int slotIndex) {
+        return !containerTarget && slotIndex >= 0 && slotIndex <= 8;
+    }
+
+    private String slotStateText(int slotIndex, SortRuleStore.SlotRule rule) {
+        if (rule.restricted) {
+            return "Locked from sorting";
+        }
+        if (rule.hasReservation()) {
+            return "Assigned: " + shortItemId(rule.reservedItemId);
+        }
+        if (isHotbarSlot(slotIndex)) {
+            return rule.unlocked ? "Unlocked hotbar sort slot" : "Hotbar locked by default";
+        }
+        return "Normal sort slot";
+    }
 
     private int[] scopeRect(int i) {
         int sx = panelX + PAD + 56;

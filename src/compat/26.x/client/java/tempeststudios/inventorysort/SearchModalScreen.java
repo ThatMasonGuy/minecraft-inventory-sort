@@ -86,8 +86,8 @@ public class SearchModalScreen extends Screen {
         Minecraft mc = Minecraft.getInstance();
         if (mc == null || mc.player == null) return;
 
-        this.modalW = Math.min(442, this.width - 24);
-        this.modalH = Math.min(268, this.height - 24);
+        this.modalW = Math.min(InvUi.STANDARD_MODAL_W, this.width - 24);
+        this.modalH = Math.min(InvUi.STANDARD_MODAL_H, this.height - 24);
         this.modalX = (this.width - modalW) / 2;
         this.modalY = (this.height - modalH) / 2;
 

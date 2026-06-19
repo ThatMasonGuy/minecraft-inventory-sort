@@ -28,6 +28,12 @@ public final class InvUi {
     public static final int ACCENT_SEARCH = 0xFF54A9EE;     // sky blue
     public static final int ACCENT_CATALOGUE = 0xFF84C76A;  // green
 
+    // Shared modal dimensions used by the three suite screens.
+    public static final int STANDARD_MODAL_W = 480;
+    public static final int STANDARD_MODAL_H = 290;
+    public static final int MIN_MODAL_W = 318;
+    public static final int MIN_MODAL_H = 232;
+
     // Background and window chrome.
     public static final int SCRIM = 0xC4000000;
     public static final int SHADOW = 0x55000000;

@@ -19,7 +19,7 @@ import java.util.Locale;
 import java.util.Map;
 
 public final class SortRuleStore {
-    private static final int CURRENT_VERSION = 2;
+    private static final int CURRENT_VERSION = 3;
     private static final String UNKNOWN_NAMESPACE = "unknown";
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static SortRuleStore instance;
@@ -244,7 +244,7 @@ public final class SortRuleStore {
             config = new SortRuleConfig();
         }
         if (config.version <= 0) {
-            config.version = CURRENT_VERSION;
+            config.version = 1;
         }
         if (config.worldRules == null) {
             config.worldRules = new LinkedHashMap<>();
@@ -252,9 +252,23 @@ public final class SortRuleStore {
         config.worldRules.entrySet().removeIf(entry ->
                 entry.getKey() == null || entry.getKey().isBlank() || entry.getValue() == null);
         config.worldRules.values().forEach(WorldSortRuleConfig::normalize);
+        if (config.version < 3) {
+            migratePlayerSlotRulesToHotbarAwareLayout();
+        }
         if (!hasLegacyRules()) {
             config.version = CURRENT_VERSION;
         }
+    }
+
+    private void migratePlayerSlotRulesToHotbarAwareLayout() {
+        if (config.playerRules != null) {
+            config.playerRules.shiftSlotRules(9);
+        }
+        for (WorldSortRuleConfig worldRules : config.worldRules.values()) {
+            worldRules.normalize();
+            worldRules.playerRules.shiftSlotRules(9);
+        }
+        config.version = CURRENT_VERSION;
     }
 
     private static String containerKey(ContainerIdentity identity) {
@@ -421,6 +435,21 @@ public final class SortRuleStore {
             slotRules.entrySet().removeIf(entry -> entry.getValue() == null || entry.getValue().isEmpty());
         }
 
+        void shiftSlotRules(int offset) {
+            normalize();
+            if (slotRules.isEmpty()) {
+                return;
+            }
+            Map<Integer, SlotRule> shifted = new LinkedHashMap<>();
+            for (Map.Entry<Integer, SlotRule> entry : slotRules.entrySet()) {
+                Integer slot = entry.getKey();
+                if (slot != null && slot >= 0) {
+                    shifted.put(slot + offset, entry.getValue());
+                }
+            }
+            slotRules = shifted;
+        }
+
         public boolean usesCustomOrder() {
             return !categoryOrder.isEmpty() || !itemOrder.isEmpty();
         }
@@ -477,11 +506,13 @@ public final class SortRuleStore {
         static final SlotRule EMPTY = new SlotRule();
 
         public boolean restricted = false;
+        public boolean unlocked = false;
         public String reservedItemId;
 
         SlotRule copy() {
             SlotRule copy = new SlotRule();
             copy.restricted = restricted;
+            copy.unlocked = unlocked;
             copy.reservedItemId = reservedItemId;
             return copy;
         }
@@ -497,7 +528,7 @@ public final class SortRuleStore {
         }
 
         public boolean isEmpty() {
-            return !restricted && !hasReservation();
+            return !restricted && !unlocked && !hasReservation();
         }
     }
 }

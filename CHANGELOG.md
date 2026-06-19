@@ -45,6 +45,15 @@ All notable project changes will be documented here.
 
 - Bumped the queued minor lane to `3.3.0` for the Inv+ bug-fix and
   feature-hardening train.
+- Standardized the main InvSort, InvSearch, and InvCatalogue suite screens on a
+  shared `480x290` modal size across the shared 1.x screens and 26.x overlays.
+- Changed InvSort player rules to use a 36-slot hotbar-aware layout. Existing
+  saved player-main slot rules migrate from old indexes `0-26` to new indexes
+  `9-35`, preserving old main-inventory rules while opening hotbar slots for
+  explicit lock, unlock, and assignment controls.
+- Changed player hotbar sorting so hotbar slots are locked by default. Users can
+  unlock individual hotbar slots or assign exact items to those slots from the
+  InvSort rules screen.
 - Moved player-inventory snapshot collection into shared Core so Catalogue,
   Search, and the tracking event mixin use the same full player inventory
   sampling path instead of duplicating menu-slot guesses.
@@ -152,6 +161,8 @@ All notable project changes will be documented here.
 
 ### Fixed
 
+- Renamed the InvSort rules screen `Assign Item` action to `Assign` and added a
+  matching `Unlock` action for default-locked hotbar slots.
 - Fixed InvSort full-inventory sorting by using the existing hotbar-swap click
   path as a reversible buffer for layout swaps instead of depending on an empty
   cursor landing slot.

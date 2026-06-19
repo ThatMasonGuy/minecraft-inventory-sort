@@ -24,9 +24,10 @@ readable. Use it on its own, or alongside InvSearch and InvCatalogue as part of
 the wider inventory management suite.
 
 Open supported inventories and containers to use the Sort button. Right-click
-that button to open the rules screen, where you can protect slots, assign exact
-items to specific slots, and control the order that categories or exact items
-should follow.
+that button to open the rules screen, where you can lock or unlock slots,
+assign exact items to specific slots, and control the order that categories or
+exact items should follow. Hotbar slots are locked by default, but can be
+unlocked for sorting or assigned to specific tools and supplies.
 
 ![InvSort slot rules](modrinth-gallery://InvSort/01_InvSort_Rules_Inventory_Slots.png)
 
@@ -41,7 +42,8 @@ food, or exact items to appear in your preferred sequence.
 
 - Sort button for supported inventory and container screens
 - Right-click rules screen for custom inventory and container layouts
-- Protected slots that sorting will not move items into or out of
+- Locked slots that sorting will not move items into or out of
+- Hotbar slots locked by default, with per-slot unlock and assignment controls
 - Item-specific slots for keeping resources, tools, or building blocks in fixed
   places
 - Custom category and exact-item sort ordering
@@ -49,7 +51,7 @@ food, or exact items to appear in your preferred sequence.
 - Restacks partial piles before laying items out cleanly
 - Compacts empty gaps so storage is easier to scan
 - Practical default ordering by stack size, item category, and item id
-- Hotbar-friendly player inventory behavior
+- Hotbar-aware player inventory behavior
 - Skips slot-sensitive screens such as hoppers, furnaces, and brewing stands
 - Works client-side in singleplayer, LAN, Realms, and multiplayer where
   client-side utility mods are allowed
@@ -60,7 +62,7 @@ food, or exact items to appear in your preferred sequence.
 - Keeping survival storage readable
 - Resetting dump chests after a mining or building session
 - Keeping hotbar supplies, building palettes, and tool slots where you expect
-  them
+  them, including after recovering dropped gear
 - Players who want predictable sorting without server-side changes
 - Using alongside InvSearch and InvCatalogue for broader inventory management
 

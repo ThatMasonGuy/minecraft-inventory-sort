@@ -14,7 +14,9 @@ A lightweight **client-side** Minecraft mod that adds robust sorting capabilitie
 ### 1. Sorting Capabilities
 
 - **Inventory & Container Sorting:** Adds a **Sort** button to supported container screens, letting you organize any supported GUI instantly. Works on chests, barrels, shulker boxes, droppers, and dispensers (hoppers, furnaces, and brewing stands are skipped - their slots are functional).
-- **Hotbar-friendly Top-up Behavior:** Intelligently tops up partial hotbar stacks from your main inventory *before* sorting, ensuring your tools and blocks are ready to use.
+- **Hotbar-Aware Sorting Rules:** Hotbar slots are locked by default. Open the
+  InvSort rules menu to unlock specific hotbar slots for sorting or assign
+  exact items to them so tools and key supplies can snap back into place.
 - **Restacking and Compaction:** Performs restacking and stable compaction so full stacks and empties are arranged cleanly, leaving no awkward gaps.
 - **Practical Category-based Ordering:** Sorts items by practical priorities:
   1. Higher max stack size first (e.g., 64-stack items before low-stack items)
@@ -23,7 +25,8 @@ A lightweight **client-side** Minecraft mod that adds robust sorting capabilitie
 - **Per-World Sorting Rules:** Right-click the Sort button to define protected
   slots, item-specific slots, category order, and exact item priorities for the
   current world or multiplayer tracked-world profile.
-- Leaves hotbar organization intentional when sorting the player inventory.
+- Keeps the hotbar intentional by default, while allowing unlocked or assigned
+  hotbar slots to participate in one-click player inventory organization.
 
 ### 2. Inventory Search
 
@@ -77,7 +80,8 @@ Single-player tracking namespaces include a stable launcher-instance id so two d
 
 - **Custom Sorting Rules:** Define your own sorting priorities and categories.
 - **Custom Sorting per Chest:** Save specific sorting configurations for individual containers.
-- **Lockable Inventory Slots:** Prevent specific slots in your inventory from being sorted or moved.
+- **Hotbar Presets:** Continue refining faster setup flows for common tool and
+  building hotbar layouts.
 - **Portable Shulker Improvements:** Better tracking for shulker boxes opened directly from your inventory.
 - **Component/NBT-aware Tracking:** Better distinguish item variants such as potion types, custom names, enchantments, and other component-backed data.
 - **Profile Selector Polish:** Improve the UI for managing numerous server/world profiles.

@@ -24,6 +24,19 @@ clears temporary reserved slots so assigned-empty slots stay empty after
 sorting. Verification: PASS `git diff --check`; PASS
 `.\gradlew.bat buildAllMods --no-daemon --console=plain` using the same
 repo-local Gradle cache fallback.
+Third InvSort checkpoint: the main InvSort, InvSearch, and InvCatalogue suite
+screens now use shared `InvUi` modal dimensions (`480x290`) across the shared
+1.x screens and the 26.x screen overlays. InvSort player rules now use a
+36-slot hotbar-aware layout, with saved old player-main slot rules migrated
+from indexes `0-26` to `9-35`. Hotbar slots are locked by default, and the
+rules screen now shows hotbar slots so users can `Unlock` selected hotbar slots
+for sorting or `Assign` exact items to them. `Assign Item` was renamed to
+`Assign`. Verification: PASS `git diff --check`; PASS
+`.\gradlew.bat buildAllMods --no-daemon --console=plain` using the repo-local
+Gradle cache fallback. Attempted targeted `26.x` build from the fresh
+repo-local Gradle cache, but Gradle could not resolve
+`net.fabricmc.fabric-loom-remap:1.16-SNAPSHOT` before compilation; keep a hosted
+or existing-cache 26.x validation pass on the follow-up verification list.
 
 Previous local checkpoint: `3.2.3` 26.x profile consolidation is complete after
 the coordinated right-side button placement work. Shared Core now exposes

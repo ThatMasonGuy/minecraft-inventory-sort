@@ -35,7 +35,7 @@ public class InventorySorter {
 		if (!playerHotbar.isEmpty() && !playerMain.isEmpty()) {
 			if (!ensureCursorEmpty(menu, invoker, playerMain, playerHotbar))
 				return;
-			topUpHotbar(menu, invoker, playerHotbar, movableSlots(playerMain, playerRules, true));
+			topUpHotbar(menu, invoker, playerHotbar, playerMainSourceSlots(playerMain, playerRules), playerRules);
 			if (!ensureCursorEmpty(menu, invoker, playerMain, playerHotbar))
 				return;
 		}
@@ -46,7 +46,7 @@ public class InventorySorter {
 		List<Slot> slotsToSort = getSortableSlots(menu, screen, playerMain);
 		tempeststudios.inventorysort.core.InventorySortCore.LOGGER.debug("Found {} slots to sort", slotsToSort.size());
 
-		sortSlots(menu, invoker, slotsToSort, playerMain, playerHotbar, containerRulesFor(screen));
+		sortSlots(menu, invoker, slotsToSort, playerMain, playerHotbar, containerRulesFor(screen), false);
 
 		tempeststudios.inventorysort.core.InventorySortCore.LOGGER.info("Sorting complete!");
 	}
@@ -65,12 +65,13 @@ public class InventorySorter {
 		if (!playerHotbar.isEmpty() && !playerMain.isEmpty()) {
 			if (!ensureCursorEmpty(menu, invoker, playerMain, playerHotbar))
 				return;
-			topUpHotbar(menu, invoker, playerHotbar, movableSlots(playerMain, rules, true));
+			topUpHotbar(menu, invoker, playerHotbar, playerMainSourceSlots(playerMain, rules), rules);
 			if (!ensureCursorEmpty(menu, invoker, playerMain, playerHotbar))
 				return;
 		}
 
-		sortSlots(menu, invoker, new ArrayList<>(playerMain), playerHotbar, playerHotbar, rules);
+		List<Slot> playerSlots = getPlayerInventorySlots(regions);
+		sortSlots(menu, invoker, playerSlots, playerSlots, playerHotbar, rules, true);
 
 		tempeststudios.inventorysort.core.InventorySortCore.LOGGER.info("Player inventory sorting complete!");
 	}
@@ -80,7 +81,8 @@ public class InventorySorter {
 								  List<Slot> slotsToSort,
 								  List<Slot> fallbackSlots,
 								  List<Slot> hotbarBufferSlots,
-								  SortRuleStore.SortRules rules) {
+								  SortRuleStore.SortRules rules,
+								  boolean hotbarDefaultLocked) {
 		if (slotsToSort.isEmpty())
 			return;
 
@@ -90,12 +92,12 @@ public class InventorySorter {
 		Slot hotbarSwapBuffer = findHotbarBuffer(hotbarBufferSlots, slotsToSort);
 
 		if (rules != null && rules.enabled) {
-			enforceReservedSlots(menu, invoker, slotsToSort, rules, hotbarSwapBuffer);
+			enforceReservedSlots(menu, invoker, slotsToSort, rules, hotbarSwapBuffer, hotbarDefaultLocked);
 			if (!ensureCursorEmpty(menu, invoker, slotsToSort, fallbackSlots))
 				return;
 		}
 
-		SortWorkSlots workSlots = sortWorkSlots(slotsToSort, rules);
+		SortWorkSlots workSlots = sortWorkSlots(slotsToSort, rules, hotbarDefaultLocked);
 		if (workSlots.slots().isEmpty())
 			return;
 
@@ -140,25 +142,24 @@ public class InventorySorter {
 		return store.containerDefaultRules();
 	}
 
-	private static List<Slot> movableSlots(List<Slot> slots,
-										   SortRuleStore.SortRules rules,
-										   boolean excludeReserved) {
+	private static List<Slot> playerMainSourceSlots(List<Slot> playerMain, SortRuleStore.SortRules rules) {
 		if (rules == null || !rules.enabled) {
-			return new ArrayList<>(slots);
+			return new ArrayList<>(playerMain);
 		}
-
-		List<Slot> movable = new ArrayList<>();
-		for (int i = 0; i < slots.size(); i++) {
-			SortRuleStore.SlotRule rule = rules.ruleFor(i);
-			if (rule.restricted || (excludeReserved && rule.hasReservation())) {
-				continue;
+		List<Slot> sources = new ArrayList<>();
+		for (int i = 0; i < playerMain.size(); i++) {
+			int ruleIndex = 9 + i;
+			SortRuleStore.SlotRule rule = rules.ruleFor(ruleIndex);
+			if (!isLockedByRule(rules, ruleIndex, true) && !rule.hasReservation()) {
+				sources.add(playerMain.get(i));
 			}
-			movable.add(slots.get(i));
 		}
-		return movable;
+		return sources;
 	}
 
-	private static SortWorkSlots sortWorkSlots(List<Slot> slots, SortRuleStore.SortRules rules) {
+	private static SortWorkSlots sortWorkSlots(List<Slot> slots,
+											   SortRuleStore.SortRules rules,
+											   boolean hotbarDefaultLocked) {
 		if (rules == null || !rules.enabled) {
 			return new SortWorkSlots(new ArrayList<>(slots), Collections.emptyList());
 		}
@@ -167,7 +168,7 @@ public class InventorySorter {
 		List<Slot> temporary = new ArrayList<>();
 		for (int i = 0; i < slots.size(); i++) {
 			SortRuleStore.SlotRule rule = rules.ruleFor(i);
-			if (rule.restricted) {
+			if (isLockedByRule(rules, i, hotbarDefaultLocked)) {
 				continue;
 			}
 			Slot slot = slots.get(i);
@@ -188,11 +189,32 @@ public class InventorySorter {
 	private record SortWorkSlots(List<Slot> slots, List<Slot> temporarySlots) {
 	}
 
+	private static boolean isLockedByRule(SortRuleStore.SortRules rules,
+										  int slotIndex,
+										  boolean hotbarDefaultLocked) {
+		if (rules == null || !rules.enabled) {
+			return false;
+		}
+		SortRuleStore.SlotRule rule = rules.ruleFor(slotIndex);
+		if (rule.restricted) {
+			return true;
+		}
+		return hotbarDefaultLocked
+				&& isHotbarRuleIndex(slotIndex)
+				&& !rule.unlocked
+				&& !rule.hasReservation();
+	}
+
+	private static boolean isHotbarRuleIndex(int slotIndex) {
+		return slotIndex >= 0 && slotIndex <= 8;
+	}
+
 	private static void enforceReservedSlots(AbstractContainerMenu menu,
 											 AbstractContainerScreenInvoker invoker,
 											 List<Slot> slots,
 											 SortRuleStore.SortRules rules,
-											 Slot hotbarSwapBuffer) {
+											 Slot hotbarSwapBuffer,
+											 boolean hotbarDefaultLocked) {
 		for (int i = 0; i < slots.size(); i++) {
 			SortRuleStore.SlotRule rule = rules.ruleFor(i);
 			if (rule.restricted || !rule.hasReservation()) {
@@ -207,18 +229,18 @@ public class InventorySorter {
 			}
 
 			if (targetStack.isEmpty() || !itemIdEquals(targetStack, reservedItemId)) {
-				int matching = findReservedSource(slots, rules, reservedItemId, i);
+				int matching = findReservedSource(slots, rules, reservedItemId, i, hotbarDefaultLocked);
 				if (matching != -1) {
 					swapSafely(invoker, target, slots.get(matching), hotbarSwapBuffer);
 				} else if (!targetStack.isEmpty()) {
-					int empty = findEmptyMovableSlot(slots, rules, i);
+					int empty = findEmptyMovableSlot(slots, rules, i, hotbarDefaultLocked);
 					if (empty != -1) {
 						swapSafely(invoker, target, slots.get(empty), hotbarSwapBuffer);
 					}
 				}
 			}
 
-			fillReservedSlot(menu, invoker, target, slots, rules, reservedItemId, i);
+			fillReservedSlot(menu, invoker, target, slots, rules, reservedItemId, i, hotbarDefaultLocked);
 		}
 	}
 
@@ -228,7 +250,8 @@ public class InventorySorter {
 										 List<Slot> slots,
 										 SortRuleStore.SortRules rules,
 										 String reservedItemId,
-										 int targetIndex) {
+										 int targetIndex,
+										 boolean hotbarDefaultLocked) {
 		ItemStack targetStack = target.getItem();
 		if (targetStack.isEmpty() || !itemIdEquals(targetStack, reservedItemId) || isBundle(targetStack)) {
 			return;
@@ -244,7 +267,7 @@ public class InventorySorter {
 				continue;
 			}
 			SortRuleStore.SlotRule rule = rules.ruleFor(i);
-			if (rule.restricted || rule.hasReservation()) {
+			if (isLockedByRule(rules, i, hotbarDefaultLocked) || rule.hasReservation()) {
 				continue;
 			}
 
@@ -269,13 +292,14 @@ public class InventorySorter {
 	private static int findReservedSource(List<Slot> slots,
 										  SortRuleStore.SortRules rules,
 										  String reservedItemId,
-										  int targetIndex) {
+										  int targetIndex,
+										  boolean hotbarDefaultLocked) {
 		for (int i = 0; i < slots.size(); i++) {
 			if (i == targetIndex) {
 				continue;
 			}
 			SortRuleStore.SlotRule rule = rules.ruleFor(i);
-			if (rule.restricted || rule.hasReservation()) {
+			if (isLockedByRule(rules, i, hotbarDefaultLocked) || rule.hasReservation()) {
 				continue;
 			}
 			ItemStack stack = slots.get(i).getItem();
@@ -286,13 +310,16 @@ public class InventorySorter {
 		return -1;
 	}
 
-	private static int findEmptyMovableSlot(List<Slot> slots, SortRuleStore.SortRules rules, int targetIndex) {
+	private static int findEmptyMovableSlot(List<Slot> slots,
+											SortRuleStore.SortRules rules,
+											int targetIndex,
+											boolean hotbarDefaultLocked) {
 		for (int i = 0; i < slots.size(); i++) {
 			if (i == targetIndex) {
 				continue;
 			}
 			SortRuleStore.SlotRule rule = rules.ruleFor(i);
-			if (rule.restricted || rule.hasReservation()) {
+			if (isLockedByRule(rules, i, hotbarDefaultLocked) || rule.hasReservation()) {
 				continue;
 			}
 			if (slots.get(i).getItem().isEmpty()) {
@@ -346,7 +373,7 @@ public class InventorySorter {
 
 	private static Slot findHotbarBuffer(List<Slot> hotbarSlots, List<Slot> protectedSlots) {
 		for (Slot slot : hotbarSlots) {
-			if (slot.getContainerSlot() >= 0 && slot.getContainerSlot() <= 8 && !protectedSlots.contains(slot)) {
+			if (slot.getContainerSlot() >= 0 && slot.getContainerSlot() <= 8) {
 				return slot;
 			}
 		}
@@ -497,6 +524,17 @@ public class InventorySorter {
 		return new ArrayList<>(getPlayerSlotRegions(menu, player).main);
 	}
 
+	public static List<Slot> getPlayerInventorySlots(AbstractContainerMenu menu, Player player) {
+		return getPlayerInventorySlots(getPlayerSlotRegions(menu, player));
+	}
+
+	private static List<Slot> getPlayerInventorySlots(PlayerSlotRegions regions) {
+		List<Slot> slots = new ArrayList<>(regions.hotbar.size() + regions.main.size());
+		slots.addAll(regions.hotbar);
+		slots.addAll(regions.main);
+		return slots;
+	}
+
 	private static Set<StackKey> buildTypeSet(List<Slot> slots) {
 		Set<StackKey> set = new HashSet<>();
 		for (Slot s : slots) {
@@ -540,11 +578,19 @@ public class InventorySorter {
 	private static void topUpHotbar(AbstractContainerMenu menu,
 									AbstractContainerScreenInvoker invoker,
 									List<Slot> hotbarSlots,
-									List<Slot> mainSlots) {
+									List<Slot> mainSlots,
+									SortRuleStore.SortRules rules) {
 
-		for (Slot hotbarSlot : hotbarSlots) {
+		for (int hotbarIndex = 0; hotbarIndex < hotbarSlots.size(); hotbarIndex++) {
+			Slot hotbarSlot = hotbarSlots.get(hotbarIndex);
+			SortRuleStore.SlotRule rule = rules == null ? SortRuleStore.SlotRule.EMPTY : rules.ruleFor(hotbarIndex);
 			ItemStack target = hotbarSlot.getItem();
 			if (target.isEmpty())
+				continue;
+
+			if (isLockedByRule(rules, hotbarIndex, true))
+				continue;
+			if (rule.hasReservation() && !itemIdEquals(target, rule.reservedItemId))
 				continue;
 
 			// Skip bundles - don't want to accidentally fill them

@@ -519,8 +519,8 @@ public class CatalogReportBrowserScreen extends Screen {
     }
 
     private void computeLayout() {
-        panelW = Math.min(620, this.width - 24);
-        panelH = Math.min(330, this.height - 24);
+        panelW = Math.min(InvUi.STANDARD_MODAL_W, this.width - 24);
+        panelH = Math.min(InvUi.STANDARD_MODAL_H, this.height - 24);
         panelX = (this.width - panelW) / 2;
         panelY = (this.height - panelH) / 2;
 
