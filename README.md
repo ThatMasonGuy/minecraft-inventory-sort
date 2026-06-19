@@ -160,8 +160,11 @@ Shared Core exposes `tempeststudios.inventorysort.api.InventoryScreenButtonSlots
 for right-side inventory-screen button placement. Mods can reserve
 `PLAYER_INVENTORY` or `CONTAINER` slots with a stable owner id, slot id, and
 priority, then use the returned placement to set their button coordinates each
-render. `getOccupiedRightSlots(...)` exposes the current reservations for mods
-that need to inspect occupied slots directly.
+render. Capacity helpers such as `getRightSlotAvailability(...)`,
+`getAvailableRightSlotCount(...)`, and `canFitNextRightSlot(...)` expose whether
+additional buttons fit in the current screen geometry. See
+[`docs/button-slot-api.md`](docs/button-slot-api.md) for examples and the stable
+InvSort/InvSearch reservation order.
 
 ## Project Structure
 

@@ -11,8 +11,12 @@ button through the same API, so standalone InvSearch occupies the first
 inventory button slot when InvSort is not installed, while combined installs
 keep InvSort first and Search underneath. The public release jar size sentinel
 is raised from 225,000 to 245,000 bytes for the intentional embedded Core API
-footprint while the junk-file and embedded-Core checks stay active.
-Verification: PASS `git diff --check`; PASS
+footprint while the junk-file and embedded-Core checks stay active. Follow-up
+API capacity helpers now report available slot count, remaining slot count,
+requested-slot fit, next-slot fit, and placement `fitsInGroup()` status, with
+`docs/button-slot-api.md` documenting usage plus the stable InvSort/InvSearch
+owner ids, slot ids, priorities, and screen conditions. Verification: PASS
+`git diff --check`; PASS
 `.\gradlew.bat buildAllMods --no-daemon --console=plain`; PASS
 `.\gradlew.bat buildAllVersions --no-daemon --console=plain`.
 

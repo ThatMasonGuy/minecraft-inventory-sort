@@ -16,6 +16,10 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.WeakHashMap;
 
+/**
+ * Coordinates right-side inventory-screen button reservations across Inventory
+ * Mods and optional companion mods.
+ */
 public final class InventoryScreenButtonSlots {
     public static final int DEFAULT_BUTTON_SIZE = 12;
     public static final int DEFAULT_BUTTON_GAP = 1;
@@ -56,9 +60,10 @@ public final class InventoryScreenButtonSlots {
             reservations.reserve(group, key, priority);
             int slotIndex = reservations.slotIndex(group, key);
             int slotCount = reservations.slotCount(group);
+            boolean fitsInGroup = canFitRightSlot(screen, group, slotIndex, buttonSize);
             Coordinates coordinates = coordinatesFor(screen, group, slotIndex, slotCount, buttonSize);
             return new SlotPlacement(group, key.ownerId(), key.slotId(), priority, slotIndex,
-                    coordinates.x(), coordinates.y(), coordinates.onPreferredRightSide());
+                    coordinates.x(), coordinates.y(), coordinates.onPreferredRightSide(), fitsInGroup);
         }
     }
 
@@ -128,6 +133,78 @@ public final class InventoryScreenButtonSlots {
         return getOccupiedRightSlots(screen, group).size();
     }
 
+    public static RightSlotAvailability getRightSlotAvailability(AbstractContainerScreen<?> screen,
+                                                                 RightSlotGroup group) {
+        return getRightSlotAvailability(screen, group, DEFAULT_BUTTON_SIZE);
+    }
+
+    public static RightSlotAvailability getRightSlotAvailability(AbstractContainerScreen<?> screen,
+                                                                 RightSlotGroup group,
+                                                                 int buttonSize) {
+        validateButtonSize(buttonSize);
+        int availableSlots = getAvailableRightSlotCount(screen, group, buttonSize);
+        int occupiedSlots = getOccupiedRightSlots(screen, group).size();
+        int remainingSlots = Math.max(0, availableSlots - occupiedSlots);
+        int nextSlotIndex = occupiedSlots;
+        return new RightSlotAvailability(group, buttonSize, availableSlots, occupiedSlots,
+                remainingSlots, nextSlotIndex, nextSlotIndex < availableSlots);
+    }
+
+    public static int getAvailableRightSlotCount(AbstractContainerScreen<?> screen,
+                                                 RightSlotGroup group) {
+        return getAvailableRightSlotCount(screen, group, DEFAULT_BUTTON_SIZE);
+    }
+
+    public static int getAvailableRightSlotCount(AbstractContainerScreen<?> screen,
+                                                 RightSlotGroup group,
+                                                 int buttonSize) {
+        validateButtonSize(buttonSize);
+        if (screen == null || group == null) {
+            return 0;
+        }
+        return availableRightSlotCount(screen, group, buttonSize);
+    }
+
+    public static int getRemainingRightSlotCount(AbstractContainerScreen<?> screen,
+                                                 RightSlotGroup group) {
+        return getRemainingRightSlotCount(screen, group, DEFAULT_BUTTON_SIZE);
+    }
+
+    public static int getRemainingRightSlotCount(AbstractContainerScreen<?> screen,
+                                                 RightSlotGroup group,
+                                                 int buttonSize) {
+        RightSlotAvailability availability = getRightSlotAvailability(screen, group, buttonSize);
+        return availability.remainingSlots();
+    }
+
+    public static boolean canFitRightSlot(AbstractContainerScreen<?> screen,
+                                          RightSlotGroup group,
+                                          int slotIndex) {
+        return canFitRightSlot(screen, group, slotIndex, DEFAULT_BUTTON_SIZE);
+    }
+
+    public static boolean canFitRightSlot(AbstractContainerScreen<?> screen,
+                                          RightSlotGroup group,
+                                          int slotIndex,
+                                          int buttonSize) {
+        validateButtonSize(buttonSize);
+        if (slotIndex < 0 || screen == null || group == null) {
+            return false;
+        }
+        return slotIndex < availableRightSlotCount(screen, group, buttonSize);
+    }
+
+    public static boolean canFitNextRightSlot(AbstractContainerScreen<?> screen,
+                                              RightSlotGroup group) {
+        return canFitNextRightSlot(screen, group, DEFAULT_BUTTON_SIZE);
+    }
+
+    public static boolean canFitNextRightSlot(AbstractContainerScreen<?> screen,
+                                              RightSlotGroup group,
+                                              int buttonSize) {
+        return getRightSlotAvailability(screen, group, buttonSize).nextSlotFits();
+    }
+
     public static SlotPlacement rightSlotPlacement(AbstractContainerScreen<?> screen,
                                                    RightSlotGroup group,
                                                    int slotIndex) {
@@ -143,14 +220,13 @@ public final class InventoryScreenButtonSlots {
         if (slotIndex < 0) {
             throw new IllegalArgumentException("slotIndex must be zero or greater");
         }
-        if (buttonSize < 1) {
-            throw new IllegalArgumentException("buttonSize must be positive");
-        }
+        validateButtonSize(buttonSize);
 
         int slotCount = Math.max(slotIndex + 1, getOccupiedRightSlots(screen, group).size());
         Coordinates coordinates = coordinatesFor(screen, group, slotIndex, slotCount, buttonSize);
         return new SlotPlacement(group, "", "", 0, slotIndex,
-                coordinates.x(), coordinates.y(), coordinates.onPreferredRightSide());
+                coordinates.x(), coordinates.y(), coordinates.onPreferredRightSide(),
+                canFitRightSlot(screen, group, slotIndex, buttonSize));
     }
 
     public static boolean isInventoryModsContainer(AbstractContainerScreen<?> screen) {
@@ -207,7 +283,7 @@ public final class InventoryScreenButtonSlots {
                              int slotCount,
                              int buttonSize) {
         if (group == RightSlotGroup.PLAYER_INVENTORY) {
-            return accessor.getTopPos() + accessor.getImageHeight() - 83;
+            return playerGroupTop(accessor);
         }
 
         int rows = Math.max(1, containerRowCount(screen));
@@ -215,6 +291,35 @@ public final class InventoryScreenButtonSlots {
         int groupHeight = (visibleSlots - 1) * (buttonSize + DEFAULT_BUTTON_GAP) + buttonSize;
         int containerHeight = rows * 18;
         return accessor.getTopPos() + 17 + Math.max(0, (containerHeight - groupHeight) / 2);
+    }
+
+    private static int availableRightSlotCount(AbstractContainerScreen<?> screen,
+                                               RightSlotGroup group,
+                                               int buttonSize) {
+        int availableHeight = availableRightSlotHeight(screen, group);
+        if (availableHeight < buttonSize) {
+            return 0;
+        }
+        return (availableHeight + DEFAULT_BUTTON_GAP) / (buttonSize + DEFAULT_BUTTON_GAP);
+    }
+
+    private static int availableRightSlotHeight(AbstractContainerScreen<?> screen, RightSlotGroup group) {
+        if (group == RightSlotGroup.CONTAINER && !isInventoryModsContainer(screen)) {
+            return 0;
+        }
+
+        AbstractContainerScreenAccessor accessor = (AbstractContainerScreenAccessor) screen;
+        if (group == RightSlotGroup.PLAYER_INVENTORY) {
+            int top = playerGroupTop(accessor);
+            int bottom = accessor.getTopPos() + accessor.getImageHeight();
+            return Math.max(0, bottom - top);
+        }
+
+        return Math.max(0, containerRowCount(screen) * 18);
+    }
+
+    private static int playerGroupTop(AbstractContainerScreenAccessor accessor) {
+        return accessor.getTopPos() + accessor.getImageHeight() - 83;
     }
 
     private static ReservationKey key(String ownerId, String slotId) {
@@ -225,6 +330,12 @@ public final class InventoryScreenButtonSlots {
             throw new IllegalArgumentException("slotId must not be blank");
         }
         return new ReservationKey(ownerId, slotId);
+    }
+
+    private static void validateButtonSize(int buttonSize) {
+        if (buttonSize < 1) {
+            throw new IllegalArgumentException("buttonSize must be positive");
+        }
     }
 
     public enum RightSlotGroup {
@@ -241,6 +352,17 @@ public final class InventoryScreenButtonSlots {
     ) {
     }
 
+    public record RightSlotAvailability(
+            RightSlotGroup group,
+            int buttonSize,
+            int availableSlots,
+            int occupiedSlots,
+            int remainingSlots,
+            int nextSlotIndex,
+            boolean nextSlotFits
+    ) {
+    }
+
     public record SlotPlacement(
             RightSlotGroup group,
             String ownerId,
@@ -249,7 +371,8 @@ public final class InventoryScreenButtonSlots {
             int slotIndex,
             int x,
             int y,
-            boolean onPreferredRightSide
+            boolean onPreferredRightSide,
+            boolean fitsInGroup
     ) {
     }
 

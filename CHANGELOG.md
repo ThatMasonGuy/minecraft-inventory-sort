@@ -36,6 +36,10 @@ All notable project changes will be documented here.
 - Added the shared Core `InventoryScreenButtonSlots` API for reserving,
   positioning, and inspecting ordered right-side button slots on inventory and
   container screens.
+- Added `InventoryScreenButtonSlots` capacity helpers for available slots,
+  remaining slots, next-slot fit checks, and placement fit reporting, plus a
+  dedicated button-slot API guide that documents first-party owner ids, slot
+  ids, priorities, and screen conditions.
 
 ### Changed
 
