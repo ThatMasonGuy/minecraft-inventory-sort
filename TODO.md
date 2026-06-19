@@ -52,6 +52,10 @@ PASS `.\gradlew.bat smokeTestSelectedClients
 "-Pinventorysort_smoke_game_versions=1.21.5"
 "-Pinventorysort_smoke_install_sets=all-public" --no-daemon --console=plain`;
 PASS `.\gradlew.bat buildAllVersions --no-daemon --console=plain`.
+Hosted validation: PASS GitHub Actions `compatibility validation` run
+`27810831395` on commit `a94f536535c140460d002eb1d4f211eeb5b11b4d` for
+`smokeTestSelectedClients`, profile `1.21-1.21.5`, game version `1.21.5`,
+install set `all-public`, Java 21.
 
 Previous checkpoint: `3.2.2` is published. InvSort now stores player inventory
 rules, world-container defaults, screen overrides, and exact-container overrides
