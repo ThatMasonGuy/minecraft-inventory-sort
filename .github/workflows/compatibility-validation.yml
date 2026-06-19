@@ -7,7 +7,7 @@ on:
         description: 'Minecraft version profile to validate'
         required: true
         type: string
-        default: '26.1.2'
+        default: '26.x'
       validation_task:
         description: 'Gradle task to run for the selected profile'
         required: true

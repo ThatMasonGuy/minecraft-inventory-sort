@@ -145,37 +145,32 @@
         }
       }
     },
-    "26.1-26.1.2": {
-      "profile_id": "26.1-26.1.2",
+    "26.1-26.2-pre-3": {
+      "profile_id": "26.1-26.2-pre-3",
       "game_versions": {
         "26.1": {
           "status": "pass",
-          "tested_at": "2026-06-03",
+          "tested_at": "2026-06-19",
           "method": "automated smokeTestSelectedClients launch matrix",
-          "notes": "Grouped 26.1.x candidate release jars launched successfully as Sort-only, Search-only, Catalogue-only, and all-three installs."
+          "notes": "Combined 26.x release jars launched successfully as Sort-only, Search-only, Catalogue-only, and all-three installs."
         },
         "26.1.1": {
           "status": "pass",
-          "tested_at": "2026-06-03",
+          "tested_at": "2026-06-19",
           "method": "automated smokeTestSelectedClients launch matrix",
-          "notes": "Grouped 26.1.x candidate release jars launched successfully as Sort-only, Search-only, Catalogue-only, and all-three installs."
+          "notes": "Combined 26.x release jars launched successfully as Sort-only, Search-only, Catalogue-only, and all-three installs."
         },
         "26.1.2": {
           "status": "pass",
-          "tested_at": "2026-06-03",
+          "tested_at": "2026-06-19",
           "method": "automated smokeTestSelectedClients launch matrix",
-          "notes": "Grouped 26.1.x candidate release jars launched successfully as Sort-only, Search-only, Catalogue-only, and all-three installs."
-        }
-      }
-    },
-    "26.2-pre-3": {
-      "profile_id": "26.2-pre-3",
-      "game_versions": {
+          "notes": "Combined 26.x release jars launched successfully as Sort-only, Search-only, Catalogue-only, and all-three installs."
+        },
         "26.2-pre-3": {
           "status": "pass",
-          "tested_at": "2026-06-03",
+          "tested_at": "2026-06-19",
           "method": "automated smokeTestSelectedClients launch matrix",
-          "notes": "Exact 26.2-pre-3 candidate release jars launched successfully as Sort-only, Search-only, Catalogue-only, and all-three installs after matching Fabric API's 26.2 prerelease dependency range."
+          "notes": "Combined 26.x release jars launched successfully as Sort-only, Search-only, Catalogue-only, and all-three installs."
         }
       }
     }

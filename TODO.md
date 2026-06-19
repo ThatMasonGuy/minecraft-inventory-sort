@@ -1,12 +1,12 @@
 # Inventory Mods TODO
 
-Current local checkpoint: `3.2.3` docs hygiene is complete for coordinated
-right-side button placement. Shared Core now exposes
+Current local checkpoint: `3.2.3` 26.x profile consolidation is complete after
+the coordinated right-side button placement work. Shared Core now exposes
 `tempeststudios.inventorysort.api.InventoryScreenButtonSlots`, which lets mods
 reserve priority-ordered `PLAYER_INVENTORY` and `CONTAINER` right-side slots,
 read occupied slots, and recalculate placement as vanilla or recipe-book screen
 positions move. InvSort now reserves its Sort/transfer slots through that API in
-the shared 1.x mixin and both 26.x overlays. InvSearch reserves the search
+the shared 1.x mixin and the shared 26.x overlay. InvSearch reserves the search
 button through the same API, so standalone InvSearch occupies the first
 inventory button slot when InvSort is not installed, while combined installs
 keep InvSort first and Search underneath. The public release jar size sentinel
@@ -22,7 +22,16 @@ owner ids, slot ids, priorities, and screen conditions. Verification: PASS
 hygiene added `docs/README.md`, linked the developer docs from `AGENTS.md` and
 `README.md`, and moved the TODO title from the old Search-only name to the
 current Inventory Mods suite name. Docs-only verification: PASS
-`git diff --check`.
+`git diff --check`. The duplicate `26.1.2`/`26.2-pre-3` source overlays were
+collapsed into shared `src/compat/26.x`, `26.x.properties` is now the single
+supported 26.x release profile (`profile_id=26.1-26.2-pre-3`), and exact
+`26.1`, `26.1.1`, `26.1.2`, and `26.2-pre-3` profiles remain runtime-only
+smoke targets. Verification: PASS
+`.\gradlew.bat printVersionProfile "-Pminecraft_version_profile=26.x" --no-daemon --console=plain`;
+PASS
+`.\gradlew.bat buildAllMods "-Pminecraft_version_profile=26.x" --no-daemon --console=plain`;
+PASS
+`.\gradlew.bat smokeTestSelectedClients "-Pinventorysort_smoke_profiles=26.1-26.2-pre-3" --no-daemon --console=plain`.
 
 Previous checkpoint: `3.2.2` is published. InvSort now stores player inventory
 rules, world-container defaults, screen overrides, and exact-container overrides
@@ -32,7 +41,8 @@ into the new `worldRules` schema: player/container/screen defaults seed the
 current world, and namespace-prefixed exact-container overrides move into their
 matching world buckets with the namespace stripped from the container key. The
 rules screen labels now say `World player inventory` and `World Containers`
-across the shared 1.x UI and both 26.x overlays. Local `git diff --check` and
+across the shared 1.x UI and then-active 26.x overlays. Local
+`git diff --check` and
 default-profile `buildAllMods` passed before release; the guarded GitHub Actions
 Modrinth publish completed successfully for `3.2.2`, uploaded all 24
 compatibility-group versions, and the annotated `v3.2.2` GitHub Release now
@@ -2178,18 +2188,17 @@ Forward tasks:
    - Then compile Search.
    - Then compile Catalogue.
    - Treat each feature pass as its own checkpoint with TODO/CHANGELOG/commit.
-   - Current status: DONE. Core, Sort, Search, and Catalogue compile on both
-     checked `26.x` candidate profiles. Both `26.1.2` and `26.2-pre-3`
-     candidate profiles also pass full `buildAllMods` jar/metadata verification.
+   - Current status: DONE. Core, Sort, Search, and Catalogue compile on the
+     shared `26.x` release profile, which now replaces the old duplicated
+     `26.1.2` and `26.2-pre-3` publish profiles.
 8. `26.x` smoke testing:
    - Add pending/pass smoke records for exact `26.x` runtimes.
    - Extend the smoke launcher if `26.x` client launch semantics differ.
    - Run selected `26.x` smoke tests first; run the full release validation
      matrix during promotion/publish once the supported publish lane changes.
-   - Current status: DONE. The grouped `26.1-26.1.2` candidate jar passed
-     automated smoke launches on exact runtimes `26.1`, `26.1.1`, and
-     `26.1.2`, and the exact `26.2-pre-3` candidate jar passed automated smoke
-     launches on `26.2-pre-3`. Each runtime passed Sort-only, Search-only,
+   - Current status: DONE. The grouped `26.1-26.2-pre-3` release jar passed
+     automated smoke launches on exact runtimes `26.1`, `26.1.1`, `26.1.2`,
+     and `26.2-pre-3`. Each runtime passed Sort-only, Search-only,
      Catalogue-only, and all-three public install sets.
 9. Publication promotion:
    - Keep `26.x` in `candidate_minecraft_version_profiles` until compile and

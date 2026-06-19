@@ -14,6 +14,11 @@ testing on.
 This keeps publishing honest while avoiding needless duplicate builds for patch
 versions that share the same API shape.
 
+Use the fewest supported build profiles that can honestly pass validation. Add
+or keep a separate supported profile only when the same compiled jar cannot
+cover the target runtimes because of source, dependency, metadata, or smoke-test
+drift.
+
 ## Profile Model
 
 Each profile should describe:

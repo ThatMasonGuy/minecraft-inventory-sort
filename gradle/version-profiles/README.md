@@ -11,14 +11,19 @@ The default profile is configured in `gradle.properties`:
 
 ```properties
 minecraft_version_profile=1.21.11
-supported_minecraft_version_profiles=1.20-1.20.4,1.20.5-1.20.6,1.21-1.21.5,1.21.6-1.21.8,1.21.9-1.21.10,1.21.11,26.1.2,26.2-pre-3
+supported_minecraft_version_profiles=1.20-1.20.4,1.20.5-1.20.6,1.21-1.21.5,1.21.6-1.21.8,1.21.9-1.21.10,1.21.11,26.x
 candidate_minecraft_version_profiles=
 ```
 
 The supported/candidate lists contain profile file names without the
 `.properties` extension. Release output folders and Modrinth version suffixes
-use the profile's `profile_id`, so a file such as `26.1.2.properties` can build
-and publish under `build/release/26.1-26.1.2/`.
+use the profile's `profile_id`, so a file such as `26.x.properties` can build
+and publish under `build/release/26.1-26.2-pre-3/`.
+
+Use the fewest supported build profiles that can honestly cover the tested
+runtime set. Prefer broadening a compatibility group when one compiled jar can
+pass every exact runtime smoke test; keep exact per-version profiles as
+runtime-only smoke profiles unless their jar must be published separately.
 
 Useful commands:
 
@@ -27,8 +32,8 @@ Useful commands:
 .\gradlew.bat buildAllMods
 .\gradlew.bat buildAllMods "-Pminecraft_version_profile=1.21.9-1.21.10"
 .\gradlew.bat buildAllMods "-Pminecraft_version_profile=1.20-1.20.4"
-.\gradlew.bat buildAllMods "-Pminecraft_version_profile=26.1.2"
-.\gradlew.bat smokeTestSelectedClients "-Pinventorysort_smoke_profiles=26.1-26.1.2"
+.\gradlew.bat buildAllMods "-Pminecraft_version_profile=26.x"
+.\gradlew.bat smokeTestSelectedClients "-Pinventorysort_smoke_profiles=26.1-26.2-pre-3"
 .\gradlew.bat buildAllVersions
 .\gradlew.bat ciValidation
 ```
@@ -86,20 +91,19 @@ be added to `supported_minecraft_version_profiles` or
 
 Current 26.x release range plan:
 
-- `26.1.2.properties` is the compile-anchor profile for the grouped
-  `26.1-26.1.2` release jar. Fabric API `0.150.0+26.1.2` declares
-  compatibility with Minecraft `26.1`, `26.1.1`, and `26.1.2`, and this jar
-  has passed automated smoke launches on every listed runtime.
-- `26.1.properties` and `26.1.1.properties` are exact runtime-only smoke
-  profiles. They use the `26.1.2` compatibility overlay and the same Fabric API
-  artifact so the grouped release jar can be launched on every listed runtime.
-- `26.2-pre-3.properties` stays exact and provisional. Current Fabric API
-  `26.2` pre-release artifacts are scoped to individual pre-releases, and
-  Minecraft `26.2` final is not available yet. Its `minecraft_dependency` uses
-  Fabric API's `~26.2-` range because Fabric Loader reports the runtime version
-  as `26.2-pre.3`, while `modrinth_game_versions` keeps the public Modrinth
-  label `26.2-pre-3`. This jar has passed automated smoke launches on
-  `26.2-pre-3`.
+- `26.x.properties` is the single supported release profile for the checked
+  26.x lane. It compiles from the newest checked anchor, `26.2-pre-3`, uses
+  the shared `26.x` compatibility overlay, and publishes under profile id
+  `26.1-26.2-pre-3`.
+- `26.1.properties`, `26.1.1.properties`, `26.1.2.properties`, and
+  `26.2-pre-3.properties` are exact runtime-only smoke profiles. Keep them out
+  of `supported_minecraft_version_profiles` and
+  `candidate_minecraft_version_profiles`.
+- The release profile lists Modrinth game versions `26.1`, `26.1.1`,
+  `26.1.2`, and `26.2-pre-3`. The exact `26.2-pre-3` runtime profile still
+  uses Fabric API's `~26.2-` dependency because Fabric Loader reports the
+  runtime version as `26.2-pre.3`, while `modrinth_game_versions` keeps the
+  public Modrinth label `26.2-pre-3`.
 
 Only add a profile to `supported_minecraft_version_profiles` after it compiles
 and launches cleanly. The current `3.1.1` supported publish lane includes the

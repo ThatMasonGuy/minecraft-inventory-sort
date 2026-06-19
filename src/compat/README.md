@@ -15,6 +15,11 @@ Keep shared logic in `src/client/java`. Add compatibility-group code only when a
 Minecraft version range needs different class names, method signatures, mixins,
 or small API adapters.
 
+Prefer the broadest compatibility source group that still compiles and passes
+the exact runtime smoke matrix. Add a new compat group only when the API shape
+really diverges; use exact runtime profiles for smoke testing without creating
+extra publish profiles.
+
 Recommended package ownership:
 
 ```text

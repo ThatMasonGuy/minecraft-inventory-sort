@@ -4,7 +4,7 @@ Research date: 2026-06-03
 
 ## Recommendation
 
-The current `3.1.1` supported/publishable profiles cover **Minecraft 1.20.x,
+The current supported/publishable profiles cover **Minecraft 1.20.x,
 1.21.x, and 26.x** through smoke-tested compatibility-group jars:
 
 - `1.20` through `1.20.4` are covered by the grouped `1.20-1.20.4` jar.
@@ -13,9 +13,8 @@ The current `3.1.1` supported/publishable profiles cover **Minecraft 1.20.x,
 - `1.21.6` through `1.21.8` are covered by the grouped `1.21.6-1.21.8` jar.
 - `1.21.9` and `1.21.10` are covered by the grouped `1.21.9-1.21.10` jar.
 - `1.21.11` is covered by the exact `1.21.11` jar.
-- `26.1`, `26.1.1`, and `26.1.2` are covered by the grouped
-  `26.1-26.1.2` jar.
-- `26.2-pre-3` is covered by an exact provisional pre-release jar.
+- `26.1`, `26.1.1`, `26.1.2`, and `26.2-pre-3` are covered by the grouped
+  `26.1-26.2-pre-3` jar.
 
 Do not mark `1.19.x` or older as compatible. Those versions remain out of scope
 because the current UI and rendering code depends on newer Minecraft APIs.
@@ -98,9 +97,9 @@ The supported profiles build public release jars under
 `build/release/<profile_id>/`. Each profile contains the three public feature
 jars:
 
-- `inventory-sort-3.1.1.jar`
-- `inventory-search-3.1.1.jar`
-- `inventory-catalogue-3.1.1.jar`
+- `inventory-sort-<mod_version>.jar`
+- `inventory-search-<mod_version>.jar`
+- `inventory-catalogue-<mod_version>.jar`
 
 Current supported profile metadata:
 
@@ -112,8 +111,7 @@ Current supported profile metadata:
 | `1.21.6-1.21.8` | `>=1.21.6 <=1.21.8` | `>=21` | `1.21.6`, `1.21.7`, `1.21.8` |
 | `1.21.9-1.21.10` | `>=1.21.9 <=1.21.10` | `>=21` | `1.21.9`, `1.21.10` |
 | `1.21.11` | `~1.21.11` | `>=21` | `1.21.11` |
-| `26.1-26.1.2` | `>=26.1 <=26.1.2` | `>=25` | `26.1`, `26.1.1`, `26.1.2` |
-| `26.2-pre-3` | `~26.2-` | `>=25` | `26.2-pre-3` |
+| `26.1-26.2-pre-3` | `>=26.1 <26.3` | `>=25` | `26.1`, `26.1.1`, `26.1.2`, `26.2-pre-3` |
 
 All current supported groups passed automated client smoke launches as
 Sort-only, Search-only, Catalogue-only, and all-three installs.
@@ -168,10 +166,10 @@ Final validation commands:
 
 | Minecraft | Java | Compile result | Notes |
 | --- | ---: | --- | --- |
-| 26.2-pre-3 | 25 | PASS | Covered by exact `26.2-pre-3` profile. Automated client smoke launch passed. |
-| 26.1.2 | 25 | PASS | Covered by grouped `26.1-26.1.2` profile. Automated client smoke launch passed. |
-| 26.1.1 | 25 | PASS | Covered by grouped `26.1-26.1.2` profile. Automated client smoke launch passed. |
-| 26.1 | 25 | PASS | Covered by grouped `26.1-26.1.2` profile. Automated client smoke launch passed. |
+| 26.2-pre-3 | 25 | PASS | Covered by grouped `26.1-26.2-pre-3` profile. Automated client smoke launch passed. |
+| 26.1.2 | 25 | PASS | Covered by grouped `26.1-26.2-pre-3` profile. Automated client smoke launch passed. |
+| 26.1.1 | 25 | PASS | Covered by grouped `26.1-26.2-pre-3` profile. Automated client smoke launch passed. |
+| 26.1 | 25 | PASS | Covered by grouped `26.1-26.2-pre-3` profile. Automated client smoke launch passed. |
 | 1.21.11 | 21 | PASS | Covered by default `1.21.11` profile. Automated client smoke launch passed. |
 | 1.21.10 | 21 | PASS | Covered by grouped `1.21.9-1.21.10` profile. Automated client smoke launch passed. |
 | 1.21.9 | 21 | PASS | Covered by grouped `1.21.9-1.21.10` profile. Automated client smoke launch passed. |

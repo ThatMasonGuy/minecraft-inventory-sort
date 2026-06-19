@@ -68,7 +68,8 @@ Single-player tracking namespaces include a stable launcher-instance id so two d
 - **Framework:** Requires **Fabric Loader** and **Fabric API** matching the target Minecraft version.
 - **Current Release Target:** The split release jars are supported/publishable
   for Minecraft `1.20` through `1.21.11`, plus `26.1`, `26.1.1`, `26.1.2`,
-  and `26.2-pre-3` through smoke-tested compatibility-group builds. See
+  and `26.2-pre-3` through smoke-tested compatibility-group builds. The 26.x
+  lane is built as one `26.1-26.2-pre-3` compatibility jar. See
   `COMPATIBILITY.md` for the exact profile ranges.
 - **"Known Current Locations":** The tracking features rely on what your client has *seen*. It provides "known current locations," not guaranteed live server truth. If another player empties a chest while you are away, your client will still remember the old contents until you reopen and rescan that container.
 
@@ -104,6 +105,7 @@ profiles:
 ```bash
 ./gradlew printVersionProfile
 ./gradlew buildAllMods -Pminecraft_version_profile=1.21.11
+./gradlew buildAllMods -Pminecraft_version_profile=26.x
 ./gradlew buildAllVersions
 ./gradlew publishValidation
 ./gradlew publishModrinthDryRun

@@ -114,18 +114,24 @@ Examples of major boundaries for this project:
   one profile per exact patch version. A profile should compile one jar from one
   anchor Minecraft version, list every Minecraft version that exact jar has passed
   smoke testing on, and publish only those tested game versions to Modrinth.
+- Prefer as few supported build/release profiles as possible. Broaden an
+  existing compatibility-group profile when one compiled jar can cover multiple
+  exact smoke-tested runtimes; add a new supported profile only when source,
+  dependency, metadata, or runtime validation proves the jar must split.
 - `supported_minecraft_version_profiles` and
   `candidate_minecraft_version_profiles` list profile file names. Release
   folders and Modrinth version suffixes use each profile's `profile_id`, which
   can be broader than the file name.
-- For the Minecraft 26.x lane, keep `26.1.2.properties` as the compile anchor
-  for the grouped `26.1-26.1.2` candidate jar, with `26.1.properties` and
-  `26.1.1.properties` used only as exact smoke runtimes. Keep `26.2-pre-3` exact
-  until newer 26.2 release metadata proves a broader range. For prerelease
+- For the Minecraft 26.x lane, keep `26.x.properties` as the single supported
+  release profile unless real API/dependency drift proves a split is necessary.
+  It compiles from the newest checked 26.x anchor, publishes with profile id
+  `26.1-26.2-pre-3`, and uses the shared `src/compat/26.x` overlay.
+  `26.1.properties`, `26.1.1.properties`, `26.1.2.properties`, and
+  `26.2-pre-3.properties` are exact runtime-only smoke profiles. For prerelease
   Fabric metadata, remember that Modrinth uses labels like `26.2-pre-3` while
   Fabric Loader reports/compares runtime versions like `26.2-pre.3`; follow
-  Fabric API's `minecraft` dependency string for `fabric.mod.json` and keep
-  `modrinth_game_versions` as the Modrinth label.
+  Fabric API's `minecraft` dependency string for exact runtime profiles and
+  keep `modrinth_game_versions` as the Modrinth label.
 - Keep automated validation ahead of Modrinth publishing: compile/build checks,
   release jar metadata checks, and launcher smoke tests must pass for every
   Minecraft version claimed by a compatibility-group profile.

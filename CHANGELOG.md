@@ -60,8 +60,9 @@ All notable project changes will be documented here.
   assets.
 - Consolidated duplicate 1.x `InventorySortDrawContexts`,
   `ClientCommandCompat`, and `HudCompat` compat wrappers into shared client
-  source while keeping 26.x on its profile-specific overlays, then cleared and
-  rebuilt the generated `build/release` artifacts with `buildAllVersions`.
+  source while the then-current 26.x lane stayed on its overlay path, then
+  cleared and rebuilt the generated `build/release` artifacts with
+  `buildAllVersions`.
 - Moved active persistent data out of `.minecraft/inventorysort` and into
   per-feature app-data folders (`InvSort`, `InvSearch`, `InvCatalogue`, and
   `InvCore`), with first-launch legacy copy/import from the old instance-local
@@ -104,6 +105,9 @@ All notable project changes will be documented here.
   right-side slot reservations, including the Minecraft 26.x render-state
   overlays, so standalone InvSearch can occupy the top inventory button slot
   when InvSort is not installed.
+- Collapsed the duplicated Minecraft 26.x publish lane into one `26.x` build
+  profile and one shared `src/compat/26.x` overlay, with exact 26.x runtime
+  profiles retained only for smoke testing.
 - Raised the public release jar size sentinel to allow the intentional embedded
   Core footprint from the shared button-slot API while keeping the existing
   junk-file and embedded-Core verification checks active.
