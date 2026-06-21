@@ -190,6 +190,9 @@ All notable project changes will be documented here.
 
 ### Fixed
 
+- Fixed InvSort sort actions so they show an in-game message instead of
+  silently stopping when the carried stack cannot be placed because the
+  inventory is full.
 - Renamed the InvSort rules screen `Assign Item` action to `Assign` and added a
   matching `Unlock` action for default-locked hotbar slots.
 - Fixed InvSearch modal scroll buttons so the up/down controls sit inside the

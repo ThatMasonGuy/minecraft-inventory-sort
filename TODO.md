@@ -8,6 +8,12 @@ shape while keeping the existing 36-slot rule indexes unchanged. Version lane
 bumped to `3.4.0` with `gradle/release-notes/3.4.0.md` started for
 user-facing changes. Verification: PASS `git diff --check`; PASS
 `.\gradlew.bat buildAllMods --no-daemon --console=plain`.
+Second InvSort checkpoint: sort operations now report a clear in-game overlay
+message when InvSort cannot finish because the carried stack has nowhere to go,
+which is the practical "inventory too full" failure path that previously made
+the sort look like it quietly did nothing. Verification: PASS
+`git diff --check`; PASS
+`.\gradlew.bat buildAllMods --no-daemon --console=plain`.
 
 Previous local checkpoint: `3.3.0` Inv+ bug-fix train is published. Release
 source commit/tag: `f98e100c12d04ff4e4745f8d260c4f05372ac071` / `v3.3.0`.

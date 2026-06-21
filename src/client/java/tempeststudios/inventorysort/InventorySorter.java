@@ -1,12 +1,15 @@
 package tempeststudios.inventorysort;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.network.chat.Component;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import tempeststudios.inventorysort.compat.core.MinecraftApiCompat;
 import tempeststudios.inventorysort.compat.sort.ContainerClickCompat;
 import tempeststudios.inventorysort.compat.sort.ItemStackCompat;
 import tempeststudios.inventorysort.mixin.AbstractContainerScreenInvoker;
@@ -14,6 +17,8 @@ import tempeststudios.inventorysort.mixin.AbstractContainerScreenInvoker;
 import java.util.*;
 
 public class InventorySorter {
+	private static final Component SORT_BLOCKED_FULL_INVENTORY = Component.literal(
+			"InvSort couldn't finish: free one inventory slot and try again.");
 
 	public static void sortInventory(AbstractContainerScreen<?> screen, Player player) {
 		tempeststudios.inventorysort.core.InventorySortCore.LOGGER.info("Sort button clicked! Screen: {}", screen.getClass().getSimpleName());
@@ -33,11 +38,15 @@ public class InventorySorter {
 
 		// 1) Top up partial stacks in hotbar (pull from player main only)
 		if (!playerHotbar.isEmpty() && !playerMain.isEmpty()) {
-			if (!ensureCursorEmpty(menu, invoker, playerMain, playerHotbar))
+			if (!ensureCursorEmpty(menu, invoker, playerMain, playerHotbar)) {
+				alertSortBlockedByFullInventory();
 				return;
+			}
 			topUpHotbar(menu, invoker, playerHotbar, playerMainSourceSlots(playerMain, playerRules), playerRules);
-			if (!ensureCursorEmpty(menu, invoker, playerMain, playerHotbar))
+			if (!ensureCursorEmpty(menu, invoker, playerMain, playerHotbar)) {
+				alertSortBlockedByFullInventory();
 				return;
+			}
 		}
 
 		// Determine what to sort:
@@ -46,7 +55,10 @@ public class InventorySorter {
 		List<Slot> slotsToSort = getSortableSlots(menu, screen, playerMain);
 		tempeststudios.inventorysort.core.InventorySortCore.LOGGER.debug("Found {} slots to sort", slotsToSort.size());
 
-		sortSlots(menu, invoker, slotsToSort, playerMain, playerHotbar, containerRulesFor(screen), false);
+		if (!sortSlots(menu, invoker, slotsToSort, playerMain, playerHotbar, containerRulesFor(screen), false)) {
+			alertSortBlockedByFullInventory();
+			return;
+		}
 
 		tempeststudios.inventorysort.core.InventorySortCore.LOGGER.info("Sorting complete!");
 	}
@@ -63,49 +75,56 @@ public class InventorySorter {
 		SortRuleStore.SortRules rules = SortRuleStore.getInstance().playerRules();
 
 		if (!playerHotbar.isEmpty() && !playerMain.isEmpty()) {
-			if (!ensureCursorEmpty(menu, invoker, playerMain, playerHotbar))
+			if (!ensureCursorEmpty(menu, invoker, playerMain, playerHotbar)) {
+				alertSortBlockedByFullInventory();
 				return;
+			}
 			topUpHotbar(menu, invoker, playerHotbar, playerMainSourceSlots(playerMain, rules), rules);
-			if (!ensureCursorEmpty(menu, invoker, playerMain, playerHotbar))
+			if (!ensureCursorEmpty(menu, invoker, playerMain, playerHotbar)) {
+				alertSortBlockedByFullInventory();
 				return;
+			}
 		}
 
 		List<Slot> playerSlots = getPlayerInventorySlots(regions);
-		sortSlots(menu, invoker, playerSlots, playerSlots, playerHotbar, rules, true);
+		if (!sortSlots(menu, invoker, playerSlots, playerSlots, playerHotbar, rules, true)) {
+			alertSortBlockedByFullInventory();
+			return;
+		}
 
 		tempeststudios.inventorysort.core.InventorySortCore.LOGGER.info("Player inventory sorting complete!");
 	}
 
-	private static void sortSlots(AbstractContainerMenu menu,
-								  AbstractContainerScreenInvoker invoker,
-								  List<Slot> slotsToSort,
-								  List<Slot> fallbackSlots,
-								  List<Slot> hotbarBufferSlots,
-								  SortRuleStore.SortRules rules,
-								  boolean hotbarDefaultLocked) {
+	private static boolean sortSlots(AbstractContainerMenu menu,
+									 AbstractContainerScreenInvoker invoker,
+									 List<Slot> slotsToSort,
+									 List<Slot> fallbackSlots,
+									 List<Slot> hotbarBufferSlots,
+									 SortRuleStore.SortRules rules,
+									 boolean hotbarDefaultLocked) {
 		if (slotsToSort.isEmpty())
-			return;
+			return true;
 
 		if (!ensureCursorEmpty(menu, invoker, slotsToSort, fallbackSlots))
-			return;
+			return false;
 
 		Slot hotbarSwapBuffer = findHotbarBuffer(hotbarBufferSlots, slotsToSort);
 
 		if (rules != null && rules.enabled) {
 			enforceReservedSlots(menu, invoker, slotsToSort, rules, hotbarSwapBuffer, hotbarDefaultLocked);
 			if (!ensureCursorEmpty(menu, invoker, slotsToSort, fallbackSlots))
-				return;
+				return false;
 		}
 
 		SortWorkSlots workSlots = sortWorkSlots(slotsToSort, rules, hotbarDefaultLocked);
 		if (workSlots.slots().isEmpty())
-			return;
+			return true;
 
 		List<Slot> sortableSlots = moveBundlesToFront(invoker, workSlots.slots(), hotbarSwapBuffer);
 		if (!ensureCursorEmpty(menu, invoker, slotsToSort, fallbackSlots))
-			return;
+			return false;
 		if (sortableSlots.isEmpty())
-			return;
+			return true;
 
 		// A) Compact empties to the end (stable)
 		stableCompact(sortableSlots, invoker, menu, hotbarSwapBuffer);
@@ -129,7 +148,15 @@ public class InventorySorter {
 		clearTemporarySlots(invoker, workSlots.temporarySlots(), workSlots.slots(), hotbarSwapBuffer);
 
 		// Final safety
-		ensureCursorEmpty(menu, invoker, sortableSlots, fallbackSlots);
+		return ensureCursorEmpty(menu, invoker, sortableSlots, fallbackSlots);
+	}
+
+	private static void alertSortBlockedByFullInventory() {
+		Minecraft client = Minecraft.getInstance();
+		if (client == null || client.player == null) {
+			return;
+		}
+		MinecraftApiCompat.sendOverlayMessage(client, SORT_BLOCKED_FULL_INVENTORY);
 	}
 
 	private static SortRuleStore.SortRules containerRulesFor(AbstractContainerScreen<?> screen) {
