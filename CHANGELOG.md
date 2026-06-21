@@ -55,6 +55,11 @@ All notable project changes will be documented here.
 
 - Bumped the queued minor lane to `3.3.0` for the Inv+ bug-fix and
   feature-hardening train.
+- Published `3.3.0` through guarded GitHub Actions workflow `27900601853`,
+  uploaded all 21 Modrinth compatibility-group versions, and created the
+  annotated `v3.3.0` GitHub Release on source commit
+  `f98e100c12d04ff4e4745f8d260c4f05372ac071` without attaching GitHub jar
+  assets.
 - Standardized the main InvSort, InvSearch, and InvCatalogue suite screens on a
   shared `480x290` modal size across the shared 1.x screens and 26.x overlays.
 - Changed InvSort player rules to use a 36-slot hotbar-aware layout. Existing

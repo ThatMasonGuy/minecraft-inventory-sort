@@ -1,6 +1,14 @@
 # Inventory Mods TODO
 
-Current local checkpoint: `3.3.0` Inv+ bug-fix train is open. First
+Current local checkpoint: `3.3.0` Inv+ bug-fix train is published. Release
+source commit/tag: `f98e100c12d04ff4e4745f8d260c4f05372ac071` / `v3.3.0`.
+GitHub Release: `https://github.com/ThatMasonGuy/minecraft-inventory-sort/releases/tag/v3.3.0`.
+Guarded publish workflow: `https://github.com/ThatMasonGuy/minecraft-inventory-sort/actions/runs/27900601853`;
+artifact `7774556090`. Publish evidence: PASS local
+`.\gradlew.bat buildAllVersions --no-daemon --console=plain`; PASS workflow
+with 92 client smoke pass markers, 7 InvSearch server smoke pass markers, 21
+Modrinth uploads, and `BUILD SUCCESSFUL in 1h 9s`.
+First
 InvCatalogue checkpoint: `includeInventory` sessions now record the actual
 player inventory when the session starts and refresh it before status, active
 reports, and stop reports. The shared Core now owns
@@ -84,8 +92,8 @@ stop` opens the saved report. Verification so far: PASS
 PASS
 `.\gradlew.bat buildAllMods "-Pminecraft_version_profile=26.x" --no-daemon --console=plain`;
 PASS `.\gradlew.bat buildAllVersions --no-daemon --console=plain`.
-Next: push the 3.3.0 release source and dispatch the guarded Modrinth publish
-workflow.
+Publish evidence: PASS guarded Modrinth workflow `27900601853`; GitHub Release
+`https://github.com/ThatMasonGuy/minecraft-inventory-sort/releases/tag/v3.3.0`.
 
 Previous local checkpoint: `3.2.3` 26.x profile consolidation is complete after
 the coordinated right-side button placement work. Shared Core now exposes
