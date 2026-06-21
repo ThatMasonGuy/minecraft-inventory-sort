@@ -1,6 +1,15 @@
 # Inventory Mods TODO
 
-Current local checkpoint: `3.3.0` Inv+ bug-fix train is published. Release
+Current local checkpoint: `3.4.0` development has started after the official
+`3.3.0` launch. First InvSort checkpoint: the player-inventory rules grid now
+renders the three main-inventory rows above the hotbar, with a small gap before
+the hotbar row, so the InvSort UI visually matches the normal player inventory
+shape while keeping the existing 36-slot rule indexes unchanged. Version lane
+bumped to `3.4.0` with `gradle/release-notes/3.4.0.md` started for
+user-facing changes. Verification: PASS `git diff --check`; PASS
+`.\gradlew.bat buildAllMods --no-daemon --console=plain`.
+
+Previous local checkpoint: `3.3.0` Inv+ bug-fix train is published. Release
 source commit/tag: `f98e100c12d04ff4e4745f8d260c4f05372ac071` / `v3.3.0`.
 GitHub Release: `https://github.com/ThatMasonGuy/minecraft-inventory-sort/releases/tag/v3.3.0`.
 Guarded publish workflow: `https://github.com/ThatMasonGuy/minecraft-inventory-sort/actions/runs/27900601853`;

@@ -53,6 +53,11 @@ All notable project changes will be documented here.
 
 ### Changed
 
+- Bumped the active development lane to `3.4.0` after the official `3.3.0`
+  launch.
+- Changed the InvSort player rules grid to render the main inventory rows above
+  the hotbar, with a small gap before the hotbar row, so the rules UI matches
+  the normal player-inventory shape.
 - Bumped the queued minor lane to `3.3.0` for the Inv+ bug-fix and
   feature-hardening train.
 - Published `3.3.0` through guarded GitHub Actions workflow `27900601853`,

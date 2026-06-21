@@ -31,6 +31,7 @@ public class InventorySortConfigScreen extends Screen {
     private static final int MIN_PANEL_H = InvUi.MIN_MODAL_H;
     private static final int PAD = 12;
     private static final int ROW_H = 16;
+    private static final int HOTBAR_GRID_GAP = 6;
 
     private static final int TAB_SLOTS = 0;
     private static final int TAB_ORDER = 1;
@@ -224,8 +225,8 @@ public class InventorySortConfigScreen extends Screen {
         InvUi.inset(ui, gridX - 5, gridY - 5, gridW, gridH);
 
         for (int i = 0; i < slots.size(); i++) {
-            int x = gridX + (i % 9) * slotSize;
-            int y = gridY + (i / 9) * slotSize;
+            int x = slotGridX(i);
+            int y = slotGridY(i);
             int draw = slotSize - 2;
             boolean hovered = isInside(mouseX, mouseY, x, y, draw, draw);
             boolean selected = selectedSlots.contains(i);
@@ -469,8 +470,8 @@ public class InventorySortConfigScreen extends Screen {
                 hide(b);
                 continue;
             }
-            int x = gridX + (i % 9) * slotSize;
-            int y = gridY + (i / 9) * slotSize;
+            int x = slotGridX(i);
+            int y = slotGridY(i);
             b.setBounds(x, y, slotSize - 2, slotSize - 2);
             b.setTargetId(String.valueOf(i));
             b.visible = true;
@@ -781,12 +782,12 @@ public class InventorySortConfigScreen extends Screen {
         int contentW = panelW - PAD * 2;
         int gridAvailH = contentBottom - (contentTop + 4) - 6 - 18 - 14;
         int byWidth = (contentW * 9 / 20) / 9;
-        int byHeight = gridAvailH / Math.max(1, rows);
+        int byHeight = (gridAvailH - gridExtraGap()) / Math.max(1, rows);
         slotSize = clamp(Math.min(Math.min(byWidth, byHeight), 20), 18, 20);
         gridX = panelX + PAD + 5;
         gridY = contentTop + 4 + 5;
         gridW = 9 * slotSize + 10;
-        gridH = rows * slotSize + 10;
+        gridH = rows * slotSize + gridExtraGap() + 10;
         actionsY = gridY - 5 + gridH + 6;
         infoX = panelX + PAD + gridW + PAD;
         infoY = contentTop + 4;
@@ -805,6 +806,33 @@ public class InventorySortConfigScreen extends Screen {
 
     private int targetRows() {
         return Math.max(1, (targetSlots().size() + 8) / 9);
+    }
+
+    private int slotGridX(int slotIndex) {
+        return gridX + slotColumn(slotIndex) * slotSize;
+    }
+
+    private int slotGridY(int slotIndex) {
+        int extraGap = isHotbarSlot(slotIndex) ? HOTBAR_GRID_GAP : 0;
+        return gridY + slotVisualRow(slotIndex) * slotSize + extraGap;
+    }
+
+    private int slotColumn(int slotIndex) {
+        if (!containerTarget && slotIndex >= 9) {
+            return (slotIndex - 9) % 9;
+        }
+        return slotIndex % 9;
+    }
+
+    private int slotVisualRow(int slotIndex) {
+        if (!containerTarget) {
+            return isHotbarSlot(slotIndex) ? 3 : (slotIndex - 9) / 9;
+        }
+        return slotIndex / 9;
+    }
+
+    private int gridExtraGap() {
+        return containerTarget ? 0 : HOTBAR_GRID_GAP;
     }
 
     private int listVisibleRows() {
