@@ -35,7 +35,7 @@ public final class InventorySearchServerNetworking {
 
     public record AutoWorldPayload(String profile) implements CustomPacketPayload {
         public static final Type<AutoWorldPayload> TYPE = new Type<>(
-                ResourceLocation.fromNamespaceAndPath("inventorysearch", "auto_world"));
+                new ResourceLocation("inventorysearch", "auto_world"));
         public static final StreamCodec<RegistryFriendlyByteBuf, AutoWorldPayload> CODEC =
                 StreamCodec.composite(ByteBufCodecs.STRING_UTF8, AutoWorldPayload::profile, AutoWorldPayload::new);
 

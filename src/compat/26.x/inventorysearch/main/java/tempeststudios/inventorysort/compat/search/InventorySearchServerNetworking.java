@@ -16,7 +16,7 @@ public final class InventorySearchServerNetworking {
     }
 
     public static void initialize() {
-        PayloadTypeRegistry.playS2C().register(AutoWorldPayload.TYPE, AutoWorldPayload.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(AutoWorldPayload.TYPE, AutoWorldPayload.CODEC);
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) ->
                 sendAutoWorld(handler.player, server));
     }

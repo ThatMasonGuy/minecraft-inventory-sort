@@ -73,10 +73,16 @@ public class CatalogReportBrowserScreen extends Screen {
     private int itemScroll;
     private int detailScroll;
     private boolean detailMode;
+    private String initialReportId;
 
     public CatalogReportBrowserScreen(Screen parent) {
+        this(parent, null);
+    }
+
+    public CatalogReportBrowserScreen(Screen parent, String initialReportId) {
         super(Component.literal("Inventory Catalogue Reports"));
         this.parent = parent;
+        this.initialReportId = initialReportId;
     }
 
     @Override
@@ -106,6 +112,14 @@ public class CatalogReportBrowserScreen extends Screen {
         } else {
             this.searchBox = null;
             reloadReports();
+            if (initialReportId != null) {
+                CatalogReportSnapshot report = findReport(initialReportId);
+                initialReportId = null;
+                if (report != null) {
+                    openDetail(report);
+                    return;
+                }
+            }
             buildReportHitboxes();
         }
     }

@@ -187,6 +187,12 @@ All notable project changes will be documented here.
 - Fixed an InvSearch client launch crash caused by the optional server
   entrypoint registering the `inventorysearch:auto_world` payload on the
   physical client before the client networking receiver registered it.
+- Fixed the 1.20.5-1.20.6 InvSearch server networking overlay so the optional
+  auto-world packet uses the `ResourceLocation` factory available in that
+  compatibility lane.
+- Fixed the 26.x InvSearch networking overlay and InvCatalogue report-browser
+  overlay so the optional server profile and direct report-opening changes
+  compile across the 26.x publish lane.
 - Fixed InvSort full-inventory sorting by using the existing hotbar-swap click
   path as a reversible buffer for layout swaps instead of depending on an empty
   cursor landing slot.

@@ -73,6 +73,19 @@ Verification: PASS `git diff --check`; PASS
 `.\gradlew.bat buildAllMods --no-daemon --console=plain`; PASS
 `.\gradlew.bat smokeTestSelectedClients "-Pinventorysort_smoke_profiles=1.21.11" "-Pinventorysort_smoke_game_versions=1.21.11" "-Pinventorysort_smoke_install_sets=inventorysearch-only" --no-daemon --console=plain`;
 PASS `.\gradlew.bat smokeTestInventorySearchServer --no-daemon --console=plain`.
+Seventh release-prep checkpoint: the local `buildAllVersions` gate caught
+supported-profile compile breaks before publish. The 1.20.5-1.20.6 InvSearch
+server networking overlay now uses the `ResourceLocation` constructor supported
+by that lane, the 26.x InvSearch networking overlay uses Fabric API's
+`clientboundPlay` payload registry, and the 26.x InvCatalogue report browser
+now mirrors the shared direct-report constructor used when `/inventorycatalogue
+stop` opens the saved report. Verification so far: PASS
+`.\gradlew.bat buildAllMods "-Pminecraft_version_profile=1.20.5-1.20.6" --no-daemon --console=plain`;
+PASS
+`.\gradlew.bat buildAllMods "-Pminecraft_version_profile=26.x" --no-daemon --console=plain`;
+PASS `.\gradlew.bat buildAllVersions --no-daemon --console=plain`.
+Next: push the 3.3.0 release source and dispatch the guarded Modrinth publish
+workflow.
 
 Previous local checkpoint: `3.2.3` 26.x profile consolidation is complete after
 the coordinated right-side button placement work. Shared Core now exposes

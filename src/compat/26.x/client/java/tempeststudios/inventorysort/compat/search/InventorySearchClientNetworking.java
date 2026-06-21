@@ -10,7 +10,7 @@ public final class InventorySearchClientNetworking {
     }
 
     public static void initialize() {
-        PayloadTypeRegistry.playS2C().register(AutoWorldPayload.TYPE, AutoWorldPayload.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(AutoWorldPayload.TYPE, AutoWorldPayload.CODEC);
         ClientPlayNetworking.registerGlobalReceiver(AutoWorldPayload.TYPE,
                 (payload, context) -> context.client().execute(() ->
                         ServerWorldProfileManager.getInstance().applyAutoProfile(context.client(), payload.profile())));
