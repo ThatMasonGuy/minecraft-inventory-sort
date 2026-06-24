@@ -3,8 +3,8 @@
 A lightweight Minecraft inventory mod suite that adds robust sorting capabilities and powerful inventory tracking to container screens. Intelligently organize your items, find misplaced gear, and keep tabs on your storage.
 
 - **Mod ID:** `inventorysort`
-- **Minecraft:** current patch lane targets `1.20.x`, `1.21.x`, and
-  `26.x` through compatibility-group releases
+- **Minecraft:** current patch lane targets `1.20.x`, `1.21.x`, final
+  `26.2`, and `26.3-snapshot-1` through compatibility-group releases
 - **Loader:** Fabric
 - **Java:** 17+ for `1.20-1.20.4`, 21+ for `1.20.5+`, 25+ for `26.x`
 - **License:** LGPL-3.0-only
@@ -87,9 +87,10 @@ profile the player selects.
 - **Framework:** Requires **Fabric Loader** and **Fabric API** matching the target Minecraft version.
 - **Current Release Target:** The split release jars are supported/publishable
   for Minecraft `1.20` through `1.21.11`, plus `26.1`, `26.1.1`, `26.1.2`,
-  and `26.2-pre-3` through smoke-tested compatibility-group builds. The 26.x
-  lane is built as one `26.1-26.2-pre-3` compatibility jar. See
-  `COMPATIBILITY.md` for the exact profile ranges.
+  `26.2`, and `26.3-snapshot-1` through smoke-tested compatibility-group
+  builds. The final 26.2 lane is built as one `26.1-26.2` compatibility jar,
+  while `26.3-snapshot-1` uses a separate snapshot jar with the same 26.x
+  compatibility overlay. See `COMPATIBILITY.md` for the exact profile ranges.
 - **"Known Current Locations":** The tracking features rely on what your client has *seen*. It provides "known current locations," not guaranteed live server truth. If another player empties a chest while you are away, your client will still remember the old contents until you reopen and rescan that container.
 
 ## Future Plans

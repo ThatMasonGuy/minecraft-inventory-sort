@@ -145,32 +145,43 @@
         }
       }
     },
-    "26.1-26.2-pre-3": {
-      "profile_id": "26.1-26.2-pre-3",
+    "26.1-26.2": {
+      "profile_id": "26.1-26.2",
       "game_versions": {
         "26.1": {
           "status": "pass",
-          "tested_at": "2026-06-19",
+          "tested_at": "2026-06-24",
           "method": "automated smokeTestSelectedClients launch matrix",
-          "notes": "Combined 26.x release jars launched successfully as Sort-only, Search-only, Catalogue-only, and all-three installs."
+          "notes": "Final 26.2-anchored 26.x release jars launched successfully as Sort-only, Search-only, Catalogue-only, and all-three installs."
         },
         "26.1.1": {
           "status": "pass",
-          "tested_at": "2026-06-19",
+          "tested_at": "2026-06-24",
           "method": "automated smokeTestSelectedClients launch matrix",
-          "notes": "Combined 26.x release jars launched successfully as Sort-only, Search-only, Catalogue-only, and all-three installs."
+          "notes": "Final 26.2-anchored 26.x release jars launched successfully as Sort-only, Search-only, Catalogue-only, and all-three installs."
         },
         "26.1.2": {
           "status": "pass",
-          "tested_at": "2026-06-19",
+          "tested_at": "2026-06-24",
           "method": "automated smokeTestSelectedClients launch matrix",
-          "notes": "Combined 26.x release jars launched successfully as Sort-only, Search-only, Catalogue-only, and all-three installs."
+          "notes": "Final 26.2-anchored 26.x release jars launched successfully as Sort-only, Search-only, Catalogue-only, and all-three installs."
         },
-        "26.2-pre-3": {
+        "26.2": {
           "status": "pass",
-          "tested_at": "2026-06-19",
+          "tested_at": "2026-06-24",
           "method": "automated smokeTestSelectedClients launch matrix",
-          "notes": "Combined 26.x release jars launched successfully as Sort-only, Search-only, Catalogue-only, and all-three installs."
+          "notes": "Final 26.2-anchored 26.x release jars launched successfully as Sort-only, Search-only, Catalogue-only, and all-three installs."
+        }
+      }
+    },
+    "26.3-snapshot-1": {
+      "profile_id": "26.3-snapshot-1",
+      "game_versions": {
+        "26.3-snapshot-1": {
+          "status": "pass",
+          "tested_at": "2026-06-24",
+          "method": "automated smokeTestSelectedClients launch matrix",
+          "notes": "Snapshot release jars launched successfully as Sort-only, Search-only, Catalogue-only, and all-three installs on the shared 26.x overlay."
         }
       }
     }

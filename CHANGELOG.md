@@ -55,6 +55,12 @@ All notable project changes will be documented here.
 
 - Bumped the active development lane to `3.4.0` after the official `3.3.0`
   launch.
+- Updated Minecraft 26.x support for final `26.2`: the supported release
+  profile now builds from final `26.2`, publishes as `26.1-26.2`, and uses
+  Fabric API `0.153.0+26.2`.
+- Added a supported `26.3-snapshot-1` release profile using Fabric API
+  `0.153.1+26.3` and the existing shared `26.x` compatibility overlay; no new
+  source shim was needed after compile and client smoke validation.
 - Changed the InvSort player rules grid to render the main inventory rows above
   the hotbar, with a small gap before the hotbar row, so the rules UI matches
   the normal player-inventory shape.

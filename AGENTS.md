@@ -122,16 +122,18 @@ Examples of major boundaries for this project:
   `candidate_minecraft_version_profiles` list profile file names. Release
   folders and Modrinth version suffixes use each profile's `profile_id`, which
   can be broader than the file name.
-- For the Minecraft 26.x lane, keep `26.x.properties` as the single supported
-  release profile unless real API/dependency drift proves a split is necessary.
-  It compiles from the newest checked 26.x anchor, publishes with profile id
-  `26.1-26.2-pre-3`, and uses the shared `src/compat/26.x` overlay.
+- For the final Minecraft 26.2 lane, keep `26.x.properties` as the single
+  supported release profile unless real API/dependency drift proves a split is
+  necessary. It compiles from final `26.2`, publishes with profile id
+  `26.1-26.2`, and uses the shared `src/compat/26.x` overlay.
   `26.1.properties`, `26.1.1.properties`, `26.1.2.properties`, and
-  `26.2-pre-3.properties` are exact runtime-only smoke profiles. For prerelease
-  Fabric metadata, remember that Modrinth uses labels like `26.2-pre-3` while
-  Fabric Loader reports/compares runtime versions like `26.2-pre.3`; follow
-  Fabric API's `minecraft` dependency string for exact runtime profiles and
-  keep `modrinth_game_versions` as the Modrinth label.
+  `26.2.properties` are exact runtime-only smoke profiles. Keep
+  `26.3-snapshot-1.properties` as a separate supported snapshot release profile
+  while it needs its own Fabric API artifact and Modrinth game-version label.
+  For prerelease/snapshot Fabric metadata, remember that Modrinth labels can
+  differ from Fabric Loader's runtime comparison strings; follow Fabric API's
+  `minecraft` dependency string for exact runtime profiles and keep
+  `modrinth_game_versions` as the Modrinth label.
 - Keep automated validation ahead of Modrinth publishing: compile/build checks,
   release jar metadata checks, and launcher smoke tests must pass for every
   Minecraft version claimed by a compatibility-group profile.

@@ -1,6 +1,6 @@
 # Minecraft Compatibility
 
-Research date: 2026-06-03
+Research date: 2026-06-24
 
 ## Recommendation
 
@@ -13,8 +13,9 @@ The current supported/publishable profiles cover **Minecraft 1.20.x,
 - `1.21.6` through `1.21.8` are covered by the grouped `1.21.6-1.21.8` jar.
 - `1.21.9` and `1.21.10` are covered by the grouped `1.21.9-1.21.10` jar.
 - `1.21.11` is covered by the exact `1.21.11` jar.
-- `26.1`, `26.1.1`, `26.1.2`, and `26.2-pre-3` are covered by the grouped
-  `26.1-26.2-pre-3` jar.
+- `26.1`, `26.1.1`, `26.1.2`, and final `26.2` are covered by the grouped
+  `26.1-26.2` jar.
+- `26.3-snapshot-1` is covered by a separate snapshot jar.
 
 Do not mark `1.19.x` or older as compatible. Those versions remain out of scope
 because the current UI and rendering code depends on newer Minecraft APIs.
@@ -80,7 +81,7 @@ dimension id access; shared feature logic should stay in `src/client/java`.
 
 The default development profile remains `1.21.11` so local/push builds stay
 fast on Java 21. These artifacts can be built under `build/release/1.21.11/`
-and are one of the `3.1.1` publish lane groups:
+and are one of the current publish lane groups:
 
 | Jar | Mod id | Minecraft dependency | Java dependency |
 | --- | --- | --- | --- |
@@ -111,7 +112,8 @@ Current supported profile metadata:
 | `1.21.6-1.21.8` | `>=1.21.6 <=1.21.8` | `>=21` | `1.21.6`, `1.21.7`, `1.21.8` |
 | `1.21.9-1.21.10` | `>=1.21.9 <=1.21.10` | `>=21` | `1.21.9`, `1.21.10` |
 | `1.21.11` | `~1.21.11` | `>=21` | `1.21.11` |
-| `26.1-26.2-pre-3` | `>=26.1 <26.3` | `>=25` | `26.1`, `26.1.1`, `26.1.2`, `26.2-pre-3` |
+| `26.1-26.2` | `>=26.1 <=26.2` | `>=25` | `26.1`, `26.1.1`, `26.1.2`, `26.2` |
+| `26.3-snapshot-1` | `~26.3-` | `>=25` | `26.3-snapshot-1` |
 
 All current supported groups passed automated client smoke launches as
 Sort-only, Search-only, Catalogue-only, and all-three installs.
@@ -119,8 +121,8 @@ Sort-only, Search-only, Catalogue-only, and all-three installs.
 ## Previously Published 3.0.0 Compatibility Artifacts
 
 The `3.0.0` release lane previously covered Minecraft `1.20.x` and `1.21.x`.
-Those same compatibility groups are now also part of the unified `3.1.1`
-publish lane:
+Those same compatibility groups remain part of the unified current publish
+lane:
 
 | Profile | Minecraft dependency | Java dependency | Smoke-tested game versions |
 | --- | --- | --- | --- |
@@ -166,10 +168,11 @@ Final validation commands:
 
 | Minecraft | Java | Compile result | Notes |
 | --- | ---: | --- | --- |
-| 26.2-pre-3 | 25 | PASS | Covered by grouped `26.1-26.2-pre-3` profile. Automated client smoke launch passed. |
-| 26.1.2 | 25 | PASS | Covered by grouped `26.1-26.2-pre-3` profile. Automated client smoke launch passed. |
-| 26.1.1 | 25 | PASS | Covered by grouped `26.1-26.2-pre-3` profile. Automated client smoke launch passed. |
-| 26.1 | 25 | PASS | Covered by grouped `26.1-26.2-pre-3` profile. Automated client smoke launch passed. |
+| 26.3-snapshot-1 | 25 | PASS | Covered by exact `26.3-snapshot-1` profile using the shared `26.x` overlay. Automated client smoke launch passed. |
+| 26.2 | 25 | PASS | Covered by grouped `26.1-26.2` profile. Automated client smoke launch passed. |
+| 26.1.2 | 25 | PASS | Covered by grouped `26.1-26.2` profile. Automated client smoke launch passed. |
+| 26.1.1 | 25 | PASS | Covered by grouped `26.1-26.2` profile. Automated client smoke launch passed. |
+| 26.1 | 25 | PASS | Covered by grouped `26.1-26.2` profile. Automated client smoke launch passed. |
 | 1.21.11 | 21 | PASS | Covered by default `1.21.11` profile. Automated client smoke launch passed. |
 | 1.21.10 | 21 | PASS | Covered by grouped `1.21.9-1.21.10` profile. Automated client smoke launch passed. |
 | 1.21.9 | 21 | PASS | Covered by grouped `1.21.9-1.21.10` profile. Automated client smoke launch passed. |
@@ -197,8 +200,8 @@ Final validation commands:
 
 ## Porting Implications
 
-- `1.20.x`, `1.21.x`, and `26.x` are now covered by smoke-passed supported
-  compatibility groups for the unified `3.1.1` publish lane.
+- `1.20.x`, `1.21.x`, final `26.2`, and `26.3-snapshot-1` are now covered by
+  smoke-passed supported compatibility groups for the `3.4.0` publish lane.
 - Future candidate groups should stay in `candidate_minecraft_version_profiles`
   until their exact runtime smoke tests pass, then move to
   `supported_minecraft_version_profiles` before publishing.
