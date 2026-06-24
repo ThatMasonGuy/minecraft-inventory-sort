@@ -19,7 +19,14 @@ release profile now compiles from final `26.2`, publishes as `26.1-26.2`, and
 lists `26.1`, `26.1.1`, `26.1.2`, and final `26.2` after a fresh selected
 client smoke matrix. `26.3-snapshot-1` builds as a separate supported snapshot
 profile using the same `src/compat/26.x` overlay and required no new shim.
-Verification so far: PASS `.\gradlew.bat printVersionProfile
+Release status: `3.4.0` is published. Release source commit/tag:
+`8690f802b57af274309c221ba452b4449876e744` / `v3.4.0`. GitHub Release:
+`https://github.com/ThatMasonGuy/minecraft-inventory-sort/releases/tag/v3.4.0`.
+Guarded publish workflow:
+`https://github.com/ThatMasonGuy/minecraft-inventory-sort/actions/runs/28093351797`;
+artifact `7848768097`. Dry-run workflow:
+`https://github.com/ThatMasonGuy/minecraft-inventory-sort/actions/runs/28089674997`.
+Verification: PASS `.\gradlew.bat printVersionProfile
 "-Pminecraft_version_profile=26.x" --no-daemon --console=plain`; PASS
 `.\gradlew.bat printVersionProfile "-Pminecraft_version_profile=26.2"
 --no-daemon --console=plain`; PASS `.\gradlew.bat printVersionProfile
@@ -33,8 +40,9 @@ PASS `.\gradlew.bat smokeTestSelectedClients
 "-Pinventorysort_smoke_profiles=26.3-snapshot-1" --no-daemon --console=plain`.
 PASS `.\gradlew.bat verifySmokeTestMatrix --no-daemon --console=plain`;
 PASS `.\gradlew.bat buildAllVersions --no-daemon --console=plain`.
-Next step: run the full supported-profile release gate/dry-run upload plan
-before starting the guarded Modrinth publish workflow.
+Publish evidence: PASS guarded workflow with 96 client smoke pass markers, 8
+InvSearch server smoke pass markers, 24 Modrinth uploads across the eight
+supported publish profiles, and `BUILD SUCCESSFUL in 1h 6m 3s`.
 
 Previous local checkpoint: `3.3.0` Inv+ bug-fix train is published. Release
 source commit/tag: `f98e100c12d04ff4e4745f8d260c4f05372ac071` / `v3.3.0`.

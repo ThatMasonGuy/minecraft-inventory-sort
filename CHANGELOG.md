@@ -61,6 +61,11 @@ All notable project changes will be documented here.
 - Added a supported `26.3-snapshot-1` release profile using Fabric API
   `0.153.1+26.3` and the existing shared `26.x` compatibility overlay; no new
   source shim was needed after compile and client smoke validation.
+- Published `3.4.0` through guarded GitHub Actions workflow `28093351797`,
+  uploaded all 24 Modrinth compatibility-group versions, and created the
+  annotated `v3.4.0` GitHub Release on source commit
+  `8690f802b57af274309c221ba452b4449876e744` without attaching GitHub jar
+  assets.
 - Changed the InvSort player rules grid to render the main inventory rows above
   the hotbar, with a small gap before the hotbar row, so the rules UI matches
   the normal player-inventory shape.
