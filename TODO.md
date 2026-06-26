@@ -43,6 +43,16 @@ PASS `.\gradlew.bat buildAllVersions --no-daemon --console=plain`.
 Publish evidence: PASS guarded workflow with 96 client smoke pass markers, 8
 InvSearch server smoke pass markers, 24 Modrinth uploads across the eight
 supported publish profiles, and `BUILD SUCCESSFUL in 1h 6m 3s`.
+Post-release local artifact hygiene checkpoint: removed the obsolete
+`gradle/version-profiles/26.2-pre-3.properties` runtime profile, cleared the
+generated root `build/` tree and every module `build/` tree, and regenerated
+local release artifacts from the current supported profile list only.
+Verification: PASS `.\gradlew.bat buildAllVersions --no-daemon
+--console=plain` in 4m19s. Result: `build/release/` contains exactly eight
+current `3.4.0` profile folders (`1.20-1.20.4`, `1.20.5-1.20.6`,
+`1.21-1.21.5`, `1.21.6-1.21.8`, `1.21.9-1.21.10`, `1.21.11`, `26.1-26.2`,
+and `26.3-snapshot-1`) with three public jars each, and no generated
+`26.2-pre-3` artifacts under `build/` or `modules/`.
 
 Previous local checkpoint: `3.3.0` Inv+ bug-fix train is published. Release
 source commit/tag: `f98e100c12d04ff4e4745f8d260c4f05372ac071` / `v3.3.0`.

@@ -66,6 +66,9 @@ All notable project changes will be documented here.
   annotated `v3.4.0` GitHub Release on source commit
   `8690f802b57af274309c221ba452b4449876e744` without attaching GitHub jar
   assets.
+- Removed the obsolete `26.2-pre-3` runtime profile from active build metadata
+  and refreshed local generated build outputs from scratch so `build/release/`
+  only contains current `3.4.0` supported-profile jars.
 - Changed the InvSort player rules grid to render the main inventory rows above
   the hotbar, with a small gap before the hotbar row, so the rules UI matches
   the normal player-inventory shape.
