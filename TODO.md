@@ -1,5 +1,18 @@
 # Inventory Mods TODO
 
+InvSearch highlight checkpoint: clicking a physical tracked container location
+in an expanded Search result now selects that exact `BlockPos`. On 26.x it draws
+a pulsing yellow ESP-style cuboid with a solid outline and translucent fill,
+both visible through walls. The highlight clears when its
+container is opened, the tracked block entity disappears, the client changes
+level/dimension, or the client disconnects. The renderer is registered once at
+InvSearch client initialization, keeps only the current immutable position and
+level identity, and uses the native 26.x always-on-top gizmo pass while the
+shared renderer covers the earlier profiles. Verification: PASS `git diff --check`;
+PASS `./gradlew.bat buildAllMods "-Pminecraft_version_profile=26.x"
+--no-daemon --console=plain`. The local 1.21.11 follow-up compile is blocked
+only because this machine has no Java 21 toolchain configured.
+
 Current local checkpoint: `3.4.0` development has started after the official
 `3.3.0` launch. First InvSort checkpoint: the player-inventory rules grid now
 renders the three main-inventory rows above the hotbar, with a small gap before

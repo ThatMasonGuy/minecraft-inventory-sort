@@ -6,6 +6,10 @@ All notable project changes will be documented here.
 
 ### Added
 
+- Added a persistent yellow ESP-style marker for a tracked physical container
+  selected from an expanded InvSearch result. On 26.x it has a solid outline
+  and translucent fill visible through walls; it clears when that container
+  opens, disappears, or the client changes world/dimension or disconnects.
 - Added a first-pass InvSort rules screen, opened by right-clicking the Sort
   button, for configuring player-inventory rules and container rules in game.
 - Added InvSort custom category ordering, custom item-id ordering, protected

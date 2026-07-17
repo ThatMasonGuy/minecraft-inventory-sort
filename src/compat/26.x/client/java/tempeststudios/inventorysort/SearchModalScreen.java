@@ -11,6 +11,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.client.input.MouseButtonEvent;
 import tempeststudios.inventorysort.compat.core.MinecraftApiCompat;
 
 import java.time.LocalDateTime;
@@ -227,6 +228,33 @@ public class SearchModalScreen extends Screen {
 
     private static int clamp(int v, int min, int max) {
         return Math.max(min, Math.min(max, v));
+    }
+
+    @Override
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        if (event.button() == 0 && highlightClickedLocation(event.x(), event.y())) {
+            return true;
+        }
+        return super.mouseClicked(event, doubleClick);
+    }
+
+    private boolean highlightClickedLocation(double mouseX, double mouseY) {
+        int y = listTopY - scrollOffsetPixels;
+        for (ResultRow row : results) {
+            boolean isOpen = expanded.contains(row.id);
+            int rowHeight = ROW_H + (isOpen ? DETAILS_H : 0);
+            if (isOpen && mouseX >= nameX - 4 && mouseX <= rowRightX
+                    && mouseY >= y + ROW_H + 18 && mouseY < y + ROW_H + 18 + 33) {
+                int locationIndex = (int) ((mouseY - (y + ROW_H + 18)) / 11);
+                LocationEntry location = row.locationAtDisplayIndex(locationIndex);
+                if (location != null && location.getPos() != null) {
+                    ChestHighlightRenderer.setHighlighted(location.getPos());
+                    return true;
+                }
+            }
+            y += rowHeight + 4;
+        }
+        return false;
     }
 
     @Override
@@ -842,6 +870,12 @@ public class SearchModalScreen extends Screen {
                 trackedLocationsCache = out;
             }
             return trackedLocationsCache;
+        }
+
+        LocationEntry locationAtDisplayIndex(int index) {
+            ensureTracked();
+            int trackedIndex = index - (currentInvLine == null ? 0 : 1);
+            return trackedIndex >= 0 && trackedIndex < trackedEntries.size() ? trackedEntries.get(trackedIndex) : null;
         }
 
         private void ensureTracked() {

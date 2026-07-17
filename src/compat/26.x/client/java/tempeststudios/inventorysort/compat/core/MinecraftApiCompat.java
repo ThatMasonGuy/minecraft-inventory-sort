@@ -68,6 +68,19 @@ public final class MinecraftApiCompat {
         return fieldValue(client, "screen") != null;
     }
 
+    public static Screen getScreen(Minecraft client) {
+        Object gui = fieldValue(client, "gui");
+        Object screen = gui != null ? invoke(gui, "screen") : null;
+        if (screen instanceof Screen s) {
+            return s;
+        }
+        Object screenField = fieldValue(client, "screen");
+        if (screenField instanceof Screen s) {
+            return s;
+        }
+        return null;
+    }
+
     public static void setScreen(Minecraft client, Screen screen) {
         Object gui = fieldValue(client, "gui");
         if (gui != null && invoke(gui, "setScreen", Screen.class, screen)) {
