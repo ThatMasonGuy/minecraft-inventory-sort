@@ -92,7 +92,7 @@ public final class ChestHighlightRenderer {
             return false;
         }
         if (selectedOnly) {
-            setHighlighted(selected.getPos());
+            setHighlightedLocations(Collections.singletonList(selected));
         } else {
             setHighlightedLocations(locations);
         }
