@@ -54,6 +54,10 @@ public final class MinecraftApiCompat {
         return client.screen != null;
     }
 
+    public static Screen getScreen(Minecraft client) {
+        return client.screen;
+    }
+
     public static void setScreen(Minecraft client, Screen screen) {
         client.setScreen(screen);
     }

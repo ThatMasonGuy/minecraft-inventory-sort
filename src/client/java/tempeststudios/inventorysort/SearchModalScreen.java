@@ -6,8 +6,10 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -41,6 +43,7 @@ public class SearchModalScreen extends Screen {
 
     // Expand state per result id
     private final Set<String> expanded = new HashSet<>();
+    private final SearchHighlightSelection highlightSelection = new SearchHighlightSelection();
 
     // UI buttons
     private final List<Button> expandButtons = new ArrayList<>();
@@ -71,7 +74,11 @@ public class SearchModalScreen extends Screen {
     private static final int COUNT_HELD = 0xFF8CC9FF;
     private static final int PAD = 12;
     private static final int ROW_H = 20;
-    private static final int DETAILS_H = 58;
+    private static final int DETAILS_MIN_H = 29;
+    private static final int DETAILS_LOCATION_Y = 16;
+    private static final int DETAILS_LINE_H = 13;
+    private static final int HIGHLIGHT_BUTTON_W = 56;
+    private static final int HIGHLIGHT_BUTTON_H = 10;
 
     private static final DateTimeFormatter TS_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy h:mma");
 
@@ -183,7 +190,14 @@ public class SearchModalScreen extends Screen {
     }
 
     private void toggleExpanded(String id) {
-        if (!expanded.add(id)) {
+        if (expanded.add(id)) {
+            for (ResultRow row : results) {
+                if (row.id.equals(id)) {
+                    highlightSelection.selectAll(id, row.trackedEntries());
+                    break;
+                }
+            }
+        } else {
             expanded.remove(id);
         }
         updateLayout();
@@ -216,7 +230,11 @@ public class SearchModalScreen extends Screen {
     }
 
     private int rowSpan(ResultRow row) {
-        return ROW_H + (expanded.contains(row.id) ? DETAILS_H : 0) + 4;
+        return ROW_H + (expanded.contains(row.id) ? detailsHeight(row) : 0) + 4;
+    }
+
+    private int detailsHeight(ResultRow row) {
+        return Math.max(DETAILS_MIN_H, DETAILS_LOCATION_Y + row.trackedLocations().size() * DETAILS_LINE_H + 5);
     }
 
     private boolean isMouseOverList(double mouseX, double mouseY) {
@@ -226,6 +244,49 @@ public class SearchModalScreen extends Screen {
 
     private static int clamp(int v, int min, int max) {
         return Math.max(min, Math.min(max, v));
+    }
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (button == 0 && highlightClickedLocation(mouseX, mouseY)) {
+            return true;
+        }
+        return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    private boolean highlightClickedLocation(double mouseX, double mouseY) {
+        int y = listTopY - scrollOffsetPixels;
+        for (ResultRow row : results) {
+            boolean isOpen = expanded.contains(row.id);
+            int rowHeight = ROW_H + (isOpen ? detailsHeight(row) : 0);
+            int locationY = y + ROW_H + 2 + DETAILS_LOCATION_Y;
+            if (isOpen && mouseX >= nameX - 4 && mouseX <= rowRightX
+                    && mouseY >= locationY - 1 && mouseY < locationY - 1 + row.trackedLocations().size() * DETAILS_LINE_H) {
+                int locationIndex = (int) ((mouseY - (locationY - 1)) / DETAILS_LINE_H);
+                LocationEntry location = row.locationAtDisplayIndex(locationIndex);
+                if (isHighlightButton(mouseX, mouseY, locationY + locationIndex * DETAILS_LINE_H - 1)) {
+                    if (highlightSelection.selectOne(row.id, location)) {
+                        playHighlightSound();
+                        return true;
+                    }
+                } else if (location != null && location.getPos() != null) {
+                    highlightSelection.selectAll(row.id, row.trackedEntries());
+                    return true;
+                }
+            }
+            y += rowHeight + 4;
+        }
+        return false;
+    }
+
+    private boolean isHighlightButton(double mouseX, double mouseY, int y) {
+        int x = rowRightX - HIGHLIGHT_BUTTON_W - 6;
+        return mouseX >= x && mouseX < x + HIGHLIGHT_BUTTON_W
+                && mouseY >= y && mouseY < y + HIGHLIGHT_BUTTON_H;
+    }
+
+    private void playHighlightSound() {
+        Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
     }
 
     @Override
@@ -270,7 +331,7 @@ public class SearchModalScreen extends Screen {
             for (int i = 0; i < results.size(); i++) {
                 ResultRow row = results.get(i);
                 boolean isOpen = expanded.contains(row.id);
-                int rowHeight = ROW_H + (isOpen ? DETAILS_H : 0);
+                int rowHeight = ROW_H + (isOpen ? detailsHeight(row) : 0);
 
                 if (y + rowHeight + 4 <= listTopY) {
                     y += rowHeight + 4;
@@ -312,7 +373,7 @@ public class SearchModalScreen extends Screen {
                 g.drawString(this.font, countStr, countRightX - this.font.width(countStr), y + 6, countColor, false);
 
                 if (isOpen) {
-                    renderDetails(g, ui, row, y + ROW_H + 2);
+                    renderDetails(g, ui, row, y + ROW_H + 2, mouseX, mouseY);
                 }
 
                 y += rowHeight + 4;
@@ -331,15 +392,16 @@ public class SearchModalScreen extends Screen {
 
         super.render(g, mouseX, mouseY, partialTick);
 
-        g.drawString(this.font, "Click the arrow to view tracked locations. Scroll wheel works too.",
+        g.drawString(this.font, "Open a result to highlight all locations. Highlight selects one or more.",
                 modalX + PAD, modalY + modalH - 12, InvUi.TEXT_DIM, false);
     }
 
-    private void renderDetails(GuiGraphics g, InventorySortDrawContext ui, ResultRow row, int dy) {
+    private void renderDetails(GuiGraphics g, InventorySortDrawContext ui, ResultRow row, int dy, int mouseX, int mouseY) {
         int dx = nameX - 4;
         int dw = rowRightX - dx;
-        ui.fill(dx, dy, dx + dw, dy + DETAILS_H - 4, InvUi.WELL);
-        ui.fill(dx, dy, dx + 2, dy + DETAILS_H - 4, ACCENT);
+        int detailsHeight = detailsHeight(row);
+        ui.fill(dx, dy, dx + dw, dy + detailsHeight - 4, InvUi.WELL);
+        ui.fill(dx, dy, dx + 2, dy + detailsHeight - 4, ACCENT);
 
         int tx = dx + 8;
         int ty = dy + 5;
@@ -349,21 +411,25 @@ public class SearchModalScreen extends Screen {
             return;
         }
         g.drawString(this.font, "Tracked locations", tx, ty, ACCENT, false);
-        ty += 11;
-        int shown = Math.min(3, tracked.size());
-        for (int j = 0; j < shown; j++) {
+        ty = dy + DETAILS_LOCATION_Y;
+        for (int j = 0; j < tracked.size(); j++) {
             String loc = tracked.get(j);
-            int maxW = dw - 18;
+            LocationEntry location = row.locationAtDisplayIndex(j);
+            int buttonX = dx + dw - HIGHLIGHT_BUTTON_W - 6;
+            int maxW = (location == null ? dx + dw - 8 : buttonX) - (tx + 8) - 4;
             if (this.font.width(loc) > maxW) {
                 loc = this.font.plainSubstrByWidth(loc, maxW - this.font.width("...")) + "...";
             }
             ui.fill(tx, ty + 3, tx + 3, ty + 6, InvUi.TEXT_DIM);
             g.drawString(this.font, loc, tx + 8, ty, InvUi.TEXT_MUTED, false);
-            ty += 11;
-        }
-        if (tracked.size() > shown) {
-            g.drawString(this.font, "+" + (tracked.size() - shown) + " more location"
-                    + (tracked.size() - shown == 1 ? "" : "s"), tx + 8, ty, InvUi.TEXT_DIM, false);
+            if (location != null && location.getPos() != null) {
+                boolean hovered = mouseX >= buttonX && mouseX < buttonX + HIGHLIGHT_BUTTON_W
+                        && mouseY >= ty - 1 && mouseY < ty - 1 + HIGHLIGHT_BUTTON_H;
+                int textColor = InvUi.button(ui, buttonX, ty - 1, HIGHLIGHT_BUTTON_W, HIGHLIGHT_BUTTON_H,
+                        hovered, true, false, ACCENT);
+                g.drawString(this.font, "Highlight", buttonX + (HIGHLIGHT_BUTTON_W - this.font.width("Highlight")) / 2, ty, textColor, false);
+            }
+            ty += DETAILS_LINE_H;
         }
     }
 
@@ -409,7 +475,7 @@ public class SearchModalScreen extends Screen {
         for (int i = 0; i < results.size(); i++) {
             ResultRow row = results.get(i);
             boolean isOpen = expanded.contains(row.id);
-            int rowHeight = ROW_H + (isOpen ? DETAILS_H : 0);
+            int rowHeight = ROW_H + (isOpen ? detailsHeight(row) : 0);
 
             if (y + rowHeight + 4 > listTopY && y < listBottomY) {
                 boolean withinClip = (y + 2) >= listTopY && (y + 2 + 14) <= listBottomY;
@@ -841,6 +907,17 @@ public class SearchModalScreen extends Screen {
                 trackedLocationsCache = out;
             }
             return trackedLocationsCache;
+        }
+
+        LocationEntry locationAtDisplayIndex(int index) {
+            ensureTracked();
+            int trackedIndex = index - (currentInvLine == null ? 0 : 1);
+            return trackedIndex >= 0 && trackedIndex < trackedEntries.size() ? trackedEntries.get(trackedIndex) : null;
+        }
+
+        List<LocationEntry> trackedEntries() {
+            ensureTracked();
+            return trackedEntries;
         }
 
         private void ensureTracked() {

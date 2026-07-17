@@ -16,6 +16,7 @@ public class InventorySearchClient implements ClientModInitializer {
         LOGGER.info("Initializing Inventory Search Mod");
         InventorySearchClientNetworking.initialize();
         InventorySearchFeature.initialize();
+        ChestHighlightRenderer.initialize();
         ClientTickEvents.END_CLIENT_TICK.register(InventorySearchFeature::sampleInventory);
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
             dispatcher.register(ClientCommandCompat.literal("inventorysearch")
