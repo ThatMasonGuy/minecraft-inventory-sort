@@ -25,15 +25,18 @@ public final class ChestHighlightRenderCompat {
     }
 
     private static void render(LevelRenderContext context) {
-        BlockPos pos = ChestHighlightRenderer.getHighlighted();
         Minecraft client = Minecraft.getInstance();
-        if (pos == null || client.level == null || !client.level.hasChunkAt(pos)) {
+        if (client.level == null || ChestHighlightRenderer.getHighlightedPositions().isEmpty()) {
             return;
         }
 
         int styleIndex = (int) ((System.nanoTime() / 125_000_000L) & 15L);
         try (Gizmos.TemporaryCollection ignored = context.levelRenderer().collectPerFrameRenderThreadGizmos()) {
-            Gizmos.cuboid(pos, STYLES[styleIndex]).setAlwaysOnTop();
+            for (BlockPos pos : ChestHighlightRenderer.getHighlightedPositions()) {
+                if (client.level.hasChunkAt(pos)) {
+                    Gizmos.cuboid(pos, STYLES[styleIndex]).setAlwaysOnTop();
+                }
+            }
         }
     }
 

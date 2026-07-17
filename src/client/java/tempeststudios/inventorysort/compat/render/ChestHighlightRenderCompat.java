@@ -29,9 +29,8 @@ public final class ChestHighlightRenderCompat {
     }
 
     private static void render(WorldRenderContext context) {
-        BlockPos pos = ChestHighlightRenderer.getHighlighted();
         Minecraft client = Minecraft.getInstance();
-        if (pos == null || client.level == null || !client.level.hasChunkAt(pos)) {
+        if (client.level == null || ChestHighlightRenderer.getHighlightedPositions().isEmpty()) {
             return;
         }
 
@@ -41,18 +40,23 @@ public final class ChestHighlightRenderCompat {
         }
 
         Vec3 camera = context.camera().getPosition();
-        double x = pos.getX() - camera.x;
-        double y = pos.getY() - camera.y;
-        double z = pos.getZ() - camera.z;
         float alpha = 0.65F + 0.20F * (float) Math.sin((System.nanoTime() / 1_000_000_000.0D) * 3.0D);
 
         RenderSystem.disableDepthTest();
         RenderSystem.depthMask(false);
         RenderSystem.lineWidth(2.0F);
-        LevelRenderer.renderLineBox(matrices, context.consumers().getBuffer(RenderType.lines()),
-                x - 0.002D, y - 0.002D, z - 0.002D,
-                x + 1.002D, y + 1.002D, z + 1.002D,
-                RED, GREEN, BLUE, alpha);
+        for (BlockPos pos : ChestHighlightRenderer.getHighlightedPositions()) {
+            if (!client.level.hasChunkAt(pos)) {
+                continue;
+            }
+            double x = pos.getX() - camera.x;
+            double y = pos.getY() - camera.y;
+            double z = pos.getZ() - camera.z;
+            LevelRenderer.renderLineBox(matrices, context.consumers().getBuffer(RenderType.lines()),
+                    x - 0.002D, y - 0.002D, z - 0.002D,
+                    x + 1.002D, y + 1.002D, z + 1.002D,
+                    RED, GREEN, BLUE, alpha);
+        }
         RenderSystem.lineWidth(1.0F);
         RenderSystem.depthMask(true);
         RenderSystem.enableDepthTest();

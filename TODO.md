@@ -13,6 +13,15 @@ PASS `./gradlew.bat buildAllMods "-Pminecraft_version_profile=26.x"
 --no-daemon --console=plain`. The local 1.21.11 follow-up compile is blocked
 only because this machine has no Java 21 toolchain configured.
 
+InvSearch multi-highlight checkpoint: clicking a tracked location now highlights
+all matching physical container locations in the current dimension by default.
+Each displayed coordinate has a `Highlight` button for selecting only that
+container. The shared highlight selection expires after one minute and removes
+only the container the player opens; renderer shims draw every remaining
+position without per-frame selection allocations. Verification: PASS `git diff
+--check`; PASS `./gradlew.bat buildAllMods
+"-Pminecraft_version_profile=26.x" --no-daemon --console=plain`.
+
 Current local checkpoint: `3.4.0` development has started after the official
 `3.3.0` launch. First InvSort checkpoint: the player-inventory rules grid now
 renders the three main-inventory rows above the hotbar, with a small gap before

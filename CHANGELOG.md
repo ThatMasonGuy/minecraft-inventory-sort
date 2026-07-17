@@ -10,6 +10,9 @@ All notable project changes will be documented here.
   selected from an expanded InvSearch result. On 26.x it has a solid outline
   and translucent fill visible through walls; it clears when that container
   opens, disappears, or the client changes world/dimension or disconnects.
+- InvSearch location selections now highlight every matching container in the
+  current dimension by default. Each coordinate has a `Highlight` button for
+  selecting only that container, and selections expire after one minute.
 - Added a first-pass InvSort rules screen, opened by right-clicking the Sort
   button, for configuring player-inventory rules and container rules in game.
 - Added InvSort custom category ordering, custom item-id ordering, protected
