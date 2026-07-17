@@ -6,8 +6,10 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -43,6 +45,7 @@ public class SearchModalScreen extends Screen {
 
     // Expand state per result id
     private final Set<String> expanded = new HashSet<>();
+    private final SearchHighlightSelection highlightSelection = new SearchHighlightSelection();
 
     // UI buttons
     private final List<Button> expandButtons = new ArrayList<>();
@@ -76,7 +79,7 @@ public class SearchModalScreen extends Screen {
     private static final int DETAILS_MIN_H = 29;
     private static final int DETAILS_LOCATION_Y = 16;
     private static final int DETAILS_LINE_H = 13;
-    private static final int HIGHLIGHT_BUTTON_W = 48;
+    private static final int HIGHLIGHT_BUTTON_W = 56;
     private static final int HIGHLIGHT_BUTTON_H = 10;
 
     private static final DateTimeFormatter TS_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy h:mma");
@@ -189,7 +192,14 @@ public class SearchModalScreen extends Screen {
     }
 
     private void toggleExpanded(String id) {
-        if (!expanded.add(id)) {
+        if (expanded.add(id)) {
+            for (ResultRow row : results) {
+                if (row.id.equals(id)) {
+                    highlightSelection.selectAll(id, row.trackedEntries());
+                    break;
+                }
+            }
+        } else {
             expanded.remove(id);
         }
         updateLayout();
@@ -256,8 +266,13 @@ public class SearchModalScreen extends Screen {
                     && mouseY >= locationY - 1 && mouseY < locationY - 1 + row.trackedLocations().size() * DETAILS_LINE_H) {
                 int locationIndex = (int) ((mouseY - (locationY - 1)) / DETAILS_LINE_H);
                 LocationEntry location = row.locationAtDisplayIndex(locationIndex);
-                if (ChestHighlightRenderer.setHighlighted(location, row.trackedEntries(),
-                        isHighlightButton(mouseX, mouseY, locationY + locationIndex * DETAILS_LINE_H - 1))) {
+                if (isHighlightButton(mouseX, mouseY, locationY + locationIndex * DETAILS_LINE_H - 1)) {
+                    if (highlightSelection.selectOne(row.id, location)) {
+                        playHighlightSound();
+                        return true;
+                    }
+                } else if (location != null && location.getPos() != null) {
+                    highlightSelection.selectAll(row.id, row.trackedEntries());
                     return true;
                 }
             }
@@ -270,6 +285,10 @@ public class SearchModalScreen extends Screen {
         int x = rowRightX - HIGHLIGHT_BUTTON_W - 6;
         return mouseX >= x && mouseX < x + HIGHLIGHT_BUTTON_W
                 && mouseY >= y && mouseY < y + HIGHLIGHT_BUTTON_H;
+    }
+
+    private void playHighlightSound() {
+        Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
     }
 
     @Override
@@ -375,7 +394,7 @@ public class SearchModalScreen extends Screen {
 
         super.extractRenderState(g, mouseX, mouseY, partialTick);
 
-        g.text(this.font, "Click a location to highlight all, or Highlight to mark one. Scroll wheel works too.",
+        g.text(this.font, "Open a result to highlight all locations. Highlight selects one or more.",
                 modalX + PAD, modalY + modalH - 12, InvUi.TEXT_DIM, false);
     }
 
@@ -410,7 +429,7 @@ public class SearchModalScreen extends Screen {
                         && mouseY >= ty - 1 && mouseY < ty - 1 + HIGHLIGHT_BUTTON_H;
                 int textColor = InvUi.button(ui, buttonX, ty - 1, HIGHLIGHT_BUTTON_W, HIGHLIGHT_BUTTON_H,
                         hovered, true, false, ACCENT);
-                g.text(this.font, "Highlight", buttonX + 4, ty, textColor, false);
+                g.text(this.font, "Highlight", buttonX + (HIGHLIGHT_BUTTON_W - this.font.width("Highlight")) / 2, ty, textColor, false);
             }
             ty += DETAILS_LINE_H;
         }

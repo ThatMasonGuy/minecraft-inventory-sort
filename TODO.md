@@ -22,6 +22,14 @@ position without per-frame selection allocations. Verification: PASS `git diff
 --check`; PASS `./gradlew.bat buildAllMods
 "-Pminecraft_version_profile=26.x" --no-daemon --console=plain`.
 
+InvSearch explicit-selection checkpoint: expanding a result immediately marks
+all of its current-dimension containers. The first `Highlight` button press
+switches to a single explicit selection and subsequent presses add containers
+to it. `Highlight` now uses the standard UI click sound, and its widened,
+centred label plus the shortened helper text stay inside the modal bounds.
+Verification: PASS `git diff --check`; PASS `./gradlew.bat buildAllMods
+"-Pminecraft_version_profile=26.x" --no-daemon --console=plain`.
+
 Current local checkpoint: `3.4.0` development has started after the official
 `3.3.0` launch. First InvSort checkpoint: the player-inventory rules grid now
 renders the three main-inventory rows above the hotbar, with a small gap before

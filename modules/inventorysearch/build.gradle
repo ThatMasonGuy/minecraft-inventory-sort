@@ -22,6 +22,7 @@ sourceSets {
 			srcDir rootProject.file("src/client/java")
 			include "tempeststudios/inventorysort/compat/search/**"
 			include "tempeststudios/inventorysort/ChestHighlightRenderer.java"
+			include "tempeststudios/inventorysort/SearchHighlightSelection.java"
 			include "tempeststudios/inventorysort/compat/render/**"
 			include "tempeststudios/inventorysort/InventoryHistorySampler.java"
 			include "tempeststudios/inventorysort/InventorySearchClient.java"

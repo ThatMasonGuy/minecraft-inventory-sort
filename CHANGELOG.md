@@ -13,6 +13,9 @@ All notable project changes will be documented here.
 - InvSearch location selections now highlight every matching container in the
   current dimension by default. Each coordinate has a `Highlight` button for
   selecting only that container, and selections expire after one minute.
+- Opening a result now immediately marks all its locations. `Highlight` buttons
+  switch to an explicit one-or-more-container selection and use the normal UI
+  click sound.
 - Added a first-pass InvSort rules screen, opened by right-clicking the Sort
   button, for configuring player-inventory rules and container rules in game.
 - Added InvSort custom category ordering, custom item-id ordering, protected
